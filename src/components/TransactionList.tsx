@@ -1,30 +1,31 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/AuthProvider";
 
 export const TransactionList = () => {
-  const transactions = [
-    {
-      id: 1,
-      description: "Office Supplies",
-      amount: 234.56,
-      date: "2024-03-15",
-      category: "Expenses",
+  const { session } = useAuth();
+
+  const { data: transactions, isLoading } = useQuery({
+    queryKey: ['transactions', session?.user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('revenue_records')
+        .select('*')
+        .eq('user_id', session?.user?.id)
+        .order('date', { ascending: false })
+        .limit(3);
+      
+      if (error) throw error;
+      return data;
     },
-    {
-      id: 2,
-      description: "Client Payment",
-      amount: 1500.00,
-      date: "2024-03-14",
-      category: "Income",
-    },
-    {
-      id: 3,
-      description: "Software License",
-      amount: 99.99,
-      date: "2024-03-13",
-      category: "Expenses",
-    },
-  ];
+    enabled: !!session?.user?.id
+  });
+
+  if (isLoading) {
+    return <div>Loading transactions...</div>;
+  }
 
   return (
     <Card className="glass-card p-6">
@@ -33,7 +34,7 @@ export const TransactionList = () => {
         <Button variant="outline" className="hover-scale">View All</Button>
       </div>
       <div className="space-y-4">
-        {transactions.map((transaction) => (
+        {transactions?.map((transaction) => (
           <div key={transaction.id} className="flex justify-between items-center p-4 bg-muted rounded-lg">
             <div>
               <p className="font-semibold">{transaction.description}</p>
