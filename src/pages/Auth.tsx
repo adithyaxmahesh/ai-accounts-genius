@@ -19,6 +19,12 @@ const AuthPage = () => {
         });
         navigate("/");
       }
+      if (event === 'SIGNED_OUT') {
+        toast({
+          title: "Signed out",
+          description: "You have been signed out.",
+        });
+      }
     });
 
     return () => {
@@ -32,11 +38,28 @@ const AuthPage = () => {
         <h1 className="text-2xl font-bold mb-8 text-center">AI Financial Assistant</h1>
         <Auth
           supabaseClient={supabase}
-          appearance={{ theme: ThemeSupa }}
+          appearance={{ 
+            theme: ThemeSupa,
+            variables: {
+              default: {
+                colors: {
+                  brand: '#2563eb',
+                  brandAccent: '#1d4ed8',
+                }
+              }
+            }
+          }}
           providers={[]}
           theme="light"
           showLinks={true}
           redirectTo={window.location.origin}
+          onError={(error) => {
+            toast({
+              title: "Error",
+              description: error.message,
+              variant: "destructive",
+            });
+          }}
         />
       </Card>
     </div>
