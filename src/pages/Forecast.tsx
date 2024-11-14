@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { ArrowLeft, TrendingUp, Brain, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/components/AuthProvider";
 import {
   LineChart,
   Line,
@@ -19,18 +20,21 @@ import {
 const Forecast = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { session } = useAuth();
 
   const { data: forecasts, isLoading } = useQuery({
-    queryKey: ['forecasts'],
+    queryKey: ['forecasts', session?.user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('forecasts')
         .select('*')
+        .eq('user_id', session?.user?.id)
         .order('period_start', { ascending: true });
       
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: !!session?.user?.id
   });
 
   const generateNewForecast = async () => {

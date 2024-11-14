@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { ArrowLeft, DollarSign, TrendingUp, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/components/AuthProvider";
 import {
   BarChart,
   Bar,
@@ -19,18 +20,21 @@ import {
 const Revenue = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { session } = useAuth();
 
   const { data: revenueData, isLoading } = useQuery({
-    queryKey: ['revenue'],
+    queryKey: ['revenue', session?.user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('revenue_records')
         .select('*')
+        .eq('user_id', session?.user?.id)
         .order('date', { ascending: false });
       
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: !!session?.user?.id
   });
 
   const monthlyRevenue = revenueData?.reduce((acc, curr) => {
