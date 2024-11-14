@@ -8,9 +8,9 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import AuditItemCard from "@/components/AuditItemCard";
 
 const AuditDetail = () => {
   const { id } = useParams();
@@ -83,6 +83,8 @@ const AuditDetail = () => {
 
   if (isLoading) return <div>Loading audit details...</div>;
 
+  const flaggedItems = audit?.audit_items?.filter(item => item.status === 'flagged') || [];
+
   return (
     <div className="container mx-auto p-6 space-y-6 fade-in">
       <Button 
@@ -112,6 +114,20 @@ const AuditDetail = () => {
           </Button>
         </div>
       </div>
+
+      {flaggedItems.length > 0 && (
+        <Card className="p-6 bg-red-50 border-red-200">
+          <h2 className="text-lg font-semibold text-red-700 mb-4 flex items-center">
+            <AlertTriangle className="mr-2 h-5 w-5" />
+            Flagged Items Requiring Attention ({flaggedItems.length})
+          </h2>
+          <div className="space-y-4">
+            {flaggedItems.map((item) => (
+              <AuditItemCard key={item.id} item={item} />
+            ))}
+          </div>
+        </Card>
+      )}
 
       <Card className="p-6 glass-card">
         <div className="flex justify-between items-start mb-6">
@@ -176,7 +192,7 @@ const AuditDetail = () => {
 
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <h3 className="text-lg font-semibold">Audit Items</h3>
+              <h3 className="text-lg font-semibold">All Audit Items</h3>
               <Tooltip>
                 <TooltipTrigger>
                   <Info className="h-4 w-4 text-muted-foreground" />
@@ -188,34 +204,7 @@ const AuditDetail = () => {
             </div>
             <div className="space-y-4">
               {audit?.audit_items?.map((item) => (
-                <Card key={item.id} className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold">{item.category}</p>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <Info className="h-4 w-4 text-muted-foreground" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Category helps classify the type of transaction or record</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{item.description}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold">${item.amount?.toLocaleString()}</p>
-                      <p className={`text-sm ${
-                        item.status === 'approved' ? 'text-green-600' :
-                        item.status === 'flagged' ? 'text-red-600' :
-                        'text-muted-foreground'
-                      }`}>
-                        {item.status}
-                      </p>
-                    </div>
-                  </div>
-                </Card>
+                <AuditItemCard key={item.id} item={item} />
               ))}
             </div>
           </div>
