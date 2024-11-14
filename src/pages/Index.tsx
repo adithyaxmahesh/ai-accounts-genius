@@ -8,6 +8,7 @@ import { FinancialMetrics } from "@/components/FinancialMetrics";
 import { TransactionList } from "@/components/TransactionList";
 import { DocumentUpload } from "@/components/DocumentUpload";
 import { FraudDetection } from "@/components/FraudDetection";
+import { useNavigate } from "react-router-dom";
 
 const data = [
   { name: "Jan", amount: 4000 },
@@ -20,6 +21,7 @@ const data = [
 
 const Index = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("dashboard");
 
   return (
@@ -29,17 +31,27 @@ const Index = () => {
           <h1 className="text-3xl font-bold">AI Financial Assistant</h1>
           <p className="text-muted-foreground">Your intelligent accounting partner</p>
         </div>
-        <Button
-          onClick={() => {
-            toast({
-              title: "AI Analysis Started",
-              description: "Processing your financial data...",
-            });
-          }}
-          className="hover-scale"
-        >
-          Run AI Analysis
-        </Button>
+        <div className="space-x-2">
+          <Button
+            onClick={() => navigate("/audit")}
+            variant="outline"
+            className="hover-scale"
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            Audits
+          </Button>
+          <Button
+            onClick={() => {
+              toast({
+                title: "AI Analysis Started",
+                description: "Processing your financial data...",
+              });
+            }}
+            className="hover-scale"
+          >
+            Run AI Analysis
+          </Button>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -111,20 +123,28 @@ const Index = () => {
 
       <Card className="glass-card p-6">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-semibold">Recent Transactions</h3>
-          <Button variant="outline" className="hover-scale">
+          <h3 className="text-xl font-semibold">Recent Audits</h3>
+          <Button 
+            variant="outline" 
+            className="hover-scale"
+            onClick={() => navigate("/audit")}
+          >
             View All
           </Button>
         </div>
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="flex justify-between items-center p-4 bg-muted rounded-lg">
+            <div 
+              key={i} 
+              className="flex justify-between items-center p-4 bg-muted rounded-lg cursor-pointer hover:bg-accent transition-colors"
+              onClick={() => navigate(`/audit/${i}`)}
+            >
               <div>
-                <p className="font-semibold">Transaction #{i}</p>
-                <p className="text-sm text-muted-foreground">Category: Office Supplies</p>
+                <p className="font-semibold">Audit Report #{i}</p>
+                <p className="text-sm text-muted-foreground">Status: In Progress</p>
               </div>
               <div className="text-right">
-                <p className="font-semibold">$234.56</p>
+                <p className="font-semibold">3 Findings</p>
                 <p className="text-sm text-muted-foreground">Mar 15, 2024</p>
               </div>
             </div>
