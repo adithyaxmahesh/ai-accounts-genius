@@ -2,25 +2,20 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/components/AuthProvider";
 
 export const TransactionList = () => {
-  const { session } = useAuth();
-
   const { data: transactions, isLoading } = useQuery({
-    queryKey: ['transactions', session?.user?.id],
+    queryKey: ['transactions'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('revenue_records')
         .select('*')
-        .eq('user_id', session?.user?.id)
         .order('date', { ascending: false })
         .limit(3);
       
       if (error) throw error;
       return data;
-    },
-    enabled: !!session?.user?.id
+    }
   });
 
   if (isLoading) {
