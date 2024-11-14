@@ -1,17 +1,15 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { useToast } from "@/components/ui/use-toast"
-import { ArrowLeft, Plus, FileText, Calculator, Download } from "lucide-react"
-import { supabase } from "@/integrations/supabase/client"
-import { useQuery } from "@tanstack/react-query"
-import { WriteOffForm } from "@/components/WriteOffForm"
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
+import { ArrowLeft, Plus, FileText, Calculator } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 const WriteOffs = () => {
-  const navigate = useNavigate()
-  const { toast } = useToast()
-  const [showForm, setShowForm] = useState(false)
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   const { data: writeOffs, isLoading: loadingWriteOffs } = useQuery({
     queryKey: ['writeOffs'],
@@ -27,12 +25,12 @@ const WriteOffs = () => {
             deduction_type
           )
         `)
-        .order('date', { ascending: false })
+        .order('date', { ascending: false });
       
-      if (error) throw error
-      return data
+      if (error) throw error;
+      return data;
     }
-  })
+  });
 
   const { data: taxCodes, isLoading: loadingTaxCodes } = useQuery({
     queryKey: ['taxCodes'],
@@ -40,50 +38,19 @@ const WriteOffs = () => {
       const { data, error } = await supabase
         .from('tax_codes')
         .select('*')
-        .order('code', { ascending: true })
+        .order('code', { ascending: true });
       
-      if (error) throw error
-      return data
+      if (error) throw error;
+      return data;
     }
-  })
+  });
 
-  const handleExport = async () => {
-    // Generate CSV of write-offs
-    const csvContent = writeOffs?.map(wo => {
-      return `${wo.date},${wo.description},${wo.amount},${wo.tax_codes?.code}`
-    }).join('\n')
-
-    const blob = new Blob([`Date,Description,Amount,Tax Code\n${csvContent}`], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'write-offs.csv'
-    a.click()
-  }
-
-  const analyzeWriteOffs = async () => {
-    try {
-      const response = await supabase.functions.invoke('analyze-financials', {
-        body: { 
-          type: 'writeoffs',
-          data: writeOffs 
-        }
-      })
-
-      if (response.error) throw response.error
-
-      toast({
-        title: "AI Analysis Complete",
-        description: response.data.analysis,
-      })
-    } catch (error) {
-      toast({
-        title: "Analysis Failed",
-        description: "Could not complete AI analysis",
-        variant: "destructive"
-      })
-    }
-  }
+  const addWriteOff = () => {
+    toast({
+      title: "Coming Soon",
+      description: "The ability to add write-offs will be available soon.",
+    });
+  };
 
   return (
     <div className="container mx-auto p-6 space-y-6 fade-in">
@@ -100,19 +67,11 @@ const WriteOffs = () => {
 
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Tax Write-Offs</h1>
-        <div className="space-x-2">
-          <Button onClick={handleExport} className="hover-scale">
-            <Download className="mr-2 h-4 w-4" />
-            Export Data
-          </Button>
-          <Button onClick={() => setShowForm(!showForm)} className="hover-scale">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Write-Off
-          </Button>
-        </div>
+        <Button onClick={addWriteOff} className="hover-scale">
+          <Plus className="mr-2 h-4 w-4" />
+          Add Write-Off
+        </Button>
       </div>
-
-      {showForm && <WriteOffForm />}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="p-6 glass-card">
@@ -122,13 +81,6 @@ const WriteOffs = () => {
             ${writeOffs?.reduce((sum, record) => sum + Number(record.amount), 0).toLocaleString()}
           </p>
           <p className="text-sm text-muted-foreground">Current fiscal year</p>
-          <Button 
-            variant="outline" 
-            className="mt-4 w-full"
-            onClick={analyzeWriteOffs}
-          >
-            Run AI Analysis
-          </Button>
         </Card>
       </div>
 
@@ -167,7 +119,7 @@ const WriteOffs = () => {
         </div>
       </Card>
     </div>
-  )
-}
+  );
+};
 
-export default WriteOffs
+export default WriteOffs;
