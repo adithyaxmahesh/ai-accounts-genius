@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, FileText, Loader2 } from "lucide-react";
+import { Upload, FileText, Image, FileSpreadsheet, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -19,12 +19,29 @@ interface ProcessedDocument {
   status: string;
   confidence: number;
   uploadedAt: string;
+  type: string;
 }
 
 export const DocumentUpload = () => {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
   const [documents, setDocuments] = useState<ProcessedDocument[]>([]);
+
+  const getFileIcon = (fileName: string) => {
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    switch (ext) {
+      case 'xls':
+      case 'xlsx':
+        return <FileSpreadsheet className="h-4 w-4 mr-2 text-green-500" />;
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+        return <Image className="h-4 w-4 mr-2 text-blue-500" />;
+      default:
+        return <FileText className="h-4 w-4 mr-2 text-muted-foreground" />;
+    }
+  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -34,7 +51,7 @@ export const DocumentUpload = () => {
       setUploading(true);
       toast({
         title: "Document Upload Started",
-        description: "Processing your document with AI OCR...",
+        description: "Processing your document...",
       });
 
       // Upload file to Supabase Storage
@@ -55,6 +72,7 @@ export const DocumentUpload = () => {
         status: "Processed",
         confidence: 98,
         uploadedAt: new Date().toISOString(),
+        type: fileExt || 'unknown'
       };
 
       setDocuments((prev) => [newDoc, ...prev]);
@@ -84,7 +102,7 @@ export const DocumentUpload = () => {
             type="file"
             id="file-upload"
             className="hidden"
-            accept=".pdf,.doc,.docx,.txt,.csv"
+            accept=".pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.jpg,.jpeg,.png,.gif"
             onChange={handleFileUpload}
             disabled={uploading}
           />
@@ -121,7 +139,7 @@ export const DocumentUpload = () => {
             <TableRow key={doc.id}>
               <TableCell className="font-medium">
                 <div className="flex items-center">
-                  <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
+                  {getFileIcon(doc.name)}
                   {doc.name}
                 </div>
               </TableCell>
