@@ -17,9 +17,19 @@ const AuditDetail = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const { data: audit, isLoading } = useQuery({
+  // Validate UUID format
+  const isValidUUID = (uuid) => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
+  };
+
+  const { data: audit, isLoading, error } = useQuery({
     queryKey: ['audit', id],
     queryFn: async () => {
+      if (!isValidUUID(id)) {
+        throw new Error('Invalid audit ID format');
+      }
+
       const { data, error } = await supabase
         .from('audit_reports')
         .select(`
@@ -31,10 +41,30 @@ const AuditDetail = () => {
       
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: !!id
   });
 
+  if (error) {
+    toast({
+      title: "Error",
+      description: "Failed to load audit details. Please check the audit ID.",
+      variant: "destructive"
+    });
+    navigate('/audit');
+    return null;
+  }
+
   const updateAuditStatus = async (status) => {
+    if (!isValidUUID(id)) {
+      toast({
+        title: "Error",
+        description: "Invalid audit ID format",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const { error } = await supabase
       .from('audit_reports')
       .update({ status })
