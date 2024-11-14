@@ -9,6 +9,7 @@ import AuditDetail from "./pages/AuditDetail";
 import Revenue from "./pages/Revenue";
 import Forecast from "./pages/Forecast";
 import WriteOffs from "./pages/WriteOffs";
+import Documents from "./pages/Documents";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/revenue" element={<Revenue />} />
           <Route path="/forecast" element={<Forecast />} />
           <Route path="/write-offs" element={<WriteOffs />} />
+          <Route path="/documents" element={<Documents />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

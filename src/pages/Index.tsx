@@ -36,10 +36,7 @@ const Index = () => {
         navigate("/forecast");
         break;
       case "Documents":
-        toast({
-          title: "Document Management",
-          description: "Document management features coming soon!",
-        });
+        navigate("/documents");
         break;
       default:
         break;
@@ -50,7 +47,7 @@ const Index = () => {
     <div className="min-h-screen bg-background p-6 space-y-6 fade-in">
       <header className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold">AI Financial Assistant</h1>
+          <h1 className="text-3xl font-bold">Audith AI</h1>
           <p className="text-muted-foreground">Your intelligent accounting partner</p>
         </div>
         <div className="space-x-2">
