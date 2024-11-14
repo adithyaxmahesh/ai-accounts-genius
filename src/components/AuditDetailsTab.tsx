@@ -1,11 +1,14 @@
 import { Card } from "@/components/ui/card";
-import { Info, FileText, AlertTriangle, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Info, FileText, AlertTriangle, Check, ClipboardList, Shield, Search, FileCheck } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useToast } from "@/components/ui/use-toast";
 import AuditItemCard from "@/components/AuditItemCard";
+import { updateAuditStatus } from "@/utils/auditUtils";
 
 interface AuditDetailsProps {
   audit: any;
@@ -14,12 +17,45 @@ interface AuditDetailsProps {
 }
 
 const AuditDetailsTab = ({ audit, getStatusExplanation, getRiskLevelExplanation }: AuditDetailsProps) => {
+  const { toast } = useToast();
+
+  const handleProgressAudit = async () => {
+    try {
+      const nextStatus = {
+        'planning': 'control_evaluation',
+        'control_evaluation': 'evidence_gathering',
+        'evidence_gathering': 'review',
+        'review': 'completed'
+      }[audit.status];
+
+      if (!nextStatus) {
+        toast({
+          title: "Info",
+          description: "Audit is already completed",
+        });
+        return;
+      }
+
+      await updateAuditStatus(audit.id, nextStatus);
+      toast({
+        title: "Success",
+        description: `Moved to ${nextStatus.replace('_', ' ')} phase`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update audit status",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <Card className="p-6 glass-card">
       <div className="flex justify-between items-start mb-6">
         <div>
           <div className="flex items-center gap-2">
-            <p className="text-muted-foreground">Status</p>
+            <p className="text-muted-foreground">Current Phase</p>
             <Tooltip>
               <TooltipTrigger>
                 <Info className="h-4 w-4 text-muted-foreground" />
@@ -31,10 +67,12 @@ const AuditDetailsTab = ({ audit, getStatusExplanation, getRiskLevelExplanation 
           </div>
           <div className={`mt-1 px-3 py-1 rounded-full text-sm inline-block ${
             audit?.status === 'completed' ? 'bg-green-100 text-green-800' :
-            audit?.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-            'bg-yellow-100 text-yellow-800'
+            audit?.status === 'review' ? 'bg-orange-100 text-orange-800' :
+            audit?.status === 'evidence_gathering' ? 'bg-purple-100 text-purple-800' :
+            audit?.status === 'control_evaluation' ? 'bg-yellow-100 text-yellow-800' :
+            'bg-blue-100 text-blue-800'
           }`}>
-            {audit?.status}
+            {audit?.status?.replace('_', ' ')}
           </div>
         </div>
         <div>
@@ -60,6 +98,14 @@ const AuditDetailsTab = ({ audit, getStatusExplanation, getRiskLevelExplanation 
         </div>
       </div>
 
+      {audit?.status !== 'completed' && (
+        <div className="mb-6">
+          <Button onClick={handleProgressAudit} className="w-full">
+            Progress to Next Phase
+          </Button>
+        </div>
+      )}
+
       <div className="space-y-6">
         <div>
           <div className="flex items-center gap-2 mb-2">
@@ -78,7 +124,7 @@ const AuditDetailsTab = ({ audit, getStatusExplanation, getRiskLevelExplanation 
 
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-lg font-semibold">All Audit Items</h3>
+            <h3 className="text-lg font-semibold">Audit Items</h3>
             <Tooltip>
               <TooltipTrigger>
                 <Info className="h-4 w-4 text-muted-foreground" />
