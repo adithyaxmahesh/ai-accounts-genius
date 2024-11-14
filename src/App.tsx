@@ -6,6 +6,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Audit from "./pages/Audit";
 import AuditDetail from "./pages/AuditDetail";
+import Revenue from "./pages/Revenue";
+import Forecast from "./pages/Forecast";
+import WriteOffs from "./pages/WriteOffs";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,6 +28,9 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/audit" element={<Audit />} />
           <Route path="/audit/:id" element={<AuditDetail />} />
+          <Route path="/revenue" element={<Revenue />} />
+          <Route path="/forecast" element={<Forecast />} />
+          <Route path="/write-offs" element={<WriteOffs />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

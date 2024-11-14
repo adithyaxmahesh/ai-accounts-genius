@@ -80,6 +80,128 @@ export type Database = {
         }
         Relationships: []
       }
+      forecasts: {
+        Row: {
+          confidence_level: number | null
+          created_at: string
+          factors: Json | null
+          id: string
+          period_end: string
+          period_start: string
+          predicted_revenue: number
+        }
+        Insert: {
+          confidence_level?: number | null
+          created_at?: string
+          factors?: Json | null
+          id?: string
+          period_end: string
+          period_start: string
+          predicted_revenue: number
+        }
+        Update: {
+          confidence_level?: number | null
+          created_at?: string
+          factors?: Json | null
+          id?: string
+          period_end?: string
+          period_start?: string
+          predicted_revenue?: number
+        }
+        Relationships: []
+      }
+      revenue_records: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          date: string
+          description?: string | null
+          id?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      tax_codes: {
+        Row: {
+          category: string
+          code: string
+          created_at: string
+          deduction_type: string
+          description: string
+          id: string
+        }
+        Insert: {
+          category: string
+          code: string
+          created_at?: string
+          deduction_type: string
+          description: string
+          id?: string
+        }
+        Update: {
+          category?: string
+          code?: string
+          created_at?: string
+          deduction_type?: string
+          description?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      write_offs: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          description: string
+          id: string
+          status: string | null
+          tax_code_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          date: string
+          description: string
+          id?: string
+          status?: string | null
+          tax_code_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          status?: string | null
+          tax_code_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "write_offs_tax_code_id_fkey"
+            columns: ["tax_code_id"]
+            isOneToOne: false
+            referencedRelation: "tax_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

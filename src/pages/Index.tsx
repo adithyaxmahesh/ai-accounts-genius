@@ -25,13 +25,24 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
 
   const handleMetricClick = (metric: string) => {
-    toast({
-      title: `Viewing ${metric} Details`,
-      description: `Navigating to detailed view of ${metric}...`,
-    });
-    // You can add specific navigation logic here based on the metric
-    if (metric === "Risk Score") {
-      navigate("/audit");
+    switch (metric) {
+      case "Revenue":
+        navigate("/revenue");
+        break;
+      case "Risk Score":
+        navigate("/audit");
+        break;
+      case "Forecast":
+        navigate("/forecast");
+        break;
+      case "Documents":
+        toast({
+          title: "Document Management",
+          description: "Document management features coming soon!",
+        });
+        break;
+      default:
+        break;
     }
   };
 
