@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { ArrowLeft, FileText, AlertTriangle, Check, Info } from "lucide-react";
+import { ArrowLeft, FileText, AlertTriangle, Check, Info, DollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -18,9 +18,9 @@ const AuditDetail = () => {
   const { toast } = useToast();
 
   // Validate UUID format
-  const isValidUUID = (uuid) => {
+  const isValidUUID = (uuid: string | undefined) => {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    return uuidRegex.test(uuid);
+    return uuid ? uuidRegex.test(uuid) : false;
   };
 
   const { data: audit, isLoading, error } = useQuery({
@@ -54,6 +54,25 @@ const AuditDetail = () => {
     navigate('/audit');
     return null;
   }
+
+  const calculateTaxes = () => {
+    if (!audit?.audit_items) return { totalAmount: 0, estimatedTax: 0, deductions: 0 };
+    
+    const totalAmount = audit.audit_items.reduce((sum, item) => sum + (item.amount || 0), 0);
+    const deductions = audit.audit_items
+      .filter(item => item.category === 'deduction')
+      .reduce((sum, item) => sum + (item.amount || 0), 0);
+    
+    // Simplified tax calculation - can be adjusted based on specific tax rules
+    const taxableIncome = totalAmount - deductions;
+    const estimatedTax = taxableIncome * 0.25; // 25% tax rate for example
+    
+    return {
+      totalAmount,
+      deductions,
+      estimatedTax: Math.max(0, estimatedTax)
+    };
+  };
 
   const updateAuditStatus = async (status) => {
     if (!isValidUUID(id)) {
@@ -114,6 +133,7 @@ const AuditDetail = () => {
   if (isLoading) return <div>Loading audit details...</div>;
 
   const flaggedItems = audit?.audit_items?.filter(item => item.status === 'flagged') || [];
+  const { totalAmount, deductions, estimatedTax } = calculateTaxes();
 
   return (
     <div className="container mx-auto p-6 space-y-6 fade-in">
@@ -144,6 +164,28 @@ const AuditDetail = () => {
           </Button>
         </div>
       </div>
+
+      {/* New Tax Summary Section */}
+      <Card className="p-6 bg-blue-50 border-blue-200">
+        <h2 className="text-lg font-semibold text-blue-700 mb-4 flex items-center">
+          <DollarSign className="mr-2 h-5 w-5" />
+          Tax Summary
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <p className="text-sm text-muted-foreground">Total Amount</p>
+            <p className="text-2xl font-bold">${totalAmount.toLocaleString()}</p>
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Deductions</p>
+            <p className="text-2xl font-bold text-green-600">-${deductions.toLocaleString()}</p>
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Estimated Tax Due</p>
+            <p className="text-2xl font-bold text-blue-600">${estimatedTax.toLocaleString()}</p>
+          </div>
+        </div>
+      </Card>
 
       {flaggedItems.length > 0 && (
         <Card className="p-6 bg-red-50 border-red-200">
