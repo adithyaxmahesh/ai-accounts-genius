@@ -1,0 +1,147 @@
+import { Card } from "@/components/ui/card";
+import { Info, FileText, AlertTriangle, Check } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import AuditItemCard from "@/components/AuditItemCard";
+
+interface AuditDetailsProps {
+  audit: any;
+  getStatusExplanation: (status: string) => string;
+  getRiskLevelExplanation: (level: string) => string;
+}
+
+const AuditDetailsTab = ({ audit, getStatusExplanation, getRiskLevelExplanation }: AuditDetailsProps) => {
+  return (
+    <Card className="p-6 glass-card">
+      <div className="flex justify-between items-start mb-6">
+        <div>
+          <div className="flex items-center gap-2">
+            <p className="text-muted-foreground">Status</p>
+            <Tooltip>
+              <TooltipTrigger>
+                <Info className="h-4 w-4 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{getStatusExplanation(audit?.status)}</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <div className={`mt-1 px-3 py-1 rounded-full text-sm inline-block ${
+            audit?.status === 'completed' ? 'bg-green-100 text-green-800' :
+            audit?.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+            'bg-yellow-100 text-yellow-800'
+          }`}>
+            {audit?.status}
+          </div>
+        </div>
+        <div>
+          <div className="flex items-center gap-2">
+            <p className="text-muted-foreground">Risk Level</p>
+            <Tooltip>
+              <TooltipTrigger>
+                <Info className="h-4 w-4 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{getRiskLevelExplanation(audit?.risk_level)}</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="mt-1 flex items-center">
+            {audit?.risk_level === 'high' ? (
+              <AlertTriangle className="h-4 w-4 text-destructive mr-1" />
+            ) : audit?.status === 'completed' ? (
+              <Check className="h-4 w-4 text-green-500 mr-1" />
+            ) : null}
+            {audit?.risk_level}
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-6">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <h3 className="text-lg font-semibold">Description</h3>
+            <Tooltip>
+              <TooltipTrigger>
+                <Info className="h-4 w-4 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Detailed explanation of the audit's purpose and scope</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <p className="text-muted-foreground">{audit?.description}</p>
+        </div>
+
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <h3 className="text-lg font-semibold">All Audit Items</h3>
+            <Tooltip>
+              <TooltipTrigger>
+                <Info className="h-4 w-4 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Individual transactions or records being reviewed</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="space-y-4">
+            {audit?.audit_items?.map((item) => (
+              <AuditItemCard key={item.id} item={item} />
+            ))}
+          </div>
+        </div>
+
+        {audit?.recommendations?.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="text-lg font-semibold">Recommendations</h3>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Suggested actions to address findings and improve processes</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <ul className="list-disc pl-5 space-y-2">
+              {audit.recommendations.map((rec, index) => (
+                <li key={index} className="text-muted-foreground">{rec}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className="mt-6 p-4 bg-muted rounded-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <h3 className="text-lg font-semibold">Audit Timeline</h3>
+            <Tooltip>
+              <TooltipTrigger>
+                <Info className="h-4 w-4 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Key dates and milestones in the audit process</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="space-y-2">
+            <p className="text-sm">
+              <span className="font-semibold">Created:</span>{" "}
+              {new Date(audit?.created_at).toLocaleDateString()}
+            </p>
+            <p className="text-sm">
+              <span className="font-semibold">Last Updated:</span>{" "}
+              {new Date(audit?.created_at).toLocaleDateString()}
+            </p>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+export default AuditDetailsTab;
