@@ -24,6 +24,17 @@ const Index = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("dashboard");
 
+  const handleMetricClick = (metric: string) => {
+    toast({
+      title: `Viewing ${metric} Details`,
+      description: `Navigating to detailed view of ${metric}...`,
+    });
+    // You can add specific navigation logic here based on the metric
+    if (metric === "Risk Score") {
+      navigate("/audit");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background p-6 space-y-6 fade-in">
       <header className="flex justify-between items-center mb-8">
@@ -55,25 +66,37 @@ const Index = () => {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="glass-card p-6 hover-scale">
+        <Card 
+          className="glass-card p-6 hover-scale cursor-pointer" 
+          onClick={() => handleMetricClick("Revenue")}
+        >
           <DollarSign className="h-8 w-8 mb-4 text-primary" />
           <h3 className="text-lg font-semibold">Total Revenue</h3>
           <p className="text-3xl font-bold">$84,234.00</p>
           <p className="text-sm text-muted-foreground">+12.5% from last month</p>
         </Card>
-        <Card className="glass-card p-6 hover-scale">
+        <Card 
+          className="glass-card p-6 hover-scale cursor-pointer" 
+          onClick={() => handleMetricClick("Risk Score")}
+        >
           <AlertTriangle className="h-8 w-8 mb-4 text-destructive" />
           <h3 className="text-lg font-semibold">Risk Score</h3>
           <p className="text-3xl font-bold">Low</p>
           <p className="text-sm text-muted-foreground">2 items flagged</p>
         </Card>
-        <Card className="glass-card p-6 hover-scale">
+        <Card 
+          className="glass-card p-6 hover-scale cursor-pointer" 
+          onClick={() => handleMetricClick("Forecast")}
+        >
           <TrendingUp className="h-8 w-8 mb-4 text-primary" />
           <h3 className="text-lg font-semibold">Forecast</h3>
           <p className="text-3xl font-bold">+8.3%</p>
           <p className="text-sm text-muted-foreground">Next quarter growth</p>
         </Card>
-        <Card className="glass-card p-6 hover-scale">
+        <Card 
+          className="glass-card p-6 hover-scale cursor-pointer" 
+          onClick={() => handleMetricClick("Documents")}
+        >
           <FileText className="h-8 w-8 mb-4 text-primary" />
           <h3 className="text-lg font-semibold">Documents</h3>
           <p className="text-3xl font-bold">143</p>

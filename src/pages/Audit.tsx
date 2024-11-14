@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { FileText, AlertTriangle, Check } from "lucide-react";
+import { FileText, AlertTriangle, Check, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 
@@ -56,6 +56,17 @@ const Audit = () => {
 
   return (
     <div className="container mx-auto p-6 space-y-6 fade-in">
+      <div className="flex items-center space-x-4 mb-6">
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate('/')}
+          className="hover-scale"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Dashboard
+        </Button>
+      </div>
+
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Audit Reports</h1>
         <Button onClick={startNewAudit} className="hover-scale">
