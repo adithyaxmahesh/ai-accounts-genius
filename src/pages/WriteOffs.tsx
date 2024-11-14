@@ -6,15 +6,13 @@ import { useToast } from "@/components/ui/use-toast";
 import { ArrowLeft, Plus, FileText, Calculator } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/components/AuthProvider";
 
 const WriteOffs = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { session } = useAuth();
 
   const { data: writeOffs, isLoading: loadingWriteOffs } = useQuery({
-    queryKey: ['writeOffs', session?.user?.id],
+    queryKey: ['writeOffs'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('write_offs')
@@ -27,13 +25,11 @@ const WriteOffs = () => {
             deduction_type
           )
         `)
-        .eq('user_id', session?.user?.id)
         .order('date', { ascending: false });
       
       if (error) throw error;
       return data;
-    },
-    enabled: !!session?.user?.id
+    }
   });
 
   const { data: taxCodes, isLoading: loadingTaxCodes } = useQuery({

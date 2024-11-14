@@ -6,27 +6,23 @@ import { useToast } from "@/components/ui/use-toast";
 import { FileText, AlertTriangle, Check, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/components/AuthProvider";
 
 const Audit = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { session } = useAuth();
   const [selectedAudit, setSelectedAudit] = useState(null);
 
   const { data: audits, isLoading } = useQuery({
-    queryKey: ['audits', session?.user?.id],
+    queryKey: ['audits'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('audit_reports')
         .select('*')
-        .eq('user_id', session?.user?.id)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
       return data;
-    },
-    enabled: !!session?.user?.id
+    }
   });
 
   const startNewAudit = async () => {
@@ -36,8 +32,7 @@ const Audit = () => {
         {
           title: `Audit Report ${new Date().toLocaleDateString()}`,
           description: "New audit report",
-          status: "pending",
-          user_id: session?.user?.id
+          status: "pending"
         }
       ])
       .select()
