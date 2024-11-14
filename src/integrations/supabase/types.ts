@@ -218,6 +218,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_settings: {
+        Row: {
+          created_at: string
+          id: string
+          notifications: boolean | null
+          theme: string | null
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          notifications?: boolean | null
+          theme?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notifications?: boolean | null
+          theme?: string | null
+        }
+        Relationships: []
+      }
       write_offs: {
         Row: {
           amount: number
