@@ -22,8 +22,8 @@ const AuthPage = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md p-6 space-y-6">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold">Audit AI</h1>
-          <p className="text-muted-foreground">Sign in to your account</p>
+          <h1 className="text-3xl font-bold">Audit ai</h1>
+          <p className="text-muted-foreground">Sign up or sign in to your account</p>
         </div>
         <Auth
           supabaseClient={supabase}
@@ -39,6 +39,8 @@ const AuthPage = () => {
             }
           }}
           providers={[]}
+          view="sign_up"
+          showLinks={true}
         />
       </Card>
     </div>
