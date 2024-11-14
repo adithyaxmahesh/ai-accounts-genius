@@ -4,13 +4,19 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
+import { useToast } from "@/components/ui/use-toast";
 
 const AuthPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
+      if (event === 'SIGNED_IN') {
+        toast({
+          title: "Welcome!",
+          description: "Successfully signed in.",
+        });
         navigate("/");
       }
     });
@@ -18,7 +24,7 @@ const AuthPage = () => {
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, toast]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -29,6 +35,8 @@ const AuthPage = () => {
           appearance={{ theme: ThemeSupa }}
           providers={[]}
           theme="light"
+          showLinks={true}
+          redirectTo={window.location.origin}
         />
       </Card>
     </div>
