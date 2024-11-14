@@ -57,6 +57,7 @@ export type Database = {
           risk_level: string | null
           status: string
           title: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -67,6 +68,7 @@ export type Database = {
           risk_level?: string | null
           status?: string
           title: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -77,8 +79,17 @@ export type Database = {
           risk_level?: string | null
           status?: string
           title?: string
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "audit_reports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       forecasts: {
         Row: {
@@ -89,6 +100,7 @@ export type Database = {
           period_end: string
           period_start: string
           predicted_revenue: number
+          user_id: string | null
         }
         Insert: {
           confidence_level?: number | null
@@ -98,6 +110,7 @@ export type Database = {
           period_end: string
           period_start: string
           predicted_revenue: number
+          user_id?: string | null
         }
         Update: {
           confidence_level?: number | null
@@ -107,6 +120,36 @@ export type Database = {
           period_end?: string
           period_start?: string
           predicted_revenue?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forecasts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          company_name: string | null
+          created_at: string
+          id: string
+          role: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string
+          id: string
+          role?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          role?: string | null
         }
         Relationships: []
       }
@@ -118,6 +161,7 @@ export type Database = {
           date: string
           description: string | null
           id: string
+          user_id: string | null
         }
         Insert: {
           amount: number
@@ -126,6 +170,7 @@ export type Database = {
           date: string
           description?: string | null
           id?: string
+          user_id?: string | null
         }
         Update: {
           amount?: number
@@ -134,8 +179,17 @@ export type Database = {
           date?: string
           description?: string | null
           id?: string
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "revenue_records_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tax_codes: {
         Row: {
@@ -173,6 +227,7 @@ export type Database = {
           id: string
           status: string | null
           tax_code_id: string | null
+          user_id: string | null
         }
         Insert: {
           amount: number
@@ -182,6 +237,7 @@ export type Database = {
           id?: string
           status?: string | null
           tax_code_id?: string | null
+          user_id?: string | null
         }
         Update: {
           amount?: number
@@ -191,6 +247,7 @@ export type Database = {
           id?: string
           status?: string | null
           tax_code_id?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -198,6 +255,13 @@ export type Database = {
             columns: ["tax_code_id"]
             isOneToOne: false
             referencedRelation: "tax_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "write_offs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
