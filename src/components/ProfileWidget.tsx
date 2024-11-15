@@ -23,10 +23,10 @@ export const ProfileWidget = () => {
   const initials = email ? email[0].toUpperCase() : "U";
 
   return (
-    <div className="absolute top-4 right-4">
+    <div className="absolute top-4 right-4 z-[60]">
       <DropdownMenu>
         <DropdownMenuTrigger className="focus:outline-none">
-          <Avatar className="h-8 w-8 hover:ring-2 hover:ring-primary transition-all">
+          <Avatar className="h-8 w-8 hover:ring-2 hover:ring-primary transition-all bg-white">
             <AvatarFallback className="bg-primary text-primary-foreground">
               {initials}
             </AvatarFallback>

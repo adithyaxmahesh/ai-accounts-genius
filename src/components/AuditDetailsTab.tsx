@@ -19,6 +19,29 @@ interface AuditDetailsProps {
 const AuditDetailsTab = ({ audit, getStatusExplanation, getRiskLevelExplanation }: AuditDetailsProps) => {
   const { toast } = useToast();
 
+  const getAuditProgress = (status: string) => {
+    const stages = ['planning', 'control_evaluation', 'evidence_gathering', 'review', 'completed'];
+    const currentIndex = stages.indexOf(status);
+    return Math.round(((currentIndex + 1) / stages.length) * 100);
+  };
+
+  const getAuditAccomplishments = (status: string) => {
+    switch (status) {
+      case 'planning':
+        return "Initial audit scope defined and risk areas identified";
+      case 'control_evaluation':
+        return "Internal controls assessed and test procedures established";
+      case 'evidence_gathering':
+        return "Financial documents analyzed and evidence collected";
+      case 'review':
+        return "Findings compiled and recommendations drafted";
+      case 'completed':
+        return "Full audit completed with detailed findings and recommendations";
+      default:
+        return "Audit not yet started";
+    }
+  };
+
   const handleProgressAudit = async () => {
     try {
       const nextStatus = {
@@ -53,7 +76,7 @@ const AuditDetailsTab = ({ audit, getStatusExplanation, getRiskLevelExplanation 
   return (
     <Card className="p-6 glass-card">
       <div className="flex justify-between items-start mb-6">
-        <div>
+        <div className="space-y-2">
           <div className="flex items-center gap-2">
             <p className="text-muted-foreground">Current Phase</p>
             <Tooltip>
@@ -74,7 +97,14 @@ const AuditDetailsTab = ({ audit, getStatusExplanation, getRiskLevelExplanation 
           }`}>
             {audit?.status?.replace('_', ' ')}
           </div>
+          <div className="mt-2">
+            <p className="text-sm font-medium">Progress: {getAuditProgress(audit?.status)}%</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {getAuditAccomplishments(audit?.status)}
+            </p>
+          </div>
         </div>
+        
         <div>
           <div className="flex items-center gap-2">
             <p className="text-muted-foreground">Risk Level</p>

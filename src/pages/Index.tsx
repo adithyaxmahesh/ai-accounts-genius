@@ -71,7 +71,9 @@ const Index = () => {
           <FraudDetection />
           <FinancialMetrics />
           <TransactionList />
-          <DocumentUpload className="scale-95" />
+          <div className="scale-100 transform-none">
+            <DocumentUpload className="h-full" />
+          </div>
         </div>
       </div>
     </div>
