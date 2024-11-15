@@ -34,7 +34,7 @@ export const FraudDetection = () => {
       
       if (error) throw error;
       
-      return (data || []).map(alert => ({
+      return data?.map(alert => ({
         id: alert.id,
         risk_score: alert.risk_score || 0,
         alert_type: alert.alert_type,
@@ -81,7 +81,10 @@ export const FraudDetection = () => {
           {metrics.map((metric) => (
             <li key={metric.name} className="flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
-              <span>{metric.name}</span>
+              <div>
+                <span className="font-medium">{metric.name}</span>
+                <p className="text-xs text-muted-foreground">{metric.description}</p>
+              </div>
             </li>
           ))}
         </ul>
@@ -98,9 +101,21 @@ export const FraudDetection = () => {
               <AlertTriangle className="h-5 w-5 text-yellow-500 mt-1" />
               <div>
                 <div className="font-medium">Risk Score: {(alert.risk_score * 100).toFixed(0)}%</div>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground mt-1 whitespace-pre-line">
                   {alert.details?.analysis || 'No analysis available'}
                 </p>
+                {alert.details?.transactions && (
+                  <div className="mt-2">
+                    <p className="text-xs font-medium">Related Transactions:</p>
+                    <ul className="text-xs text-muted-foreground mt-1">
+                      {alert.details.transactions.map((t, i) => (
+                        <li key={i}>
+                          ${t.amount} - {new Date(t.date).toLocaleDateString()}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
           ))}
