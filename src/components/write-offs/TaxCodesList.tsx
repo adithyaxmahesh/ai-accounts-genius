@@ -84,4 +84,4 @@ const TaxCodesList = () => {
   );
 };
 
-export default TaxCodesList; // Ensure the component is exported correctly
+export default TaxCodesList;

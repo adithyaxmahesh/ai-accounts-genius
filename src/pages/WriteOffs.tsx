@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/components/AuthProvider";
 import { WriteOffDialog } from "@/components/write-offs/WriteOffDialog";
 import { WriteOffsList } from "@/components/write-offs/WriteOffsList";
-import { TaxCodesList } from "@/components/write-offs/TaxCodesList";
+import TaxCodesList from "@/components/write-offs/TaxCodesList";
 import { supabase } from "@/integrations/supabase/client";
 
 const WriteOffs = () => {
