@@ -16,10 +16,23 @@ serve(async (req) => {
     const { documentId } = await req.json()
     console.log('Starting document analysis for document:', documentId)
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const openAiKey = Deno.env.get('OPENAI_API_KEY')
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Supabase credentials missing')
+      throw new Error('Configuration error')
+    }
+
+    if (!openAiKey) {
+      console.error('OpenAI API key is missing')
+      throw new Error('OpenAI API key is not configured')
+    }
+
+    console.log('All required credentials are present')
+
+    const supabase = createClient(supabaseUrl, supabaseKey)
 
     console.log('Fetching document data from database...')
     const { data: document, error: docError } = await supabase
@@ -49,13 +62,6 @@ serve(async (req) => {
     console.log('Document text extracted, length:', text.length)
     console.log('First 100 characters:', text.substring(0, 100))
 
-    const openAiKey = Deno.env.get('OPENAI_API_KEY')
-    if (!openAiKey) {
-      console.error('OpenAI API key is not set')
-      throw new Error('OpenAI API key is missing')
-    }
-    console.log('OpenAI API key verification successful')
-
     console.log('Sending request to OpenAI...')
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -68,15 +74,15 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are an AI accountant. Your task is to scan the document and extract ONLY financial information, focusing on prices, amounts, and monetary values. Return the data in this JSON format: { "amounts": [{"value": number, "context": "string"}], "total": number, "currency": "string" }. If no amounts are found, return empty arrays and null values.'
+            content: 'You are an AI accountant. Extract ONLY financial information from the document, focusing on prices, amounts, and monetary values. Return the data in this JSON format: { "amounts": [{"value": number, "context": "string"}], "total": number, "currency": "string" }. If no amounts are found, return empty arrays and null values.'
           },
           {
             role: 'user',
             content: text
           }
         ],
-        temperature: 0.7,
-        max_tokens: 1000
+        temperature: 0.3,
+        max_tokens: 500
       }),
     })
 
