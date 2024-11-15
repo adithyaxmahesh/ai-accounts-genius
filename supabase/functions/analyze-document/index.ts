@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { documentId, userId } = await req.json()
+    const { documentId } = await req.json()
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY')
     
     const supabaseClient = createClient(
