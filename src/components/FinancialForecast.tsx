@@ -27,22 +27,30 @@ export const FinancialForecast = () => {
 
   const generateNewForecast = async () => {
     try {
+      toast({
+        title: "Generating Forecast",
+        description: "Please wait while we analyze your data...",
+      });
+
       const { data, error } = await supabase.functions.invoke('generate-forecast', {
-        body: { userId: session?.user.id }
+        body: { 
+          userId: session?.user.id 
+        }
       });
 
       if (error) throw error;
+
+      await refetch();
 
       toast({
         title: "Forecast Generated",
         description: "New financial forecast has been created",
       });
-
-      refetch();
     } catch (error) {
+      console.error("Forecast generation error:", error);
       toast({
         title: "Error",
-        description: "Failed to generate forecast",
+        description: "Failed to generate forecast. Please try again.",
         variant: "destructive",
       });
     }

@@ -2,16 +2,26 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ArrowLeft, Plus, FileText, Calculator } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/components/AuthProvider";
 
 const WriteOffs = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { session } = useAuth();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newWriteOff, setNewWriteOff] = useState({
+    amount: '',
+    description: '',
+    date: new Date().toISOString().split('T')[0]
+  });
 
-  const { data: writeOffs, isLoading: loadingWriteOffs } = useQuery({
+  const { data: writeOffs, refetch } = useQuery({
     queryKey: ['writeOffs'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -32,7 +42,7 @@ const WriteOffs = () => {
     }
   });
 
-  const { data: taxCodes, isLoading: loadingTaxCodes } = useQuery({
+  const { data: taxCodes } = useQuery({
     queryKey: ['taxCodes'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -45,11 +55,40 @@ const WriteOffs = () => {
     }
   });
 
-  const addWriteOff = () => {
-    toast({
-      title: "Coming Soon",
-      description: "The ability to add write-offs will be available soon.",
-    });
+  const addWriteOff = async () => {
+    try {
+      const { error } = await supabase
+        .from('write_offs')
+        .insert({
+          user_id: session?.user.id,
+          amount: parseFloat(newWriteOff.amount),
+          description: newWriteOff.description,
+          date: newWriteOff.date,
+          status: 'pending'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Write-off Added",
+        description: "Your write-off has been recorded successfully.",
+      });
+
+      setIsDialogOpen(false);
+      setNewWriteOff({
+        amount: '',
+        description: '',
+        date: new Date().toISOString().split('T')[0]
+      });
+      refetch();
+    } catch (error) {
+      console.error("Error adding write-off:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add write-off. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -67,10 +106,62 @@ const WriteOffs = () => {
 
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Tax Write-Offs</h1>
-        <Button onClick={addWriteOff} className="hover-scale">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Write-Off
-        </Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="hover-scale">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Write-Off
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Write-Off</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 mt-4">
+              <div>
+                <label className="text-sm font-medium">Amount</label>
+                <Input
+                  type="number"
+                  placeholder="Enter amount"
+                  value={newWriteOff.amount}
+                  onChange={(e) => setNewWriteOff(prev => ({
+                    ...prev,
+                    amount: e.target.value
+                  }))}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Description</label>
+                <Input
+                  placeholder="Enter description"
+                  value={newWriteOff.description}
+                  onChange={(e) => setNewWriteOff(prev => ({
+                    ...prev,
+                    description: e.target.value
+                  }))}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Date</label>
+                <Input
+                  type="date"
+                  value={newWriteOff.date}
+                  onChange={(e) => setNewWriteOff(prev => ({
+                    ...prev,
+                    date: e.target.value
+                  }))}
+                />
+              </div>
+              <Button 
+                className="w-full" 
+                onClick={addWriteOff}
+                disabled={!newWriteOff.amount || !newWriteOff.description}
+              >
+                Add Write-Off
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -107,7 +198,8 @@ const WriteOffs = () => {
               <div>
                 <p className="font-semibold">{writeOff.description}</p>
                 <p className="text-sm text-muted-foreground">
-                  Section {writeOff.tax_codes?.code} - {writeOff.tax_codes?.category}
+                  {writeOff.tax_codes?.code && `Section ${writeOff.tax_codes.code}`} 
+                  {writeOff.tax_codes?.category && ` - ${writeOff.tax_codes.category}`}
                 </p>
               </div>
               <div className="text-right">

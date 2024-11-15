@@ -1,13 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
-import { LineChart, TrendingUp, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { LineChart, TrendingUp, ArrowUpRight, ArrowDownRight, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
+import { useToast } from "@/components/ui/use-toast";
 
 export const BusinessIntelligence = () => {
   const { session } = useAuth();
+  const { toast } = useToast();
 
-  const { data: insights } = useQuery({
+  const { data: insights, refetch } = useQuery({
     queryKey: ['business-insights', session?.user.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -22,11 +25,48 @@ export const BusinessIntelligence = () => {
     }
   });
 
+  const generateInsights = async () => {
+    try {
+      toast({
+        title: "Generating Insights",
+        description: "Analyzing your business data...",
+      });
+
+      const { data, error } = await supabase.functions.invoke('generate-insights', {
+        body: { 
+          userId: session?.user.id 
+        }
+      });
+
+      if (error) throw error;
+
+      await refetch();
+
+      toast({
+        title: "Insights Generated",
+        description: "New business insights are available",
+      });
+    } catch (error) {
+      console.error("Error generating insights:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate insights. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Card className="p-6">
-      <div className="flex items-center gap-2 mb-6">
-        <LineChart className="h-6 w-6 text-primary" />
-        <h2 className="text-xl font-semibold">Business Intelligence</h2>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2">
+          <LineChart className="h-6 w-6 text-primary" />
+          <h2 className="text-xl font-semibold">Business Intelligence</h2>
+        </div>
+        <Button onClick={generateInsights} className="hover-scale">
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Generate New Insights
+        </Button>
       </div>
 
       <div className="space-y-6">
@@ -42,7 +82,7 @@ export const BusinessIntelligence = () => {
                 insight.priority === 'medium' ? 'text-yellow-500' : 
                 'text-green-500'
               }`}>
-                {insight.priority.toUpperCase()}
+                {insight.priority?.toUpperCase()}
               </span>
             </div>
 
