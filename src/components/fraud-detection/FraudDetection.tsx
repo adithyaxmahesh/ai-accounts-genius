@@ -5,6 +5,20 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 
+interface FraudAlertDetails {
+  analysis: string;
+  transactions?: any[];
+}
+
+interface FraudAlert {
+  id: string;
+  risk_score: number;
+  details: FraudAlertDetails;
+  created_at: string;
+  alert_type: string;
+  status?: string;
+}
+
 export const FraudDetection = () => {
   const { session } = useAuth();
 
@@ -19,7 +33,15 @@ export const FraudDetection = () => {
         .limit(5);
       
       if (error) throw error;
-      return data || [];
+      
+      return (data || []).map(alert => ({
+        id: alert.id,
+        risk_score: alert.risk_score || 0,
+        alert_type: alert.alert_type,
+        status: alert.status,
+        details: alert.details as FraudAlertDetails,
+        created_at: alert.created_at
+      })) as FraudAlert[];
     }
   });
 
@@ -62,13 +84,13 @@ export const FraudDetection = () => {
         </ul>
       </div>
 
-      {alerts?.length === 0 ? (
+      {!alerts?.length ? (
         <div className="text-center text-muted-foreground p-4">
           No suspicious activities detected
         </div>
       ) : (
         <div className="space-y-4">
-          {alerts?.map((alert) => (
+          {alerts.map((alert) => (
             <div key={alert.id} className="flex items-start gap-4 p-4 bg-muted rounded-lg">
               <AlertTriangle className="h-5 w-5 text-yellow-500 mt-1" />
               <div>
