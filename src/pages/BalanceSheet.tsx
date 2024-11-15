@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { DollarSign } from "lucide-react";
+import { DollarSign, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AddBalanceSheetItem } from "@/components/AddBalanceSheetItem";
 import { BalanceSheetSection } from "@/components/BalanceSheetSection";
@@ -12,6 +13,7 @@ import { useAuth } from "@/components/AuthProvider";
 const BalanceSheet = () => {
   const { session } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [showAddForm, setShowAddForm] = useState(false);
   const queryClient = useQueryClient();
 
@@ -42,6 +44,17 @@ const BalanceSheet = () => {
 
   return (
     <div className="min-h-screen bg-background p-6 space-y-6">
+      <div className="flex items-center space-x-4 mb-8">
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate('/')}
+          className="hover-scale"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Dashboard
+        </Button>
+      </div>
+
       <header className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold">Balance Sheet</h1>
