@@ -115,6 +115,21 @@ serve(async (req) => {
     }
     console.log('Document updated successfully')
 
+    // Create an AI insight from the extracted data
+    const { error: insightError } = await supabase
+      .from('ai_insights')
+      .insert({
+        category: 'document_analysis',
+        insight: `Financial analysis of document ${document.original_filename}`,
+        confidence_score: 0.95,
+        user_id: document.user_id
+      })
+
+    if (insightError) {
+      console.error('Error creating AI insight:', insightError)
+      // Don't throw here as the main analysis was successful
+    }
+
     return new Response(
       JSON.stringify({ success: true, data: extractedData }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
