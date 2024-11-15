@@ -35,22 +35,22 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
-      <div className="border-b">
-        <div className="container mx-auto py-2">
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto py-4">
           <Tabs defaultValue="dashboard">
-            <TabsList className="w-full justify-start">
-              <TabsTrigger value="dashboard" className="gap-2">
-                <BarChart className="h-4 w-4" />
+            <TabsList className="w-full justify-start h-12">
+              <TabsTrigger value="dashboard" className="gap-2 text-lg px-6">
+                <BarChart className="h-5 w-5" />
                 Dashboard
               </TabsTrigger>
               {navigationItems.map((item) => (
                 <TabsTrigger
                   key={item.path}
                   value={item.path}
-                  className="gap-2"
+                  className="gap-2 text-lg px-6"
                   onClick={() => navigate(item.path)}
                 >
-                  <item.icon className="h-4 w-4" />
+                  <item.icon className="h-5 w-5" />
                   {item.title}
                 </TabsTrigger>
               ))}

@@ -20,14 +20,14 @@ export const DocumentList = ({ documents, processing, onAnalyze }: DocumentListP
       case 'csv':
       case 'xls':
       case 'xlsx':
-        return <FileSpreadsheet className="h-4 w-4 mr-2 text-green-500" />;
+        return <FileSpreadsheet className="h-4 w-4 text-green-500" />;
       case 'jpg':
       case 'jpeg':
       case 'png':
       case 'gif':
-        return <Image className="h-4 w-4 mr-2 text-blue-500" />;
+        return <Image className="h-4 w-4 text-blue-500" />;
       default:
-        return <FileText className="h-4 w-4 mr-2 text-muted-foreground" />;
+        return <FileText className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -58,35 +58,33 @@ export const DocumentList = ({ documents, processing, onAnalyze }: DocumentListP
   };
 
   return (
-    <div className="overflow-auto">
+    <div className="overflow-auto max-h-[300px]">
       <Table>
-        <TableHeader>
+        <TableHeader className="sticky top-0 bg-background z-10">
           <TableRow>
-            <TableHead>Document Name</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Confidence</TableHead>
-            <TableHead>Upload Date</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead>Document</TableHead>
+            <TableHead className="w-[100px]">Status</TableHead>
+            <TableHead className="w-[100px] text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {documents.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center text-muted-foreground">
+              <TableCell colSpan={3} className="text-center text-muted-foreground">
                 No documents uploaded yet
               </TableCell>
             </TableRow>
           ) : (
             documents.map((doc) => (
               <TableRow key={doc.id}>
-                <TableCell className="font-medium">
-                  <div className="flex items-center">
+                <TableCell>
+                  <div className="flex items-center space-x-2">
                     {getFileIcon(doc.name)}
-                    {doc.name}
+                    <span className="truncate max-w-[200px]">{doc.name}</span>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-sm ${
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${
                     doc.status === 'Analyzed' ? 'bg-green-100 text-green-800' :
                     doc.status === 'Processing' ? 'bg-yellow-100 text-yellow-800' :
                     'bg-blue-100 text-blue-800'
@@ -94,27 +92,19 @@ export const DocumentList = ({ documents, processing, onAnalyze }: DocumentListP
                     {doc.status}
                   </span>
                 </TableCell>
-                <TableCell>{doc.confidence}%</TableCell>
-                <TableCell>
-                  {new Date(doc.uploadedAt).toLocaleDateString()}
-                </TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
+                <TableCell className="text-right">
+                  <div className="flex justify-end space-x-2">
                     <Button
-                      variant="outline"
-                      size="sm"
+                      variant="ghost"
+                      size="icon"
                       onClick={() => onAnalyze(doc.id)}
                       disabled={processing || doc.status === 'Analyzed'}
                     >
-                      {processing ? (
-                        <Brain className="h-4 w-4 animate-pulse" />
-                      ) : (
-                        <Brain className="h-4 w-4" />
-                      )}
+                      <Brain className={`h-4 w-4 ${processing ? 'animate-pulse' : ''}`} />
                     </Button>
                     <Button
-                      variant="outline"
-                      size="sm"
+                      variant="ghost"
+                      size="icon"
                       onClick={() => handleDownload(doc)}
                     >
                       <Download className="h-4 w-4" />
