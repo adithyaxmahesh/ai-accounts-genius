@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Upload, DollarSign, AlertTriangle, TrendingUp, FileText } from "lucide-react";
+import { Upload, DollarSign, AlertTriangle, TrendingUp, FileText, ChartBar } from "lucide-react";
 import { FinancialMetrics } from "@/components/FinancialMetrics";
 import { TransactionList } from "@/components/TransactionList";
 import { DocumentUpload } from "@/components/DocumentUpload";
@@ -117,7 +117,7 @@ const Index = () => {
           className="glass-card p-6 hover-scale cursor-pointer" 
           onClick={() => handleMetricClick("Balance Sheet")}
         >
-          <DollarSign className="h-8 w-8 mb-4 text-primary" />
+          <ChartBar className="h-8 w-8 mb-4 text-primary" />
           <h3 className="text-lg font-semibold">Balance Sheet</h3>
           <p className="text-3xl font-bold">View</p>
           <p className="text-sm text-muted-foreground">Assets & Liabilities</p>
