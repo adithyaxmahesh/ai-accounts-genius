@@ -31,6 +31,10 @@ export const getRiskLevelExplanation = (level: string) => {
 };
 
 export const startNewAudit = async (title: string) => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) throw new Error("User not authenticated");
+
   const { data, error } = await supabase
     .from('audit_reports')
     .insert([
@@ -40,13 +44,18 @@ export const startNewAudit = async (title: string) => {
         risk_level: 'medium',
         description: "Initial audit scope and planning phase",
         findings: [],
-        recommendations: []
+        recommendations: [],
+        user_id: user.id
       }
     ])
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error creating audit:', error);
+    throw error;
+  }
+  
   return data;
 };
 

@@ -37,13 +37,18 @@ const getStatusIcon = (status: string) => {
 const Audit = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isCreating, setIsCreating] = useState(false);
 
-  const { data: audits, isLoading } = useQuery({
+  const { data: audits, isLoading, refetch } = useQuery({
     queryKey: ['audits'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
       const { data, error } = await supabase
         .from('audit_reports')
         .select('*, audit_items(*)')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -53,6 +58,7 @@ const Audit = () => {
 
   const handleNewAudit = async () => {
     try {
+      setIsCreating(true);
       const title = `Audit Report ${new Date().toLocaleDateString()}`;
       const data = await startNewAudit(title);
       
@@ -61,13 +67,17 @@ const Audit = () => {
         description: "New audit created and planning phase initiated",
       });
       
+      await refetch();
       navigate(`/audit/${data.id}`);
     } catch (error) {
+      console.error('Error creating audit:', error);
       toast({
         title: "Error",
-        description: "Failed to create new audit",
+        description: "Failed to create new audit. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -91,9 +101,13 @@ const Audit = () => {
             Conduct structured audits following professional standards
           </p>
         </div>
-        <Button onClick={handleNewAudit} className="hover-scale">
+        <Button 
+          onClick={handleNewAudit} 
+          className="hover-scale"
+          disabled={isCreating}
+        >
           <FileText className="mr-2 h-4 w-4" />
-          Start New Audit
+          {isCreating ? 'Creating...' : 'Start New Audit'}
         </Button>
       </div>
 
