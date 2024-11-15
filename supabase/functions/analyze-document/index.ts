@@ -14,13 +14,14 @@ serve(async (req) => {
 
   try {
     const { documentId } = await req.json()
-    console.log('Processing document:', documentId)
+    console.log('Starting document analysis for document:', documentId)
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    console.log('Fetching document data from database...')
     // Get document data
     const { data: document, error: docError } = await supabase
       .from('processed_documents')
@@ -32,7 +33,9 @@ serve(async (req) => {
       console.error('Error fetching document:', docError)
       throw new Error('Document not found')
     }
+    console.log('Document data fetched successfully:', document.original_filename)
 
+    console.log('Downloading document content from storage...')
     // Get document content from storage
     const { data: fileData, error: storageError } = await supabase.storage
       .from('documents')
@@ -42,19 +45,30 @@ serve(async (req) => {
       console.error('Error downloading file:', storageError)
       throw new Error('Failed to download document')
     }
+    console.log('Document content downloaded successfully')
 
     const text = await fileData.text()
-    console.log('Document text extracted successfully')
+    console.log('Document text extracted, length:', text.length)
+    console.log('First 100 characters:', text.substring(0, 100))
 
+    // Verify OpenAI API key
+    const openAiKey = Deno.env.get('OPENAI_API_KEY')
+    if (!openAiKey) {
+      console.error('OpenAI API key is not set')
+      throw new Error('OpenAI API key is missing')
+    }
+    console.log('OpenAI API key is set and available')
+
+    console.log('Sending request to OpenAI...')
     // Analyze with OpenAI
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+        'Authorization': `Bearer ${openAiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: [
           {
             role: 'system',
@@ -69,15 +83,18 @@ serve(async (req) => {
     })
 
     if (!response.ok) {
-      console.error('OpenAI API error:', await response.text())
+      const errorText = await response.text()
+      console.error('OpenAI API error:', errorText)
       throw new Error('Failed to analyze document')
     }
 
     const analysis = await response.json()
-    console.log('OpenAI analysis completed')
+    console.log('OpenAI analysis completed:', analysis)
 
     const extractedData = analysis.choices[0].message.content
+    console.log('Extracted data:', extractedData)
     
+    console.log('Updating document with extracted data...')
     // Update document with extracted data and confidence score
     const { error: updateError } = await supabase
       .from('processed_documents')
@@ -93,6 +110,7 @@ serve(async (req) => {
       console.error('Error updating document:', updateError)
       throw new Error('Failed to save analysis results')
     }
+    console.log('Document updated successfully')
 
     return new Response(
       JSON.stringify({ success: true, data: extractedData }),
