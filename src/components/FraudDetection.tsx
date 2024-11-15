@@ -9,6 +9,13 @@ interface FraudAlertDetails {
   transactions?: any[];
 }
 
+interface FraudAlert {
+  id: string;
+  risk_score: number;
+  details: FraudAlertDetails;
+  created_at: string;
+}
+
 export const FraudDetection = () => {
   const { session } = useAuth();
 
@@ -23,7 +30,7 @@ export const FraudDetection = () => {
         .limit(5);
       
       if (error) throw error;
-      return data;
+      return data as FraudAlert[];
     }
   });
 
@@ -46,7 +53,7 @@ export const FraudDetection = () => {
               <div>
                 <div className="font-medium">Risk Score: {(alert.risk_score * 100).toFixed(0)}%</div>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {(alert.details as FraudAlertDetails).analysis}
+                  {alert.details.analysis}
                 </p>
               </div>
             </div>
