@@ -38,6 +38,9 @@ const Index = () => {
       case "Documents":
         navigate("/documents");
         break;
+      case "Balance Sheet":
+        navigate("/balance-sheet");
+        break;
       default:
         break;
     }
@@ -73,7 +76,7 @@ const Index = () => {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <Card 
           className="glass-card p-6 hover-scale cursor-pointer" 
           onClick={() => handleMetricClick("Revenue")}
@@ -109,6 +112,15 @@ const Index = () => {
           <h3 className="text-lg font-semibold">Documents</h3>
           <p className="text-3xl font-bold">143</p>
           <p className="text-sm text-muted-foreground">Processed this month</p>
+        </Card>
+        <Card 
+          className="glass-card p-6 hover-scale cursor-pointer" 
+          onClick={() => handleMetricClick("Balance Sheet")}
+        >
+          <DollarSign className="h-8 w-8 mb-4 text-primary" />
+          <h3 className="text-lg font-semibold">Balance Sheet</h3>
+          <p className="text-3xl font-bold">View</p>
+          <p className="text-sm text-muted-foreground">Assets & Liabilities</p>
         </Card>
       </div>
 

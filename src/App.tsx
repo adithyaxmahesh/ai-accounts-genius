@@ -13,6 +13,7 @@ import Revenue from "./pages/Revenue";
 import Forecast from "./pages/Forecast";
 import WriteOffs from "./pages/WriteOffs";
 import Documents from "./pages/Documents";
+import BalanceSheet from "./pages/BalanceSheet";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -98,6 +99,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Documents />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/balance-sheet"
+              element={
+                <ProtectedRoute>
+                  <BalanceSheet />
                 </ProtectedRoute>
               }
             />
