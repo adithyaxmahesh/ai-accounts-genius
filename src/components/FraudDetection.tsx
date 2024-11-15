@@ -31,7 +31,6 @@ export const FraudDetection = () => {
       
       if (error) throw error;
       
-      // Transform the data to ensure it matches our FraudAlert type
       return (data || []).map(alert => ({
         id: alert.id,
         risk_score: alert.risk_score || 0,
