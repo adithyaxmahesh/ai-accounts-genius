@@ -6,7 +6,7 @@ import { AiInsights } from "@/components/ai-insights/AiInsights";
 import { FraudDetection } from "@/components/fraud-detection/FraudDetection";
 import { DocumentUpload } from "@/components/document-management/DocumentUpload";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   BarChart, 
   FileText, 
@@ -34,32 +34,41 @@ const Index = () => {
   ];
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <BusinessIntelligence />
-        <AiInsights />
-        <FraudDetection />
-        <FinancialMetrics />
-        <TransactionList />
-        <DocumentUpload />
+    <div className="min-h-screen">
+      <div className="border-b">
+        <div className="container mx-auto py-2">
+          <Tabs defaultValue="dashboard">
+            <TabsList className="w-full justify-start">
+              <TabsTrigger value="dashboard" className="gap-2">
+                <BarChart className="h-4 w-4" />
+                Dashboard
+              </TabsTrigger>
+              {navigationItems.map((item) => (
+                <TabsTrigger
+                  key={item.path}
+                  value={item.path}
+                  className="gap-2"
+                  onClick={() => navigate(item.path)}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.title}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
-      <div className="mt-8">
-        <h2 className="text-2xl font-semibold mb-4">Quick Navigation</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {navigationItems.map((item) => (
-            <Button
-              key={item.path}
-              variant="outline"
-              className="w-full h-24 flex flex-col items-center justify-center gap-2 hover:bg-accent"
-              onClick={() => navigate(item.path)}
-            >
-              <item.icon className="h-6 w-6" />
-              <span>{item.title}</span>
-            </Button>
-          ))}
+      <div className="container mx-auto p-6 space-y-6">
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <BusinessIntelligence />
+          <AiInsights />
+          <FraudDetection />
+          <FinancialMetrics />
+          <TransactionList />
+          <DocumentUpload />
         </div>
       </div>
     </div>
