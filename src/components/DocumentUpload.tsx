@@ -1,28 +1,12 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, FileText, Image, FileSpreadsheet, Loader2, Brain } from "lucide-react";
+import { Upload, Loader2, Brain } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-
-interface ProcessedDocument {
-  id: string;
-  name: string;
-  status: string;
-  confidence: number;
-  uploadedAt: string;
-  type: string;
-  extracted_data?: any;
-}
+import { DocumentList } from "./DocumentList";
+import { ProcessedDocument } from "./types";
 
 export const DocumentUpload = () => {
   const { toast } = useToast();
@@ -30,22 +14,6 @@ export const DocumentUpload = () => {
   const [uploading, setUploading] = useState(false);
   const [documents, setDocuments] = useState<ProcessedDocument[]>([]);
   const [processing, setProcessing] = useState(false);
-
-  const getFileIcon = (fileName: string) => {
-    const ext = fileName.split('.').pop()?.toLowerCase();
-    switch (ext) {
-      case 'xls':
-      case 'xlsx':
-        return <FileSpreadsheet className="h-4 w-4 mr-2 text-green-500" />;
-      case 'jpg':
-      case 'jpeg':
-      case 'png':
-      case 'gif':
-        return <Image className="h-4 w-4 mr-2 text-blue-500" />;
-      default:
-        return <FileText className="h-4 w-4 mr-2 text-muted-foreground" />;
-    }
-  };
 
   const analyzeDocument = async (documentId: string) => {
     setProcessing(true);
@@ -59,23 +27,18 @@ export const DocumentUpload = () => {
         throw new Error(error.message || "Failed to analyze document");
       }
 
-      if (!data) {
-        throw new Error("No data received from analysis");
-      }
-
       toast({
         title: "Analysis Complete",
         description: "Document has been processed by AI",
       });
 
-      // Update documents list with extracted data
       setDocuments(prev => prev.map(doc => 
         doc.id === documentId 
           ? { 
               ...doc, 
               extracted_data: data, 
               status: 'Analyzed',
-              confidence: 95 // Default confidence score
+              confidence: 95
             }
           : doc
       ));
@@ -102,18 +65,14 @@ export const DocumentUpload = () => {
         description: "Processing your document...",
       });
 
-      // Upload file to Supabase Storage
       const fileExt = file.name.split(".").pop();
       const fileName = `${Math.random()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
         .from("documents")
         .upload(fileName, file);
 
-      if (uploadError) {
-        throw uploadError;
-      }
+      if (uploadError) throw uploadError;
 
-      // Create document record
       const { data: docRecord, error: dbError } = await supabase
         .from('processed_documents')
         .insert({
@@ -127,7 +86,6 @@ export const DocumentUpload = () => {
 
       if (dbError) throw dbError;
 
-      // Add to documents list
       const newDoc: ProcessedDocument = {
         id: docRecord.id,
         name: file.name,
@@ -144,7 +102,6 @@ export const DocumentUpload = () => {
         description: "Your document has been uploaded and is ready for analysis.",
       });
 
-      // Start analysis
       await analyzeDocument(docRecord.id);
     } catch (error) {
       console.error("Error uploading document:", error);
@@ -192,48 +149,11 @@ export const DocumentUpload = () => {
         </div>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Document Name</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Confidence</TableHead>
-            <TableHead>Upload Date</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {documents.map((doc) => (
-            <TableRow key={doc.id}>
-              <TableCell className="font-medium">
-                <div className="flex items-center">
-                  {getFileIcon(doc.name)}
-                  {doc.name}
-                </div>
-              </TableCell>
-              <TableCell>{doc.status}</TableCell>
-              <TableCell>{doc.confidence}%</TableCell>
-              <TableCell>
-                {new Date(doc.uploadedAt).toLocaleDateString()}
-              </TableCell>
-              <TableCell>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => analyzeDocument(doc.id)}
-                  disabled={processing || doc.status === 'Analyzed'}
-                >
-                  {processing ? (
-                    <Brain className="h-4 w-4 animate-pulse" />
-                  ) : (
-                    <Brain className="h-4 w-4" />
-                  )}
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <DocumentList 
+        documents={documents}
+        processing={processing}
+        onAnalyze={analyzeDocument}
+      />
     </Card>
   );
 };

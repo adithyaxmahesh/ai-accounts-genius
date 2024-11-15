@@ -58,7 +58,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are an AI accountant. Analyze this financial document and extract key information in JSON format including: date, amount, category, description, and any other relevant financial details.'
+            content: 'You are an AI accountant. Your task is to scan the document and extract ONLY financial information, focusing on prices, amounts, and monetary values. Return the data in this JSON format: { "amounts": [{"value": number, "context": "string"}], "total": number, "currency": "string" }. If no amounts are found, return empty arrays and null values.'
           },
           {
             role: 'user',
