@@ -22,7 +22,6 @@ serve(async (req) => {
     )
 
     console.log('Fetching document data from database...')
-    // Get document data
     const { data: document, error: docError } = await supabase
       .from('processed_documents')
       .select('*')
@@ -36,7 +35,6 @@ serve(async (req) => {
     console.log('Document data fetched successfully:', document.original_filename)
 
     console.log('Downloading document content from storage...')
-    // Get document content from storage
     const { data: fileData, error: storageError } = await supabase.storage
       .from('documents')
       .download(document.storage_path)
@@ -51,7 +49,6 @@ serve(async (req) => {
     console.log('Document text extracted, length:', text.length)
     console.log('First 100 characters:', text.substring(0, 100))
 
-    // Verify OpenAI API key
     const openAiKey = Deno.env.get('OPENAI_API_KEY')
     if (!openAiKey) {
       console.error('OpenAI API key is not set')
@@ -60,7 +57,6 @@ serve(async (req) => {
     console.log('OpenAI API key verification successful')
 
     console.log('Sending request to OpenAI...')
-    // Analyze with OpenAI
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -68,7 +64,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',  // Using a widely available model
+        model: 'gpt-4o-mini',  // Using the recommended fast model
         messages: [
           {
             role: 'system',
@@ -95,7 +91,6 @@ serve(async (req) => {
     console.log('Extracted data:', extractedData)
     
     console.log('Updating document with extracted data...')
-    // Update document with extracted data and confidence score
     const { error: updateError } = await supabase
       .from('processed_documents')
       .update({
