@@ -51,11 +51,16 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a document analysis AI. Extract key information, identify potential fraud indicators, and suggest audit implications.'
+            content: `You are a financial document analyzer. Extract and analyze:
+              1) Key financial information (amounts, dates, categories)
+              2) Tax implications (deductions, write-offs, tax codes)
+              3) Potential fraud indicators
+              4) Audit findings
+              Format the response as JSON with these sections.`
           },
           {
             role: 'user',
-            content: `Analyze this document and extract: 1) Key financial information 2) Potential fraud indicators 3) Audit implications\n\nDocument content: ${text}`
+            content: `Analyze this document and provide structured findings:\n\n${text}`
           }
         ],
       }),
@@ -63,89 +68,114 @@ serve(async (req) => {
 
     const aiResponse = await response.json()
     const analysis = aiResponse.choices[0].message.content
+    const parsedAnalysis = JSON.parse(analysis)
 
     // Update document with analysis
     const { error: updateError } = await supabaseClient
       .from('processed_documents')
       .update({
-        extracted_data: { analysis },
+        extracted_data: parsedAnalysis,
         processing_status: 'analyzed',
-        confidence_score: 0.95 // Default high confidence for GPT-4 analysis
+        confidence_score: 0.95
       })
       .eq('id', documentId)
 
     if (updateError) throw updateError
 
-    // Create fraud alert if suspicious patterns found
-    if (analysis.toLowerCase().includes('suspicious') || 
-        analysis.toLowerCase().includes('irregular') || 
-        analysis.toLowerCase().includes('unusual')) {
+    // Create or update audit items based on document analysis
+    if (parsedAnalysis.audit_findings) {
+      const { data: existingAudit } = await supabaseClient
+        .from('audit_reports')
+        .select('id')
+        .eq('user_id', document.user_id)
+        .eq('status', 'in_progress')
+        .single()
+
+      const auditId = existingAudit?.id
+
+      if (auditId) {
+        // Add audit items
+        await supabaseClient
+          .from('audit_items')
+          .insert(parsedAnalysis.audit_findings.map(finding => ({
+            audit_id: auditId,
+            category: finding.category,
+            description: finding.description,
+            amount: finding.amount,
+            status: finding.risk_level === 'high' ? 'flagged' : 'pending'
+          })))
+      }
+    }
+
+    // Create fraud alerts if suspicious patterns found
+    if (parsedAnalysis.fraud_indicators?.length > 0) {
       await supabaseClient
         .from('fraud_alerts')
         .insert({
           user_id: document.user_id,
           alert_type: 'document_analysis',
-          risk_score: 0.7,
+          risk_score: parsedAnalysis.fraud_indicators.length > 2 ? 0.8 : 0.6,
           details: {
-            analysis: `Suspicious patterns detected in document: ${document.original_filename}\n\n${analysis}`,
+            analysis: parsedAnalysis.fraud_indicators.join('\n'),
             document_id: documentId
           },
           status: 'pending'
         })
     }
 
-    // Create or update audit items based on document analysis
-    const { data: existingAudit } = await supabaseClient
-      .from('audit_reports')
-      .select('id')
-      .eq('user_id', document.user_id)
-      .eq('status', 'in_progress')
-      .single()
-
-    if (existingAudit) {
-      await supabaseClient
-        .from('audit_items')
-        .insert({
-          audit_id: existingAudit.id,
-          category: 'document_review',
-          description: `Analysis of ${document.original_filename}`,
-          status: analysis.toLowerCase().includes('suspicious') ? 'flagged' : 'pending'
-        })
-    }
-
-    // Create AI insights from document analysis
-    await supabaseClient
-      .from('ai_insights')
-      .insert({
-        user_id: document.user_id,
-        category: 'document_analysis',
-        insight: analysis,
-        confidence_score: 0.95
-      })
-
-    // Update tax analysis if tax implications are found
-    if (analysis.toLowerCase().includes('tax') || 
-        analysis.toLowerCase().includes('deduction') || 
-        analysis.toLowerCase().includes('write-off')) {
+    // Process tax implications
+    if (parsedAnalysis.tax_implications) {
+      // Create tax analysis entry
       await supabaseClient
         .from('tax_analysis')
         .insert({
           user_id: document.user_id,
           analysis_type: 'document_review',
-          recommendations: { suggestions: analysis },
-          jurisdiction: 'US' // Default to US
+          recommendations: parsedAnalysis.tax_implications,
+          jurisdiction: parsedAnalysis.tax_implications.jurisdiction || 'US'
         })
+
+      // Create write-offs if applicable
+      if (parsedAnalysis.tax_implications.write_offs) {
+        for (const writeOff of parsedAnalysis.tax_implications.write_offs) {
+          await supabaseClient
+            .from('write_offs')
+            .insert({
+              user_id: document.user_id,
+              amount: writeOff.amount,
+              description: writeOff.description,
+              date: writeOff.date || new Date().toISOString(),
+              tax_code_id: writeOff.tax_code_id,
+              status: 'pending'
+            })
+        }
+      }
     }
 
-    console.log('Document analysis completed:', { documentId, analysis })
+    // Create AI insights
+    await supabaseClient
+      .from('ai_insights')
+      .insert({
+        user_id: document.user_id,
+        category: 'document_analysis',
+        insight: JSON.stringify(parsedAnalysis.key_findings),
+        confidence_score: 0.95
+      })
+
+    console.log('Document analysis completed:', { 
+      documentId, 
+      hasAuditFindings: !!parsedAnalysis.audit_findings,
+      hasFraudIndicators: !!parsedAnalysis.fraud_indicators,
+      hasTaxImplications: !!parsedAnalysis.tax_implications
+    })
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        analysis,
-        hasAuditImplications: !!existingAudit,
-        hasFraudIndicators: analysis.toLowerCase().includes('suspicious'),
-        hasTaxImplications: analysis.toLowerCase().includes('tax')
+        analysis: parsedAnalysis,
+        hasAuditFindings: !!parsedAnalysis.audit_findings,
+        hasFraudIndicators: !!parsedAnalysis.fraud_indicators,
+        hasTaxImplications: !!parsedAnalysis.tax_implications
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
