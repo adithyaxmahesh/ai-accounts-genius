@@ -35,7 +35,10 @@ export const FraudDetection = () => {
       return (data || []).map(alert => ({
         id: alert.id,
         risk_score: alert.risk_score || 0,
-        details: alert.details as FraudAlertDetails,
+        details: {
+          analysis: (alert.details as { analysis: string })?.analysis || '',
+          transactions: (alert.details as { transactions?: any[] })?.transactions
+        },
         created_at: alert.created_at
       })) as FraudAlert[];
     }
