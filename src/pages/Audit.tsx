@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { 
   FileText, 
   AlertTriangle, 
@@ -79,24 +79,26 @@ const Audit = () => {
 
       setIsCreating(true);
       const title = `Audit Report ${new Date().toLocaleDateString()}`;
-      const data = await startNewAudit(title);
       
-      if (!data) {
-        throw new Error("Failed to create audit");
+      const newAudit = await startNewAudit(title);
+      
+      if (!newAudit || !newAudit.id) {
+        throw new Error("Failed to create audit: No audit data returned");
       }
+      
+      await refetch();
       
       toast({
         title: "Success",
         description: "New audit created and planning phase initiated",
       });
       
-      await refetch();
-      navigate(`/audit/${data.id}`);
+      navigate(`/audit/${newAudit.id}`);
     } catch (error) {
       console.error('Error creating audit:', error);
       toast({
         title: "Error",
-        description: "Failed to create new audit. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to create new audit. Please try again.",
         variant: "destructive"
       });
     } finally {
