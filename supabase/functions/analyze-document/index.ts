@@ -21,10 +21,10 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Get document content
+    // Get document content and metadata
     const { data: document, error: docError } = await supabaseClient
       .from('processed_documents')
-      .select('*')
+      .select('*, user_id')
       .eq('id', documentId)
       .single()
 
@@ -47,15 +47,15 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: [
           {
             role: 'system',
-            content: 'You are a document analysis AI. Extract key information and suggest tax implications.'
+            content: 'You are a document analysis AI. Extract key information, identify potential fraud indicators, and suggest audit implications.'
           },
           {
             role: 'user',
-            content: `Analyze this document and extract key financial information: ${text}`
+            content: `Analyze this document and extract: 1) Key financial information 2) Potential fraud indicators 3) Audit implications\n\nDocument content: ${text}`
           }
         ],
       }),
@@ -69,17 +69,57 @@ serve(async (req) => {
       .from('processed_documents')
       .update({
         extracted_data: { analysis },
-        processing_status: 'completed'
+        processing_status: 'analyzed'
       })
       .eq('id', documentId)
 
     if (updateError) throw updateError
+
+    // Create fraud alert if suspicious patterns found
+    if (analysis.toLowerCase().includes('suspicious') || 
+        analysis.toLowerCase().includes('irregular') || 
+        analysis.toLowerCase().includes('unusual')) {
+      await supabaseClient
+        .from('fraud_alerts')
+        .insert({
+          user_id: document.user_id,
+          alert_type: 'document_analysis',
+          risk_score: 0.7,
+          details: {
+            analysis: `Suspicious patterns detected in document: ${document.original_filename}\n\n${analysis}`,
+            document_id: documentId
+          },
+          status: 'pending'
+        })
+    }
+
+    // Create or update audit items based on document analysis
+    const { data: existingAudit } = await supabaseClient
+      .from('audit_reports')
+      .select('id')
+      .eq('user_id', document.user_id)
+      .eq('status', 'in_progress')
+      .single()
+
+    if (existingAudit) {
+      await supabaseClient
+        .from('audit_items')
+        .insert({
+          audit_id: existingAudit.id,
+          category: 'document_review',
+          description: `Analysis of ${document.original_filename}`,
+          status: analysis.toLowerCase().includes('suspicious') ? 'flagged' : 'pending'
+        })
+    }
+
+    console.log('Document analysis completed:', { documentId, analysis })
 
     return new Response(
       JSON.stringify({ success: true, analysis }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
+    console.error('Error in document analysis:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
