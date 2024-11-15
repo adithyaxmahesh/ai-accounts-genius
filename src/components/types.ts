@@ -5,5 +5,6 @@ export interface ProcessedDocument {
   confidence: number;
   uploadedAt: string;
   type: string;
+  storage_path?: string;
   extracted_data?: any;
 }
