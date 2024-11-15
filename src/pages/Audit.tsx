@@ -43,7 +43,15 @@ const Audit = () => {
     queryKey: ['audits'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "Please sign in to view audits",
+          variant: "destructive"
+        });
+        navigate("/auth");
+        throw new Error("Not authenticated");
+      }
 
       const { data, error } = await supabase
         .from('audit_reports')
@@ -58,9 +66,24 @@ const Audit = () => {
 
   const handleNewAudit = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "Please sign in to create an audit",
+          variant: "destructive"
+        });
+        navigate("/auth");
+        return;
+      }
+
       setIsCreating(true);
       const title = `Audit Report ${new Date().toLocaleDateString()}`;
       const data = await startNewAudit(title);
+      
+      if (!data) {
+        throw new Error("Failed to create audit");
+      }
       
       toast({
         title: "Success",

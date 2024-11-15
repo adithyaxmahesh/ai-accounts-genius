@@ -33,7 +33,9 @@ export const getRiskLevelExplanation = (level: string) => {
 export const startNewAudit = async (title: string) => {
   const { data: { user } } = await supabase.auth.getUser();
   
-  if (!user) throw new Error("User not authenticated");
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
 
   const { data, error } = await supabase
     .from('audit_reports')
@@ -53,7 +55,14 @@ export const startNewAudit = async (title: string) => {
 
   if (error) {
     console.error('Error creating audit:', error);
-    throw error;
+    if (error.code === '42501') {
+      throw new Error("Permission denied. Please check if you're properly authenticated.");
+    }
+    throw new Error(`Failed to create audit: ${error.message}`);
+  }
+  
+  if (!data) {
+    throw new Error("No data returned after creating audit");
   }
   
   return data;
