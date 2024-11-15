@@ -7,8 +7,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { DocumentList } from "./DocumentList";
 import { ProcessedDocument } from "./types";
+import { cn } from "@/lib/utils";
 
-export const DocumentUpload = () => {
+export const DocumentUpload = ({ className }: { className?: string }) => {
   const { toast } = useToast();
   const { session } = useAuth();
   const [uploading, setUploading] = useState(false);
@@ -162,7 +163,7 @@ export const DocumentUpload = () => {
   };
 
   return (
-    <Card className="p-6 glass-card">
+    <Card className={cn("p-6 glass-card", className)}>
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl font-semibold">Document Processing</h3>
         <div className="relative">
@@ -176,7 +177,7 @@ export const DocumentUpload = () => {
           />
           <label htmlFor="file-upload">
             <Button
-              className="hover-scale cursor-pointer"
+              className="hover-scale text-sm px-4 py-2 h-9"
               disabled={uploading || processing}
               asChild
             >

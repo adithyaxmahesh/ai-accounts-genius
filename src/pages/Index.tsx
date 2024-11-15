@@ -35,22 +35,25 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto py-4">
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <div className="container mx-auto py-2">
           <Tabs defaultValue="dashboard">
-            <TabsList className="w-full justify-start h-12">
-              <TabsTrigger value="dashboard" className="gap-2 text-lg px-6">
-                <BarChart className="h-5 w-5" />
+            <TabsList className="w-full justify-start h-16 bg-primary/5">
+              <TabsTrigger 
+                value="dashboard" 
+                className="gap-2 text-lg px-8 py-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <BarChart className="h-6 w-6" />
                 Dashboard
               </TabsTrigger>
               {navigationItems.map((item) => (
                 <TabsTrigger
                   key={item.path}
                   value={item.path}
-                  className="gap-2 text-lg px-6"
+                  className="gap-2 text-lg px-8 py-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                   onClick={() => navigate(item.path)}
                 >
-                  <item.icon className="h-5 w-5" />
+                  <item.icon className="h-6 w-6" />
                   {item.title}
                 </TabsTrigger>
               ))}
@@ -68,7 +71,7 @@ const Index = () => {
           <FraudDetection />
           <FinancialMetrics />
           <TransactionList />
-          <DocumentUpload />
+          <DocumentUpload className="scale-95" />
         </div>
       </div>
     </div>
