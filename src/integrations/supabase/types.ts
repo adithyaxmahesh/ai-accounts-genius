@@ -167,6 +167,44 @@ export type Database = {
           },
         ]
       }
+      business_insights: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          metrics: Json | null
+          priority: string | null
+          recommendations: string[] | null
+          user_id: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          metrics?: Json | null
+          priority?: string | null
+          recommendations?: string[] | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          metrics?: Json | null
+          priority?: string | null
+          recommendations?: string[] | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_insights_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forecasts: {
         Row: {
           confidence_level: number | null
@@ -201,6 +239,82 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "forecasts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fraud_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          details: Json | null
+          id: string
+          risk_score: number | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          risk_score?: number | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          risk_score?: number | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fraud_alerts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_analytics: {
+        Row: {
+          created_at: string
+          demand_forecast: Json | null
+          id: string
+          item_category: string | null
+          optimization_suggestions: Json | null
+          reorder_points: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          demand_forecast?: Json | null
+          id?: string
+          item_category?: string | null
+          optimization_suggestions?: Json | null
+          reorder_points?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          demand_forecast?: Json | null
+          id?: string
+          item_category?: string | null
+          optimization_suggestions?: Json | null
+          reorder_points?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_analytics_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -307,6 +421,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "revenue_records_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_analysis: {
+        Row: {
+          analysis_type: string
+          created_at: string
+          id: string
+          jurisdiction: string | null
+          recommendations: Json | null
+          tax_impact: number | null
+          user_id: string | null
+        }
+        Insert: {
+          analysis_type: string
+          created_at?: string
+          id?: string
+          jurisdiction?: string | null
+          recommendations?: Json | null
+          tax_impact?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          analysis_type?: string
+          created_at?: string
+          id?: string
+          jurisdiction?: string | null
+          recommendations?: Json | null
+          tax_impact?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_analysis_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
