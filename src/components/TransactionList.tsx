@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
@@ -37,20 +38,26 @@ export const TransactionList = () => {
           {showAll ? "Show Less" : "View All"}
         </Button>
       </div>
-      <div className="space-y-4 max-h-[400px] overflow-auto">
-        {displayTransactions.map((transaction) => (
-          <div key={transaction.id} className="flex justify-between items-center p-4 bg-muted rounded-lg">
-            <div>
-              <p className="font-semibold">{transaction.description}</p>
-              <p className="text-sm text-muted-foreground">Category: {transaction.category}</p>
-            </div>
-            <div className="text-right">
-              <p className="font-semibold">${transaction.amount.toFixed(2)}</p>
-              <p className="text-sm text-muted-foreground">{new Date(transaction.date).toLocaleDateString()}</p>
-            </div>
+      <ScrollArea className={cn("space-y-4", showAll ? "max-h-[400px]" : "max-h-fit")}>
+        {displayTransactions.length === 0 ? (
+          <div className="text-center text-muted-foreground py-4">
+            No transactions found
           </div>
-        ))}
-      </div>
+        ) : (
+          displayTransactions.map((transaction) => (
+            <div key={transaction.id} className="flex justify-between items-center p-4 bg-muted rounded-lg mb-2">
+              <div>
+                <p className="font-semibold">{transaction.description}</p>
+                <p className="text-sm text-muted-foreground">Category: {transaction.category}</p>
+              </div>
+              <div className="text-right">
+                <p className="font-semibold">${transaction.amount.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground">{new Date(transaction.date).toLocaleDateString()}</p>
+              </div>
+            </div>
+          ))
+        )}
+      </ScrollArea>
     </Card>
   );
 };
