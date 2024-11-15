@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { AlertTriangle, Shield, Info } from "lucide-react";
-import { Tooltip } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 
@@ -38,9 +38,16 @@ export const FraudDetection = () => {
           <Shield className="h-6 w-6 text-primary" />
           <h2 className="text-xl font-semibold">Fraud Detection</h2>
         </div>
-        <Tooltip content="View fraud detection metrics">
-          <Info className="h-5 w-5 text-muted-foreground cursor-help" />
-        </Tooltip>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <Info className="h-5 w-5 text-muted-foreground cursor-help" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>View fraud detection metrics</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       <div className="mb-4">
@@ -67,7 +74,7 @@ export const FraudDetection = () => {
               <div>
                 <div className="font-medium">Risk Score: {(alert.risk_score * 100).toFixed(0)}%</div>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {alert.details.analysis}
+                  {alert.details?.analysis || 'No analysis available'}
                 </p>
               </div>
             </div>
