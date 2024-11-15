@@ -13,6 +13,8 @@ import {
 import { QueryInterface } from "@/components/QueryInterface";
 import { AiInsights } from "@/components/AiInsights";
 import { FinancialForecast } from "@/components/FinancialForecast";
+import { FraudDetection } from "@/components/FraudDetection";
+import { BusinessIntelligence } from "@/components/BusinessIntelligence";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -76,6 +78,11 @@ const Index = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <QueryInterface />
         <AiInsights />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <FraudDetection />
+        <BusinessIntelligence />
       </div>
 
       <FinancialForecast />

@@ -13,16 +13,15 @@ serve(async (req) => {
   }
 
   try {
-    const { userId, data } = await req.json()
+    const { userId, transactions } = await req.json()
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY')
     
-    // Create Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Analyze data with OpenAI
+    // Analyze transactions for fraud patterns
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -34,34 +33,37 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a financial analyst AI. Analyze the provided financial data and generate insights.'
+            content: 'You are a fraud detection AI. Analyze transactions for suspicious patterns.'
           },
           {
             role: 'user',
-            content: `Analyze this financial data and provide insights: ${JSON.stringify(data)}`
+            content: `Analyze these transactions for potential fraud: ${JSON.stringify(transactions)}`
           }
         ],
       }),
     })
 
     const aiResponse = await response.json()
-    const insights = aiResponse.choices[0].message.content
+    const analysis = aiResponse.choices[0].message.content
+    const riskScore = 0.7 // This would be calculated based on the analysis
 
-    // Store insights in database
-    const { error } = await supabaseClient
-      .from('business_insights')
-      .insert({
-        user_id: userId,
-        category: 'financial_analysis',
-        metrics: data,
-        recommendations: [insights],
-        priority: 'high'
-      })
+    // Store fraud alert if risk is high
+    if (riskScore > 0.5) {
+      const { error } = await supabaseClient
+        .from('fraud_alerts')
+        .insert({
+          user_id: userId,
+          alert_type: 'suspicious_transaction',
+          risk_score: riskScore,
+          details: { analysis, transactions },
+          status: 'pending'
+        })
 
-    if (error) throw error
+      if (error) throw error
+    }
 
     return new Response(
-      JSON.stringify({ success: true, insights }),
+      JSON.stringify({ success: true, riskScore, analysis }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {

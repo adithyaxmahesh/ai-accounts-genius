@@ -1,45 +1,53 @@
+import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Shield } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/AuthProvider";
 
 export const FraudDetection = () => {
-  const alerts = [
-    {
-      id: 1,
-      type: "Unusual Transaction",
-      description: "Large transaction outside normal patterns",
-      risk: "High",
-    },
-    {
-      id: 2,
-      type: "Duplicate Payment",
-      description: "Potential duplicate invoice payment detected",
-      risk: "Medium",
-    },
-  ];
+  const { session } = useAuth();
+
+  const { data: alerts } = useQuery({
+    queryKey: ['fraud-alerts', session?.user.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('fraud_alerts')
+        .select('*')
+        .eq('user_id', session?.user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      if (error) throw error;
+      return data;
+    }
+  });
 
   return (
-    <Card className="glass-card p-6">
-      <div className="flex items-center mb-6">
-        <AlertTriangle className="h-6 w-6 text-destructive mr-2" />
-        <h3 className="text-xl font-semibold">Fraud Detection Alerts</h3>
+    <Card className="p-6">
+      <div className="flex items-center gap-2 mb-6">
+        <Shield className="h-6 w-6 text-primary" />
+        <h2 className="text-xl font-semibold">Fraud Detection</h2>
       </div>
-      <div className="space-y-4">
-        {alerts.map((alert) => (
-          <div key={alert.id} className="p-4 bg-muted rounded-lg">
-            <div className="flex justify-between items-start">
+
+      {alerts?.length === 0 ? (
+        <div className="text-center text-muted-foreground p-4">
+          No suspicious activities detected
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {alerts?.map((alert) => (
+            <div key={alert.id} className="flex items-start gap-4 p-4 bg-muted rounded-lg">
+              <AlertTriangle className="h-5 w-5 text-yellow-500 mt-1" />
               <div>
-                <p className="font-semibold">{alert.type}</p>
-                <p className="text-sm text-muted-foreground">{alert.description}</p>
+                <div className="font-medium">Risk Score: {(alert.risk_score * 100).toFixed(0)}%</div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {alert.details.analysis}
+                </p>
               </div>
-              <span className={`px-2 py-1 rounded text-sm ${
-                alert.risk === "High" ? "bg-destructive text-white" : "bg-yellow-100 text-yellow-800"
-              }`}>
-                {alert.risk} Risk
-              </span>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </Card>
   );
 };
