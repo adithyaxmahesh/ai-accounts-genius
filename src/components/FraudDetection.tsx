@@ -30,7 +30,14 @@ export const FraudDetection = () => {
         .limit(5);
       
       if (error) throw error;
-      return data as FraudAlert[];
+      
+      // Transform the data to ensure it matches our FraudAlert type
+      return (data || []).map(alert => ({
+        id: alert.id,
+        risk_score: alert.risk_score || 0,
+        details: alert.details as FraudAlertDetails,
+        created_at: alert.created_at
+      })) as FraudAlert[];
     }
   });
 
