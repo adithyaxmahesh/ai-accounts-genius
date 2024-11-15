@@ -13,7 +13,7 @@ export const FinancialMetrics = () => {
       >
         <DollarSign className="h-8 w-8 mb-4 text-primary" />
         <h3 className="text-lg font-semibold">Revenue</h3>
-        <p className="text-3xl font-bold">$84,234</p>
+        <p className="text-2xl font-bold truncate">$84,234</p>
         <p className="text-sm text-muted-foreground">+12.5% from last month</p>
       </Card>
       <Card 
