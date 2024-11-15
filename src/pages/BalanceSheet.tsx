@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query"; // Ensure useQueryClient is imported
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ const BalanceSheet = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [showAddForm, setShowAddForm] = useState(false);
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient(); // This line uses the imported hook
 
   const { data: balanceSheetItems, isLoading } = useQuery({
     queryKey: ["balanceSheetItems", session?.user.id],
