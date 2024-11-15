@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { WriteOffFormFields } from "./WriteOffFormFields";
 
 interface WriteOffDialogProps {
   isOpen: boolean;
@@ -32,11 +31,10 @@ export const WriteOffDialog = ({ isOpen, onOpenChange, onSuccess, userId }: Writ
         .from('tax_codes')
         .select('state')
         .not('state', 'is', null)
-        .order('state')
-        .distinct();
+        .order('state');
       
       if (error) throw error;
-      return data.map(item => item.state);
+      return Array.from(new Set(data.map(item => item.state)));
     }
   });
 
@@ -48,11 +46,10 @@ export const WriteOffDialog = ({ isOpen, onOpenChange, onSuccess, userId }: Writ
         .select('expense_category')
         .eq('state', selectedState)
         .not('expense_category', 'is', null)
-        .order('expense_category')
-        .distinct();
+        .order('expense_category');
       
       if (error) throw error;
-      return data.map(item => item.expense_category);
+      return Array.from(new Set(data.map(item => item.expense_category)));
     },
     enabled: !!selectedState
   });
@@ -118,107 +115,17 @@ export const WriteOffDialog = ({ isOpen, onOpenChange, onSuccess, userId }: Writ
           <DialogTitle>Add New Write-Off</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-4">
-          <div>
-            <label className="text-sm font-medium">State</label>
-            <Select
-              value={selectedState}
-              onValueChange={setSelectedState}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select state" />
-              </SelectTrigger>
-              <SelectContent>
-                {states?.map((state) => (
-                  <SelectItem key={state} value={state}>
-                    {state}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {selectedState && (
-            <div>
-              <label className="text-sm font-medium">Expense Category</label>
-              <Select
-                value={selectedCategory}
-                onValueChange={setSelectedCategory}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories?.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {selectedCategory && (
-            <div>
-              <label className="text-sm font-medium">Tax Code</label>
-              <Select
-                value={newWriteOff.taxCodeId}
-                onValueChange={(value) => setNewWriteOff(prev => ({
-                  ...prev,
-                  taxCodeId: value
-                }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select tax code" />
-                </SelectTrigger>
-                <SelectContent>
-                  {taxCodes?.map((code) => (
-                    <SelectItem key={code.id} value={code.id}>
-                      {code.code} - {code.description}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          <div>
-            <label className="text-sm font-medium">Amount</label>
-            <Input
-              type="number"
-              placeholder="Enter amount"
-              value={newWriteOff.amount}
-              onChange={(e) => setNewWriteOff(prev => ({
-                ...prev,
-                amount: e.target.value
-              }))}
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium">Description</label>
-            <Input
-              placeholder="Enter description"
-              value={newWriteOff.description}
-              onChange={(e) => setNewWriteOff(prev => ({
-                ...prev,
-                description: e.target.value
-              }))}
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium">Date</label>
-            <Input
-              type="date"
-              value={newWriteOff.date}
-              onChange={(e) => setNewWriteOff(prev => ({
-                ...prev,
-                date: e.target.value
-              }))}
-            />
-          </div>
-
+          <WriteOffFormFields
+            states={states}
+            categories={categories}
+            taxCodes={taxCodes}
+            selectedState={selectedState}
+            selectedCategory={selectedCategory}
+            newWriteOff={newWriteOff}
+            setSelectedState={setSelectedState}
+            setSelectedCategory={setSelectedCategory}
+            setNewWriteOff={setNewWriteOff}
+          />
           <Button 
             className="w-full" 
             onClick={addWriteOff}
