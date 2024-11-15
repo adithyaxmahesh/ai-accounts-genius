@@ -69,7 +69,8 @@ serve(async (req) => {
       .from('processed_documents')
       .update({
         extracted_data: { analysis },
-        processing_status: 'analyzed'
+        processing_status: 'analyzed',
+        confidence_score: 0.95 // Default high confidence for GPT-4 analysis
       })
       .eq('id', documentId)
 
@@ -112,10 +113,40 @@ serve(async (req) => {
         })
     }
 
+    // Create AI insights from document analysis
+    await supabaseClient
+      .from('ai_insights')
+      .insert({
+        user_id: document.user_id,
+        category: 'document_analysis',
+        insight: analysis,
+        confidence_score: 0.95
+      })
+
+    // Update tax analysis if tax implications are found
+    if (analysis.toLowerCase().includes('tax') || 
+        analysis.toLowerCase().includes('deduction') || 
+        analysis.toLowerCase().includes('write-off')) {
+      await supabaseClient
+        .from('tax_analysis')
+        .insert({
+          user_id: document.user_id,
+          analysis_type: 'document_review',
+          recommendations: { suggestions: analysis },
+          jurisdiction: 'US' // Default to US
+        })
+    }
+
     console.log('Document analysis completed:', { documentId, analysis })
 
     return new Response(
-      JSON.stringify({ success: true, analysis }),
+      JSON.stringify({ 
+        success: true, 
+        analysis,
+        hasAuditImplications: !!existingAudit,
+        hasFraudIndicators: analysis.toLowerCase().includes('suspicious'),
+        hasTaxImplications: analysis.toLowerCase().includes('tax')
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
