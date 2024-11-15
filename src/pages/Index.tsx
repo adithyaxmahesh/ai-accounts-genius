@@ -1,218 +1,98 @@
-import { useState } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Upload, DollarSign, AlertTriangle, TrendingUp, FileText, ChartBar } from "lucide-react";
-import { FinancialMetrics } from "@/components/FinancialMetrics";
-import { TransactionList } from "@/components/TransactionList";
-import { DocumentUpload } from "@/components/DocumentUpload";
-import { FraudDetection } from "@/components/FraudDetection";
 import { useNavigate } from "react-router-dom";
-
-const data = [
-  { name: "Jan", amount: 4000 },
-  { name: "Feb", amount: 3000 },
-  { name: "Mar", amount: 2000 },
-  { name: "Apr", amount: 2780 },
-  { name: "May", amount: 1890 },
-  { name: "Jun", amount: 2390 },
-];
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import {
+  FileText,
+  TrendingUp,
+  DollarSign,
+  Calculator,
+  ClipboardList,
+  FileCheck,
+  ArrowRight,
+} from "lucide-react";
+import { QueryInterface } from "@/components/QueryInterface";
+import { AiInsights } from "@/components/AiInsights";
 
 const Index = () => {
-  const { toast } = useToast();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("dashboard");
 
-  const handleMetricClick = (metric: string) => {
-    switch (metric) {
-      case "Revenue":
-        navigate("/revenue");
-        break;
-      case "Risk Score":
-        navigate("/audit");
-        break;
-      case "Forecast":
-        navigate("/forecast");
-        break;
-      case "Documents":
-        navigate("/documents");
-        break;
-      case "Balance Sheet":
-        navigate("/balance-sheet");
-        break;
-      default:
-        break;
-    }
-  };
+  const menuItems = [
+    {
+      title: "Audit Reports",
+      icon: <FileText className="h-6 w-6" />,
+      description: "View and manage audit reports",
+      path: "/audit",
+      color: "text-blue-500",
+    },
+    {
+      title: "Revenue Analysis",
+      icon: <TrendingUp className="h-6 w-6" />,
+      description: "Track and analyze revenue",
+      path: "/revenue",
+      color: "text-green-500",
+    },
+    {
+      title: "Financial Forecast",
+      icon: <DollarSign className="h-6 w-6" />,
+      description: "AI-powered financial projections",
+      path: "/forecast",
+      color: "text-purple-500",
+    },
+    {
+      title: "Write-Offs",
+      icon: <Calculator className="h-6 w-6" />,
+      description: "Manage tax write-offs",
+      path: "/write-offs",
+      color: "text-red-500",
+    },
+    {
+      title: "Documents",
+      icon: <ClipboardList className="h-6 w-6" />,
+      description: "Upload and process documents",
+      path: "/documents",
+      color: "text-orange-500",
+    },
+    {
+      title: "Balance Sheet",
+      icon: <FileCheck className="h-6 w-6" />,
+      description: "View balance sheet",
+      path: "/balance-sheet",
+      color: "text-teal-500",
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-background p-6 space-y-6 fade-in">
-      <header className="flex justify-between items-center mb-8">
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Audit AI</h1>
-          <p className="text-muted-foreground">Your intelligent accounting partner</p>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Welcome to your AI-powered accounting assistant
+          </p>
         </div>
-        <div className="space-x-2">
-          <Button
-            onClick={() => navigate("/audit")}
-            variant="outline"
-            className="hover-scale"
-          >
-            <FileText className="mr-2 h-4 w-4" />
-            Audits
-          </Button>
-          <Button
-            onClick={() => {
-              toast({
-                title: "AI Analysis Started",
-                description: "Processing your financial data...",
-              });
-            }}
-            className="hover-scale"
-          >
-            Run AI Analysis
-          </Button>
-        </div>
-      </header>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-        <Card 
-          className="glass-card p-6 hover-scale cursor-pointer" 
-          onClick={() => handleMetricClick("Revenue")}
-        >
-          <DollarSign className="h-8 w-8 mb-4 text-primary" />
-          <h3 className="text-lg font-semibold">Total Revenue</h3>
-          <p className="text-3xl font-bold">$84,234.00</p>
-          <p className="text-sm text-muted-foreground">+12.5% from last month</p>
-        </Card>
-        <Card 
-          className="glass-card p-6 hover-scale cursor-pointer" 
-          onClick={() => handleMetricClick("Risk Score")}
-        >
-          <AlertTriangle className="h-8 w-8 mb-4 text-destructive" />
-          <h3 className="text-lg font-semibold">Risk Score</h3>
-          <p className="text-3xl font-bold">Low</p>
-          <p className="text-sm text-muted-foreground">2 items flagged</p>
-        </Card>
-        <Card 
-          className="glass-card p-6 hover-scale cursor-pointer" 
-          onClick={() => handleMetricClick("Forecast")}
-        >
-          <TrendingUp className="h-8 w-8 mb-4 text-primary" />
-          <h3 className="text-lg font-semibold">Forecast</h3>
-          <p className="text-3xl font-bold">+8.3%</p>
-          <p className="text-sm text-muted-foreground">Next quarter growth</p>
-        </Card>
-        <Card 
-          className="glass-card p-6 hover-scale cursor-pointer" 
-          onClick={() => handleMetricClick("Documents")}
-        >
-          <FileText className="h-8 w-8 mb-4 text-primary" />
-          <h3 className="text-lg font-semibold">Documents</h3>
-          <p className="text-3xl font-bold">143</p>
-          <p className="text-sm text-muted-foreground">Processed this month</p>
-        </Card>
-        <Card 
-          className="glass-card p-6 hover-scale cursor-pointer" 
-          onClick={() => handleMetricClick("Balance Sheet")}
-        >
-          <ChartBar className="h-8 w-8 mb-4 text-primary" />
-          <h3 className="text-lg font-semibold">Balance Sheet</h3>
-          <p className="text-3xl font-bold">View</p>
-          <p className="text-sm text-muted-foreground">Assets & Liabilities</p>
-        </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="glass-card p-6">
-          <h3 className="text-xl font-semibold mb-4">Revenue Trend</h3>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="amount" fill="#9b87f5" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-        <Card className="glass-card p-6">
-          <h3 className="text-xl font-semibold mb-4">AI Insights</h3>
-          <div className="space-y-4">
-            <div className="p-4 bg-muted rounded-lg">
-              <h4 className="font-semibold">Expense Optimization</h4>
-              <p className="text-sm text-muted-foreground">
-                AI analysis suggests potential savings of $2,345 in operational costs
-              </p>
-            </div>
-            <div className="p-4 bg-muted rounded-lg">
-              <h4 className="font-semibold">Cash Flow Prediction</h4>
-              <p className="text-sm text-muted-foreground">
-                Based on current trends, expect 15% increase in Q3
-              </p>
-            </div>
-            <div className="p-4 bg-muted rounded-lg">
-              <h4 className="font-semibold">Tax Optimization</h4>
-              <p className="text-sm text-muted-foreground">
-                3 potential deductions identified worth $5,678
-              </p>
-            </div>
-          </div>
-        </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <QueryInterface />
+        <AiInsights />
       </div>
 
-      <Card className="glass-card p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-semibold">Recent Audits</h3>
-          <Button 
-            variant="outline" 
-            className="hover-scale"
-            onClick={() => navigate("/audit")}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {menuItems.map((item) => (
+          <Card
+            key={item.path}
+            className="p-6 hover:shadow-lg transition-shadow cursor-pointer glass-card"
+            onClick={() => navigate(item.path)}
           >
-            View All
-          </Button>
-        </div>
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div 
-              key={i} 
-              className="flex justify-between items-center p-4 bg-muted rounded-lg cursor-pointer hover:bg-accent transition-colors"
-              onClick={() => navigate(`/audit/${i}`)}
-            >
-              <div>
-                <p className="font-semibold">Audit Report #{i}</p>
-                <p className="text-sm text-muted-foreground">Status: In Progress</p>
-              </div>
-              <div className="text-right">
-                <p className="font-semibold">3 Findings</p>
-                <p className="text-sm text-muted-foreground">Mar 15, 2024</p>
-              </div>
+            <div className="flex justify-between items-start">
+              <div className={item.color}>{item.icon}</div>
+              <ArrowRight className="h-4 w-4 text-muted-foreground" />
             </div>
-          ))}
-        </div>
-      </Card>
-
-      <Card className="glass-card p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-semibold">Document Processing</h3>
-          <Button className="hover-scale">
-            <Upload className="h-4 w-4 mr-2" />
-            Upload Documents
-          </Button>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="p-4 bg-muted rounded-lg">
-              <p className="font-semibold">Invoice #{i}</p>
-              <p className="text-sm text-muted-foreground">Status: Processed</p>
-              <p className="text-sm text-muted-foreground">Confidence: 98%</p>
-            </div>
-          ))}
-        </div>
-      </Card>
+            <h2 className="text-xl font-semibold mt-4">{item.title}</h2>
+            <p className="text-muted-foreground mt-2">{item.description}</p>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 };
