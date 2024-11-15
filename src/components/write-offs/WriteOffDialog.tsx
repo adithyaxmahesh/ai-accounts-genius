@@ -34,7 +34,7 @@ export const WriteOffDialog = ({ isOpen, onOpenChange, onSuccess, userId }: Writ
         .order('state');
       
       if (error) throw error;
-      return Array.from(new Set(data.map(item => item.state)));
+      return Array.from(new Set(data.map(item => item.state))); // Using Set to filter unique states
     }
   });
 
@@ -49,7 +49,7 @@ export const WriteOffDialog = ({ isOpen, onOpenChange, onSuccess, userId }: Writ
         .order('expense_category');
       
       if (error) throw error;
-      return Array.from(new Set(data.map(item => item.expense_category)));
+      return Array.from(new Set(data.map(item => item.expense_category))); // Using Set to filter unique categories
     },
     enabled: !!selectedState
   });
