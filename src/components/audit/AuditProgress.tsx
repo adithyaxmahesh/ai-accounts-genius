@@ -4,6 +4,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Progress } from "@/components/ui/progress";
 
 interface AuditProgressProps {
   status: string;
@@ -17,25 +18,48 @@ export const getAuditProgress = (status: string) => {
 };
 
 export const getAuditAccomplishments = (status: string) => {
-  switch (status) {
-    case 'planning':
-      return "Initial audit scope defined and risk areas identified";
-    case 'control_evaluation':
-      return "Internal controls assessed and test procedures established";
-    case 'evidence_gathering':
-      return "Financial documents analyzed and evidence collected";
-    case 'review':
-      return "Findings compiled and recommendations drafted";
-    case 'completed':
-      return "Full audit completed with detailed findings and recommendations";
-    default:
-      return "Audit not yet started";
-  }
+  const accomplishments = {
+    planning: [
+      "Initial risk assessment completed",
+      "Audit scope defined",
+      "Key risk areas identified",
+      "Preliminary analysis performed"
+    ],
+    control_evaluation: [
+      "Internal controls assessed",
+      "Control weaknesses identified",
+      "Test procedures established",
+      "Risk management evaluated"
+    ],
+    evidence_gathering: [
+      "Financial documents analyzed",
+      "Transaction patterns reviewed",
+      "Supporting evidence collected",
+      "Detailed testing conducted"
+    ],
+    review: [
+      "Findings documented",
+      "Recommendations drafted",
+      "Risk assessment updated",
+      "Report preparation initiated"
+    ],
+    completed: [
+      "Final report generated",
+      "All findings documented",
+      "Recommendations provided",
+      "Risk mitigation strategies proposed"
+    ]
+  };
+
+  return accomplishments[status as keyof typeof accomplishments] || [];
 };
 
 const AuditProgress = ({ status, getStatusExplanation }: AuditProgressProps) => {
+  const progress = getAuditProgress(status);
+  const accomplishments = getAuditAccomplishments(status);
+
   return (
-    <div className="space-y-2">
+    <div className="space-y-4">
       <div className="flex items-center gap-2">
         <p className="text-muted-foreground">Current Phase</p>
         <Tooltip>
@@ -47,7 +71,8 @@ const AuditProgress = ({ status, getStatusExplanation }: AuditProgressProps) => 
           </TooltipContent>
         </Tooltip>
       </div>
-      <div className={`mt-1 px-3 py-1 rounded-full text-sm inline-block ${
+
+      <div className={`px-3 py-1 rounded-full text-sm inline-block ${
         status === 'completed' ? 'bg-green-100 text-green-800' :
         status === 'review' ? 'bg-orange-100 text-orange-800' :
         status === 'evidence_gathering' ? 'bg-purple-100 text-purple-800' :
@@ -56,11 +81,24 @@ const AuditProgress = ({ status, getStatusExplanation }: AuditProgressProps) => 
       }`}>
         {status?.replace('_', ' ')}
       </div>
-      <div className="mt-2">
-        <p className="text-sm font-medium">Progress: {getAuditProgress(status)}%</p>
-        <p className="text-sm text-muted-foreground mt-1">
-          {getAuditAccomplishments(status)}
-        </p>
+
+      <div className="space-y-2">
+        <div className="flex justify-between text-sm">
+          <span>Progress</span>
+          <span>{progress}%</span>
+        </div>
+        <Progress value={progress} className="h-2" />
+      </div>
+
+      <div className="mt-4">
+        <h4 className="text-sm font-medium mb-2">Phase Accomplishments:</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          {accomplishments.map((item, index) => (
+            <li key={index} className="text-sm text-muted-foreground">
+              {item}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
