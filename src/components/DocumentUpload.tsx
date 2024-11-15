@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, FileText, Image, FileSpreadsheet, Loader2 } from "lucide-react";
+import { Upload, FileText, Image, FileSpreadsheet, Loader2, Brain } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/AuthProvider";
 import {
   Table,
   TableBody,
@@ -20,12 +21,15 @@ interface ProcessedDocument {
   confidence: number;
   uploadedAt: string;
   type: string;
+  extracted_data?: any;
 }
 
 export const DocumentUpload = () => {
   const { toast } = useToast();
+  const { session } = useAuth();
   const [uploading, setUploading] = useState(false);
   const [documents, setDocuments] = useState<ProcessedDocument[]>([]);
+  const [processing, setProcessing] = useState(false);
 
   const getFileIcon = (fileName: string) => {
     const ext = fileName.split('.').pop()?.toLowerCase();
@@ -40,6 +44,38 @@ export const DocumentUpload = () => {
         return <Image className="h-4 w-4 mr-2 text-blue-500" />;
       default:
         return <FileText className="h-4 w-4 mr-2 text-muted-foreground" />;
+    }
+  };
+
+  const analyzeDocument = async (documentId: string) => {
+    setProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-document', {
+        body: { documentId }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Analysis Complete",
+        description: "Document has been processed by AI",
+      });
+
+      // Update documents list with extracted data
+      setDocuments(prev => prev.map(doc => 
+        doc.id === documentId 
+          ? { ...doc, extracted_data: data, status: 'Analyzed' }
+          : doc
+      ));
+    } catch (error) {
+      console.error("Error analyzing document:", error);
+      toast({
+        title: "Analysis Failed",
+        description: "There was an error analyzing your document.",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -65,12 +101,26 @@ export const DocumentUpload = () => {
         throw uploadError;
       }
 
+      // Create document record
+      const { data: docRecord, error: dbError } = await supabase
+        .from('processed_documents')
+        .insert({
+          user_id: session?.user.id,
+          original_filename: file.name,
+          storage_path: fileName,
+          processing_status: 'uploaded'
+        })
+        .select()
+        .single();
+
+      if (dbError) throw dbError;
+
       // Add to documents list
       const newDoc: ProcessedDocument = {
-        id: fileName,
+        id: docRecord.id,
         name: file.name,
-        status: "Processed",
-        confidence: 98,
+        status: "Uploaded",
+        confidence: 0,
         uploadedAt: new Date().toISOString(),
         type: fileExt || 'unknown'
       };
@@ -78,9 +128,12 @@ export const DocumentUpload = () => {
       setDocuments((prev) => [newDoc, ...prev]);
 
       toast({
-        title: "Document Processed Successfully",
-        description: "Your document has been uploaded and processed.",
+        title: "Document Uploaded Successfully",
+        description: "Your document has been uploaded and is ready for analysis.",
       });
+
+      // Start analysis
+      await analyzeDocument(docRecord.id);
     } catch (error) {
       console.error("Error uploading document:", error);
       toast({
@@ -104,21 +157,23 @@ export const DocumentUpload = () => {
             className="hidden"
             accept=".pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.jpg,.jpeg,.png,.gif"
             onChange={handleFileUpload}
-            disabled={uploading}
+            disabled={uploading || processing}
           />
           <label htmlFor="file-upload">
             <Button
               className="hover-scale cursor-pointer"
-              disabled={uploading}
+              disabled={uploading || processing}
               asChild
             >
               <div>
                 {uploading ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : processing ? (
+                  <Brain className="h-4 w-4 mr-2 animate-pulse" />
                 ) : (
                   <Upload className="h-4 w-4 mr-2" />
                 )}
-                Upload Documents
+                {uploading ? "Uploading..." : processing ? "Analyzing..." : "Upload Documents"}
               </div>
             </Button>
           </label>
@@ -132,6 +187,7 @@ export const DocumentUpload = () => {
             <TableHead>Status</TableHead>
             <TableHead>Confidence</TableHead>
             <TableHead>Upload Date</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -147,6 +203,20 @@ export const DocumentUpload = () => {
               <TableCell>{doc.confidence}%</TableCell>
               <TableCell>
                 {new Date(doc.uploadedAt).toLocaleDateString()}
+              </TableCell>
+              <TableCell>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => analyzeDocument(doc.id)}
+                  disabled={processing || doc.status === 'Analyzed'}
+                >
+                  {processing ? (
+                    <Brain className="h-4 w-4 animate-pulse" />
+                  ) : (
+                    <Brain className="h-4 w-4" />
+                  )}
+                </Button>
               </TableCell>
             </TableRow>
           ))}
