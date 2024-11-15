@@ -7,11 +7,12 @@ import {
   DollarSign,
   Calculator,
   ClipboardList,
-  FileCheck,
+  ChartBar,
   ArrowRight,
 } from "lucide-react";
 import { QueryInterface } from "@/components/QueryInterface";
 import { AiInsights } from "@/components/AiInsights";
+import { FinancialForecast } from "@/components/FinancialForecast";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -54,7 +55,7 @@ const Index = () => {
     },
     {
       title: "Balance Sheet",
-      icon: <FileCheck className="h-6 w-6" />,
+      icon: <ChartBar className="h-6 w-6" />,
       description: "View balance sheet",
       path: "/balance-sheet",
       color: "text-teal-500",
@@ -76,6 +77,8 @@ const Index = () => {
         <QueryInterface />
         <AiInsights />
       </div>
+
+      <FinancialForecast />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {menuItems.map((item) => (
