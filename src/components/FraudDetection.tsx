@@ -4,6 +4,11 @@ import { AlertTriangle, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 
+interface FraudAlertDetails {
+  analysis: string;
+  transactions?: any[];
+}
+
 export const FraudDetection = () => {
   const { session } = useAuth();
 
@@ -41,7 +46,7 @@ export const FraudDetection = () => {
               <div>
                 <div className="font-medium">Risk Score: {(alert.risk_score * 100).toFixed(0)}%</div>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {alert.details.analysis}
+                  {(alert.details as FraudAlertDetails).analysis}
                 </p>
               </div>
             </div>
