@@ -205,6 +205,44 @@ export type Database = {
           },
         ]
       }
+      compliance_checks: {
+        Row: {
+          check_type: string | null
+          created_at: string
+          findings: Json | null
+          id: string
+          recommendations: string[] | null
+          risk_level: string | null
+          user_id: string | null
+        }
+        Insert: {
+          check_type?: string | null
+          created_at?: string
+          findings?: Json | null
+          id?: string
+          recommendations?: string[] | null
+          risk_level?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          check_type?: string | null
+          created_at?: string
+          findings?: Json | null
+          id?: string
+          recommendations?: string[] | null
+          risk_level?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_checks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forecasts: {
         Row: {
           confidence_level: number | null
@@ -390,6 +428,47 @@ export type Database = {
         }
         Relationships: []
       }
+      receipt_analysis: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          extracted_data: Json | null
+          id: string
+          location: string | null
+          receipt_url: string | null
+          suggested_tax_codes: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          extracted_data?: Json | null
+          id?: string
+          location?: string | null
+          receipt_url?: string | null
+          suggested_tax_codes?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          extracted_data?: Json | null
+          id?: string
+          location?: string | null
+          receipt_url?: string | null
+          suggested_tax_codes?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipt_analysis_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       revenue_records: {
         Row: {
           amount: number
@@ -421,6 +500,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "revenue_records_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      state_operations: {
+        Row: {
+          compliance_status: string | null
+          created_at: string
+          id: string
+          operation_type: string | null
+          state: string | null
+          tax_implications: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          compliance_status?: string | null
+          created_at?: string
+          id?: string
+          operation_type?: string | null
+          state?: string | null
+          tax_implications?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          compliance_status?: string | null
+          created_at?: string
+          id?: string
+          operation_type?: string | null
+          state?: string | null
+          tax_implications?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "state_operations_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -498,6 +615,41 @@ export type Database = {
           state?: string | null
         }
         Relationships: []
+      }
+      tax_planning_chats: {
+        Row: {
+          answer: string | null
+          context: Json | null
+          created_at: string
+          id: string
+          question: string | null
+          user_id: string | null
+        }
+        Insert: {
+          answer?: string | null
+          context?: Json | null
+          created_at?: string
+          id?: string
+          question?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          answer?: string | null
+          context?: Json | null
+          created_at?: string
+          id?: string
+          question?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_planning_chats_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_settings: {
         Row: {
