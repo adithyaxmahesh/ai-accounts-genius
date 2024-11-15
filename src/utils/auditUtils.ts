@@ -37,8 +37,7 @@ export const startNewAudit = async (title: string) => {
     throw new Error("User not authenticated");
   }
 
-  // First, create the audit report
-  const { data: auditData, error: auditError } = await supabase
+  const { data, error } = await supabase
     .from('audit_reports')
     .insert([
       {
@@ -54,16 +53,16 @@ export const startNewAudit = async (title: string) => {
     .select()
     .single();
 
-  if (auditError) {
-    console.error('Error creating audit:', auditError);
-    throw new Error(`Failed to create audit: ${auditError.message}`);
+  if (error) {
+    console.error('Error creating audit:', error);
+    throw new Error(`Failed to create audit: ${error.message}`);
   }
 
-  if (!auditData) {
+  if (!data) {
     throw new Error("No data returned after creating audit");
   }
 
-  return auditData;
+  return data;
 };
 
 export const updateAuditStatus = async (id: string, status: string, findings: any[] = []) => {
