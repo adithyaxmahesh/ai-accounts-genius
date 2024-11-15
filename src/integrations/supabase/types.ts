@@ -9,6 +9,41 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_insights: {
+        Row: {
+          category: string
+          confidence_score: number | null
+          created_at: string
+          id: string
+          insight: string
+          user_id: string | null
+        }
+        Insert: {
+          category: string
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          insight: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          insight?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_insights_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_items: {
         Row: {
           amount: number | null
@@ -166,6 +201,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "forecasts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      processed_documents: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          document_type: string | null
+          extracted_data: Json | null
+          id: string
+          original_filename: string
+          processing_status: string | null
+          storage_path: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          document_type?: string | null
+          extracted_data?: Json | null
+          id?: string
+          original_filename: string
+          processing_status?: string | null
+          storage_path: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          document_type?: string | null
+          extracted_data?: Json | null
+          id?: string
+          original_filename?: string
+          processing_status?: string | null
+          storage_path?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processed_documents_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
