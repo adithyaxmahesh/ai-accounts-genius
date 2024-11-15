@@ -473,7 +473,9 @@ export type Database = {
           created_at: string
           deduction_type: string
           description: string
+          expense_category: string | null
           id: string
+          state: string | null
         }
         Insert: {
           category: string
@@ -481,7 +483,9 @@ export type Database = {
           created_at?: string
           deduction_type: string
           description: string
+          expense_category?: string | null
           id?: string
+          state?: string | null
         }
         Update: {
           category?: string
@@ -489,7 +493,9 @@ export type Database = {
           created_at?: string
           deduction_type?: string
           description?: string
+          expense_category?: string | null
           id?: string
+          state?: string | null
         }
         Relationships: []
       }
