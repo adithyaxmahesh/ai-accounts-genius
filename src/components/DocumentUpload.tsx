@@ -22,23 +22,20 @@ export const DocumentUpload = () => {
         body: { documentId }
       });
 
-      if (error) {
-        console.error("Analysis error:", error);
-        throw new Error(error.message || "Failed to analyze document");
-      }
+      if (error) throw error;
 
       toast({
         title: "Analysis Complete",
-        description: "Document has been processed by AI",
+        description: "Document has been processed successfully",
       });
 
+      // Update the document status in the UI
       setDocuments(prev => prev.map(doc => 
         doc.id === documentId 
           ? { 
               ...doc, 
-              extracted_data: data, 
               status: 'Analyzed',
-              confidence: 95
+              confidence: data?.confidence_score || 95
             }
           : doc
       ));
@@ -61,10 +58,11 @@ export const DocumentUpload = () => {
 
       setUploading(true);
       toast({
-        title: "Document Upload Started",
+        title: "Upload Started",
         description: "Processing your document...",
       });
 
+      // Upload file to Supabase Storage
       const fileExt = file.name.split(".").pop();
       const fileName = `${Math.random()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
@@ -73,19 +71,22 @@ export const DocumentUpload = () => {
 
       if (uploadError) throw uploadError;
 
+      // Create document record in the database
       const { data: docRecord, error: dbError } = await supabase
         .from('processed_documents')
         .insert({
           user_id: session?.user.id,
           original_filename: file.name,
           storage_path: fileName,
-          processing_status: 'uploaded'
+          processing_status: 'uploaded',
+          document_type: fileExt
         })
         .select()
         .single();
 
       if (dbError) throw dbError;
 
+      // Add document to UI list
       const newDoc: ProcessedDocument = {
         id: docRecord.id,
         name: file.name,
@@ -95,16 +96,17 @@ export const DocumentUpload = () => {
         type: fileExt || 'unknown'
       };
 
-      setDocuments((prev) => [newDoc, ...prev]);
+      setDocuments(prev => [newDoc, ...prev]);
 
       toast({
-        title: "Document Uploaded Successfully",
+        title: "Upload Successful",
         description: "Your document has been uploaded and is ready for analysis.",
       });
 
+      // Start analysis
       await analyzeDocument(docRecord.id);
     } catch (error) {
-      console.error("Error uploading document:", error);
+      console.error("Upload error:", error);
       toast({
         title: "Upload Failed",
         description: error instanceof Error ? error.message : "There was an error uploading your document.",
@@ -112,6 +114,9 @@ export const DocumentUpload = () => {
       });
     } finally {
       setUploading(false);
+      if (event.target) {
+        event.target.value = '';  // Reset file input
+      }
     }
   };
 
