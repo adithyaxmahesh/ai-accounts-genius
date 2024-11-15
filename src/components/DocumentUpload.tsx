@@ -54,7 +54,14 @@ export const DocumentUpload = () => {
         body: { documentId }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Analysis error:", error);
+        throw new Error(error.message || "Failed to analyze document");
+      }
+
+      if (!data) {
+        throw new Error("No data received from analysis");
+      }
 
       toast({
         title: "Analysis Complete",
@@ -64,14 +71,19 @@ export const DocumentUpload = () => {
       // Update documents list with extracted data
       setDocuments(prev => prev.map(doc => 
         doc.id === documentId 
-          ? { ...doc, extracted_data: data, status: 'Analyzed' }
+          ? { 
+              ...doc, 
+              extracted_data: data, 
+              status: 'Analyzed',
+              confidence: 95 // Default confidence score
+            }
           : doc
       ));
     } catch (error) {
       console.error("Error analyzing document:", error);
       toast({
         title: "Analysis Failed",
-        description: "There was an error analyzing your document.",
+        description: error instanceof Error ? error.message : "There was an error analyzing your document.",
         variant: "destructive",
       });
     } finally {
@@ -138,7 +150,7 @@ export const DocumentUpload = () => {
       console.error("Error uploading document:", error);
       toast({
         title: "Upload Failed",
-        description: "There was an error uploading your document.",
+        description: error instanceof Error ? error.message : "There was an error uploading your document.",
         variant: "destructive",
       });
     } finally {

@@ -14,6 +14,7 @@ serve(async (req) => {
 
   try {
     const { documentId } = await req.json()
+    console.log('Processing document:', documentId)
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -21,22 +22,29 @@ serve(async (req) => {
     )
 
     // Get document data
-    const { data: document } = await supabase
+    const { data: document, error: docError } = await supabase
       .from('processed_documents')
       .select('*')
       .eq('id', documentId)
       .single()
 
-    if (!document) {
+    if (docError) {
+      console.error('Error fetching document:', docError)
       throw new Error('Document not found')
     }
 
     // Get document content from storage
-    const { data: fileData } = await supabase.storage
+    const { data: fileData, error: storageError } = await supabase.storage
       .from('documents')
       .download(document.storage_path)
 
+    if (storageError) {
+      console.error('Error downloading file:', storageError)
+      throw new Error('Failed to download document')
+    }
+
     const text = await fileData.text()
+    console.log('Document text extracted successfully')
 
     // Analyze with OpenAI
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -50,7 +58,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are an AI accountant. Analyze this financial document and extract key information.'
+            content: 'You are an AI accountant. Analyze this financial document and extract key information in JSON format including: date, amount, category, description, and any other relevant financial details.'
           },
           {
             role: 'user',
@@ -60,24 +68,38 @@ serve(async (req) => {
       }),
     })
 
-    const analysis = await response.json()
-    const extractedData = analysis.choices[0].message.content
+    if (!response.ok) {
+      console.error('OpenAI API error:', await response.text())
+      throw new Error('Failed to analyze document')
+    }
 
-    // Update document with extracted data
-    await supabase
+    const analysis = await response.json()
+    console.log('OpenAI analysis completed')
+
+    const extractedData = analysis.choices[0].message.content
+    
+    // Update document with extracted data and confidence score
+    const { error: updateError } = await supabase
       .from('processed_documents')
       .update({
         extracted_data: JSON.parse(extractedData),
-        processing_status: 'completed'
+        confidence_score: 0.95,
+        processing_status: 'completed',
+        document_type: 'financial'
       })
       .eq('id', documentId)
+
+    if (updateError) {
+      console.error('Error updating document:', updateError)
+      throw new Error('Failed to save analysis results')
+    }
 
     return new Response(
       JSON.stringify({ success: true, data: extractedData }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error in analyze-document function:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
