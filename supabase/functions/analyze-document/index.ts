@@ -47,7 +47,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
@@ -56,7 +56,14 @@ serve(async (req) => {
               2) Tax implications (deductions, write-offs, tax codes)
               3) Potential fraud indicators
               4) Audit findings
-              Format the response as JSON with these sections.`
+              Format the response as JSON with these sections.
+              For each transaction or financial item found, include:
+              - amount (numeric)
+              - category (string)
+              - description (string)
+              - risk_level (string: low, medium, high)
+              - status (string: pending, flagged, approved)
+              - date (string in ISO format)`
           },
           {
             role: 'user',
@@ -67,14 +74,58 @@ serve(async (req) => {
     })
 
     const aiResponse = await response.json()
-    const analysis = aiResponse.choices[0].message.content
-    const parsedAnalysis = JSON.parse(analysis)
+    const analysis = JSON.parse(aiResponse.choices[0].message.content)
 
-    // Update document with analysis
+    // Get or create an active audit for the user
+    const { data: existingAudit } = await supabaseClient
+      .from('audit_reports')
+      .select('id')
+      .eq('user_id', document.user_id)
+      .eq('status', 'in_progress')
+      .single()
+
+    let auditId = existingAudit?.id
+
+    if (!auditId) {
+      // Create new audit if none exists
+      const { data: newAudit, error: auditError } = await supabaseClient
+        .from('audit_reports')
+        .insert({
+          user_id: document.user_id,
+          title: `Audit Report ${new Date().toLocaleDateString()}`,
+          status: 'in_progress',
+          risk_level: analysis.fraud_indicators?.length > 0 ? 'high' : 'low',
+          description: 'Automated audit from document analysis'
+        })
+        .select()
+        .single()
+
+      if (auditError) throw auditError
+      auditId = newAudit.id
+    }
+
+    // Create audit items from the analysis
+    if (analysis.financial_items) {
+      const auditItems = analysis.financial_items.map(item => ({
+        audit_id: auditId,
+        category: item.category,
+        description: item.description,
+        amount: item.amount,
+        status: item.risk_level === 'high' ? 'flagged' : 'pending'
+      }))
+
+      const { error: itemsError } = await supabaseClient
+        .from('audit_items')
+        .insert(auditItems)
+
+      if (itemsError) throw itemsError
+    }
+
+    // Update document with analysis results
     const { error: updateError } = await supabaseClient
       .from('processed_documents')
       .update({
-        extracted_data: parsedAnalysis,
+        extracted_data: analysis,
         processing_status: 'analyzed',
         confidence_score: 0.95
       })
@@ -82,41 +133,16 @@ serve(async (req) => {
 
     if (updateError) throw updateError
 
-    // Create or update audit items based on document analysis
-    if (parsedAnalysis.audit_findings) {
-      const { data: existingAudit } = await supabaseClient
-        .from('audit_reports')
-        .select('id')
-        .eq('user_id', document.user_id)
-        .eq('status', 'in_progress')
-        .single()
-
-      const auditId = existingAudit?.id
-
-      if (auditId) {
-        // Add audit items
-        await supabaseClient
-          .from('audit_items')
-          .insert(parsedAnalysis.audit_findings.map(finding => ({
-            audit_id: auditId,
-            category: finding.category,
-            description: finding.description,
-            amount: finding.amount,
-            status: finding.risk_level === 'high' ? 'flagged' : 'pending'
-          })))
-      }
-    }
-
     // Create fraud alerts if suspicious patterns found
-    if (parsedAnalysis.fraud_indicators?.length > 0) {
+    if (analysis.fraud_indicators?.length > 0) {
       await supabaseClient
         .from('fraud_alerts')
         .insert({
           user_id: document.user_id,
           alert_type: 'document_analysis',
-          risk_score: parsedAnalysis.fraud_indicators.length > 2 ? 0.8 : 0.6,
+          risk_score: analysis.fraud_indicators.length > 2 ? 0.8 : 0.6,
           details: {
-            analysis: parsedAnalysis.fraud_indicators.join('\n'),
+            analysis: analysis.fraud_indicators,
             document_id: documentId
           },
           status: 'pending'
@@ -124,58 +150,41 @@ serve(async (req) => {
     }
 
     // Process tax implications
-    if (parsedAnalysis.tax_implications) {
-      // Create tax analysis entry
+    if (analysis.tax_implications) {
       await supabaseClient
         .from('tax_analysis')
         .insert({
           user_id: document.user_id,
           analysis_type: 'document_review',
-          recommendations: parsedAnalysis.tax_implications,
-          jurisdiction: parsedAnalysis.tax_implications.jurisdiction || 'US'
+          recommendations: analysis.tax_implications,
+          jurisdiction: analysis.tax_implications.jurisdiction || 'US'
         })
 
       // Create write-offs if applicable
-      if (parsedAnalysis.tax_implications.write_offs) {
-        for (const writeOff of parsedAnalysis.tax_implications.write_offs) {
-          await supabaseClient
-            .from('write_offs')
-            .insert({
-              user_id: document.user_id,
-              amount: writeOff.amount,
-              description: writeOff.description,
-              date: writeOff.date || new Date().toISOString(),
-              tax_code_id: writeOff.tax_code_id,
-              status: 'pending'
-            })
-        }
+      if (analysis.tax_implications.write_offs) {
+        const writeOffs = analysis.tax_implications.write_offs.map(writeOff => ({
+          user_id: document.user_id,
+          amount: writeOff.amount,
+          description: writeOff.description,
+          date: writeOff.date || new Date().toISOString(),
+          tax_code_id: writeOff.tax_code_id,
+          status: 'pending'
+        }))
+
+        await supabaseClient
+          .from('write_offs')
+          .insert(writeOffs)
       }
     }
-
-    // Create AI insights
-    await supabaseClient
-      .from('ai_insights')
-      .insert({
-        user_id: document.user_id,
-        category: 'document_analysis',
-        insight: JSON.stringify(parsedAnalysis.key_findings),
-        confidence_score: 0.95
-      })
-
-    console.log('Document analysis completed:', { 
-      documentId, 
-      hasAuditFindings: !!parsedAnalysis.audit_findings,
-      hasFraudIndicators: !!parsedAnalysis.fraud_indicators,
-      hasTaxImplications: !!parsedAnalysis.tax_implications
-    })
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        analysis: parsedAnalysis,
-        hasAuditFindings: !!parsedAnalysis.audit_findings,
-        hasFraudIndicators: !!parsedAnalysis.fraud_indicators,
-        hasTaxImplications: !!parsedAnalysis.tax_implications
+        analysis,
+        auditId,
+        hasAuditFindings: true,
+        hasFraudIndicators: analysis.fraud_indicators?.length > 0,
+        hasTaxImplications: !!analysis.tax_implications
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
