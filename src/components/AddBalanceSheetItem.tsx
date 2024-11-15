@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/AuthProvider";
 
 interface AddBalanceSheetItemProps {
   onClose: () => void;
@@ -25,6 +26,7 @@ interface AddBalanceSheetItemProps {
 }
 
 export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemProps) => {
+  const { session } = useAuth();
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
@@ -40,6 +42,7 @@ export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemP
             amount: Number(amount),
             category,
             description,
+            user_id: session?.user.id,
           },
         ]);
 

@@ -16,7 +16,7 @@ const BalanceSheet = () => {
   const queryClient = useQueryClient();
 
   const { data: balanceSheetItems, isLoading } = useQuery({
-    queryKey: ["balanceSheetItems"],
+    queryKey: ["balanceSheetItems", session?.user.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("balance_sheet_items")
