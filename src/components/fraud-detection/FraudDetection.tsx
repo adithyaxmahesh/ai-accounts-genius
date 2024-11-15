@@ -39,7 +39,10 @@ export const FraudDetection = () => {
         risk_score: alert.risk_score || 0,
         alert_type: alert.alert_type,
         status: alert.status,
-        details: alert.details as FraudAlertDetails,
+        details: {
+          analysis: (alert.details as { analysis: string })?.analysis || '',
+          transactions: (alert.details as { transactions?: any[] })?.transactions
+        },
         created_at: alert.created_at
       })) as FraudAlert[];
     }
