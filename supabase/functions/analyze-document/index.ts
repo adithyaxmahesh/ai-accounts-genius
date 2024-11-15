@@ -57,7 +57,7 @@ serve(async (req) => {
       console.error('OpenAI API key is not set')
       throw new Error('OpenAI API key is missing')
     }
-    console.log('OpenAI API key is set and available')
+    console.log('OpenAI API key verification successful')
 
     console.log('Sending request to OpenAI...')
     // Analyze with OpenAI
@@ -68,7 +68,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',  // Changed from gpt-4 to gpt-4o-mini for faster processing
+        model: 'gpt-4-1106-preview',  // Using the latest GPT-4 model
         messages: [
           {
             role: 'system',
