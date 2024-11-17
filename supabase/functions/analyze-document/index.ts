@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import "https://deno.land/x/xhr@0.1.0/mod.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+import { parse as parseCSV } from 'https://deno.land/std@0.181.0/encoding/csv.ts'
+import * as XLSX from 'https://esm.sh/xlsx@0.18.5'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -37,9 +39,21 @@ serve(async (req) => {
 
     if (downloadError) throw downloadError
 
-    const text = await fileData.text()
+    // Parse file content based on type
+    let parsedData = [];
+    const fileExt = document.storage_path.split('.').pop()?.toLowerCase();
+    
+    if (fileExt === 'csv') {
+      const text = await fileData.text()
+      parsedData = await parseCSV(text, { skipFirstRow: true })
+    } else if (['xls', 'xlsx'].includes(fileExt)) {
+      const arrayBuffer = await fileData.arrayBuffer()
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' })
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
+      parsedData = XLSX.utils.sheet_to_json(firstSheet)
+    }
 
-    // Analyze document content with OpenAI
+    // Analyze data with OpenAI
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -51,23 +65,17 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a financial document analyzer. Extract and analyze:
-              1) Key financial information (amounts, dates, categories)
-              2) Tax implications (deductions, write-offs, tax codes)
-              3) Potential fraud indicators
-              4) Audit findings
-              Format the response as JSON with these sections.
-              For each transaction or financial item found, include:
-              - amount (numeric)
-              - category (string)
-              - description (string)
-              - risk_level (string: low, medium, high)
-              - status (string: pending, flagged, approved)
-              - date (string in ISO format)`
+            content: `You are a financial document analyzer. Analyze this spreadsheet data and provide:
+              1) Summary of transactions/entries
+              2) Potential anomalies or suspicious patterns
+              3) Tax implications
+              4) Compliance concerns
+              5) Risk assessment
+              Format response as JSON with these sections.`
           },
           {
             role: 'user',
-            content: `Analyze this document and provide structured findings:\n\n${text}`
+            content: `Analyze this spreadsheet data:\n${JSON.stringify(parsedData, null, 2)}`
           }
         ],
       }),
@@ -75,51 +83,6 @@ serve(async (req) => {
 
     const aiResponse = await response.json()
     const analysis = JSON.parse(aiResponse.choices[0].message.content)
-
-    // Get or create an active audit for the user
-    const { data: existingAudit } = await supabaseClient
-      .from('audit_reports')
-      .select('id')
-      .eq('user_id', document.user_id)
-      .eq('status', 'in_progress')
-      .single()
-
-    let auditId = existingAudit?.id
-
-    if (!auditId) {
-      // Create new audit if none exists
-      const { data: newAudit, error: auditError } = await supabaseClient
-        .from('audit_reports')
-        .insert({
-          user_id: document.user_id,
-          title: `Audit Report ${new Date().toLocaleDateString()}`,
-          status: 'in_progress',
-          risk_level: analysis.fraud_indicators?.length > 0 ? 'high' : 'low',
-          description: 'Automated audit from document analysis'
-        })
-        .select()
-        .single()
-
-      if (auditError) throw auditError
-      auditId = newAudit.id
-    }
-
-    // Create audit items from the analysis
-    if (analysis.financial_items) {
-      const auditItems = analysis.financial_items.map(item => ({
-        audit_id: auditId,
-        category: item.category,
-        description: item.description,
-        amount: item.amount,
-        status: item.risk_level === 'high' ? 'flagged' : 'pending'
-      }))
-
-      const { error: itemsError } = await supabaseClient
-        .from('audit_items')
-        .insert(auditItems)
-
-      if (itemsError) throw itemsError
-    }
 
     // Update document with analysis results
     const { error: updateError } = await supabaseClient
@@ -133,58 +96,54 @@ serve(async (req) => {
 
     if (updateError) throw updateError
 
-    // Create fraud alerts if suspicious patterns found
-    if (analysis.fraud_indicators?.length > 0) {
+    // Create or update audit findings
+    const { data: existingAudit } = await supabaseClient
+      .from('audit_reports')
+      .select('id')
+      .eq('user_id', document.user_id)
+      .eq('status', 'evidence_gathering')
+      .single()
+
+    const auditFindings = analysis.anomalies?.map(anomaly => ({
+      category: 'Financial Review',
+      description: anomaly.description,
+      impact: anomaly.impact || 'Unknown',
+      severity: anomaly.risk_level || 'medium',
+      status: 'pending',
+      details: anomaly.details || []
+    })) || []
+
+    if (existingAudit?.id) {
+      await supabaseClient
+        .from('audit_reports')
+        .update({
+          findings: auditFindings,
+          risk_level: analysis.risk_assessment?.overall_risk || 'low',
+          recommendations: analysis.recommendations || []
+        })
+        .eq('id', existingAudit.id)
+    }
+
+    // Create fraud alerts if needed
+    if (analysis.anomalies?.some(a => a.risk_level === 'high')) {
       await supabaseClient
         .from('fraud_alerts')
         .insert({
           user_id: document.user_id,
           alert_type: 'document_analysis',
-          risk_score: analysis.fraud_indicators.length > 2 ? 0.8 : 0.6,
+          risk_score: 0.8,
           details: {
-            analysis: analysis.fraud_indicators,
-            document_id: documentId
-          },
-          status: 'pending'
+            document_id: documentId,
+            findings: analysis.anomalies.filter(a => a.risk_level === 'high')
+          }
         })
-    }
-
-    // Process tax implications
-    if (analysis.tax_implications) {
-      await supabaseClient
-        .from('tax_analysis')
-        .insert({
-          user_id: document.user_id,
-          analysis_type: 'document_review',
-          recommendations: analysis.tax_implications,
-          jurisdiction: analysis.tax_implications.jurisdiction || 'US'
-        })
-
-      // Create write-offs if applicable
-      if (analysis.tax_implications.write_offs) {
-        const writeOffs = analysis.tax_implications.write_offs.map(writeOff => ({
-          user_id: document.user_id,
-          amount: writeOff.amount,
-          description: writeOff.description,
-          date: writeOff.date || new Date().toISOString(),
-          tax_code_id: writeOff.tax_code_id,
-          status: 'pending'
-        }))
-
-        await supabaseClient
-          .from('write_offs')
-          .insert(writeOffs)
-      }
     }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         analysis,
-        auditId,
-        hasAuditFindings: true,
-        hasFraudIndicators: analysis.fraud_indicators?.length > 0,
-        hasTaxImplications: !!analysis.tax_implications
+        hasAuditFindings: auditFindings.length > 0
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
