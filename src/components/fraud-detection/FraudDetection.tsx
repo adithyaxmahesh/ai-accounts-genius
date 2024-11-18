@@ -19,6 +19,29 @@ interface FraudAlert {
   status?: string;
 }
 
+const formatAnalysis = (analysis: string) => {
+  if (!analysis) return '';
+  
+  // Split the analysis into lines and filter out empty ones
+  const lines = analysis.split('\n').filter(line => line.trim());
+  
+  // Group similar alerts
+  const groups: { [key: string]: number } = {};
+  lines.forEach(line => {
+    // Extract the base message without specific amounts/times
+    const baseMessage = line.replace(/\$\d+(\.\d+)?|(\d{1,2}:\d{2})/g, 'VALUE');
+    groups[baseMessage] = (groups[baseMessage] || 0) + 1;
+  });
+
+  // Format the output with counts
+  return Object.entries(groups)
+    .map(([message, count]) => {
+      const formattedMessage = message.replace('VALUE', '(multiple values)');
+      return count > 1 ? `${formattedMessage} (${count} occurrences)` : message;
+    })
+    .join('\n');
+};
+
 export const FraudDetection = () => {
   const { session } = useAuth();
 
@@ -40,7 +63,7 @@ export const FraudDetection = () => {
         alert_type: alert.alert_type,
         status: alert.status,
         details: {
-          analysis: (alert.details as { analysis: string })?.analysis || '',
+          analysis: formatAnalysis((alert.details as { analysis: string })?.analysis || ''),
           transactions: (alert.details as { transactions?: any[] })?.transactions
         },
         created_at: alert.created_at
@@ -102,20 +125,8 @@ export const FraudDetection = () => {
               <div>
                 <div className="font-medium">Risk Score: {(alert.risk_score * 100).toFixed(0)}%</div>
                 <p className="text-sm text-muted-foreground mt-1 whitespace-pre-line">
-                  {alert.details?.analysis || 'No analysis available'}
+                  {alert.details.analysis}
                 </p>
-                {alert.details?.transactions && (
-                  <div className="mt-2">
-                    <p className="text-xs font-medium">Related Transactions:</p>
-                    <ul className="text-xs text-muted-foreground mt-1">
-                      {alert.details.transactions.map((t, i) => (
-                        <li key={i}>
-                          ${t.amount} - {new Date(t.date).toLocaleDateString()}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
               </div>
             </div>
           ))}
