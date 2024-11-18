@@ -6,21 +6,26 @@ interface WriteOffsListProps {
   userId: string;
 }
 
+type TaxCode = {
+  code: string;
+  description: string;
+  category: string;
+  deduction_type: string;
+  state: string | null;
+  expense_category: string | null;
+};
+
 type WriteOff = {
   id: string;
   description: string;
   amount: number;
   date: string;
   status: string;
-  tax_codes: {
-    code: string;
-    description: string;
-    category: string;
-    deduction_type: string;
-    state: string | null;
-    expense_category: string | null;
-  }[];
-}
+  tax_code_id: string;
+  user_id: string;
+  created_at: string;
+  tax_codes: TaxCode[];
+};
 
 export const WriteOffsList = ({ userId }: WriteOffsListProps) => {
   const { data: writeOffs } = useQuery({
