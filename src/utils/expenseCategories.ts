@@ -25,7 +25,13 @@ export const categorizeTransaction = async (description: string, amount: number)
     { pattern: 'insurance|coverage', category: 'Insurance', confidence: 0.9, isExpense: true },
   ];
 
-  const allPatterns = [...(patterns || []), ...defaultPatterns];
+  const allPatterns = [...(patterns || []).map(p => ({
+    pattern: p.pattern,
+    category: p.category,
+    confidence: p.confidence,
+    isExpense: p.is_expense
+  })), ...defaultPatterns];
+  
   const descLower = description.toLowerCase();
 
   for (const pattern of allPatterns) {

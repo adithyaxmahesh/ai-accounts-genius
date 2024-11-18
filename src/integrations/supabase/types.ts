@@ -253,6 +253,47 @@ export type Database = {
           },
         ]
       }
+      expense_patterns: {
+        Row: {
+          category: string
+          confidence: number | null
+          created_at: string
+          id: string
+          is_expense: boolean | null
+          pattern: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          category: string
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          is_expense?: boolean | null
+          pattern: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          is_expense?: boolean | null
+          pattern?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_patterns_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forecasts: {
         Row: {
           confidence_level: number | null
