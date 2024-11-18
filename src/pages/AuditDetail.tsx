@@ -4,12 +4,12 @@ import { useToast } from "@/components/ui/use-toast";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import AuditItemCard from "@/components/AuditItemCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TaxSummaryTab from "@/components/TaxSummaryTab";
 import AuditDetailsTab from "@/components/AuditDetailsTab";
 import { useState } from "react";
 import { updateAuditStatus, getStatusExplanation, getRiskLevelExplanation } from "@/utils/auditUtils";
+import AuditItemCard from "@/components/AuditItemCard";
 
 const AuditDetail = () => {
   const { id } = useParams();
@@ -17,7 +17,6 @@ const AuditDetail = () => {
   const { toast } = useToast();
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
-  // Validate UUID format
   const isValidUUID = (uuid: string | undefined) => {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     return uuid ? uuidRegex.test(uuid) : false;
@@ -26,6 +25,12 @@ const AuditDetail = () => {
   const { data: audit, isLoading, error } = useQuery({
     queryKey: ['audit', id],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('Authentication required');
+      }
+
       if (!isValidUUID(id)) {
         throw new Error('Invalid audit ID format');
       }
@@ -37,13 +42,40 @@ const AuditDetail = () => {
           audit_items (*)
         `)
         .eq('id', id)
+        .eq('user_id', user.id)
         .single();
       
       if (error) throw error;
+      if (!data) throw new Error('Audit not found');
+      
       return data;
     },
-    enabled: !!id
+    retry: false
   });
+
+  if (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to load audit details';
+    toast({
+      title: "Error",
+      description: errorMessage,
+      variant: "destructive"
+    });
+    navigate('/audit');
+    return null;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-32 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  const flaggedItems = audit?.audit_items?.filter(item => item.status === 'flagged') || [];
 
   const getFraudInsights = (item: any) => {
     const insights = [];
@@ -67,26 +99,12 @@ const AuditDetail = () => {
     return insights;
   };
 
-  if (error) {
-    toast({
-      title: "Error",
-      description: "Failed to load audit details. Please check the audit ID.",
-      variant: "destructive"
-    });
-    navigate('/audit');
-    return null;
-  }
-
-  if (isLoading) return <div>Loading audit details...</div>;
-
-  const flaggedItems = audit?.audit_items?.filter(item => item.status === 'flagged') || [];
-
   return (
-    <div className="container mx-auto p-6 space-y-6 fade-in">
+    <div className="container mx-auto p-6 space-y-6">
       <Button 
         variant="ghost" 
         onClick={() => navigate('/audit')}
-        className="mb-4 hover-scale"
+        className="mb-4"
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back to Audits
@@ -97,14 +115,42 @@ const AuditDetail = () => {
         <div className="space-x-2">
           <Button
             variant="outline"
-            onClick={() => updateAuditStatus(id, 'in_progress')}
-            className="hover-scale"
+            onClick={() => {
+              updateAuditStatus(id!, 'in_progress')
+                .then(() => {
+                  toast({
+                    title: "Success",
+                    description: "Audit status updated successfully",
+                  });
+                })
+                .catch((error) => {
+                  toast({
+                    title: "Error",
+                    description: "Failed to update audit status",
+                    variant: "destructive"
+                  });
+                });
+            }}
           >
             Start Review
           </Button>
           <Button
-            onClick={() => updateAuditStatus(id, 'completed')}
-            className="hover-scale"
+            onClick={() => {
+              updateAuditStatus(id!, 'completed')
+                .then(() => {
+                  toast({
+                    title: "Success",
+                    description: "Audit marked as completed",
+                  });
+                })
+                .catch((error) => {
+                  toast({
+                    title: "Error",
+                    description: "Failed to complete audit",
+                    variant: "destructive"
+                  });
+                });
+            }}
           >
             Complete Audit
           </Button>

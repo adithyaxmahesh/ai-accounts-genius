@@ -37,7 +37,6 @@ export const startNewAudit = async (title: string) => {
     throw new Error("User not authenticated");
   }
 
-  // First, get recent transactions for initial risk assessment
   const { data: transactions } = await supabase
     .from('revenue_records')
     .select('*')
@@ -45,7 +44,6 @@ export const startNewAudit = async (title: string) => {
     .order('date', { ascending: false })
     .limit(100);
 
-  // Perform initial risk assessment
   const totalAmount = transactions?.reduce((sum, t) => sum + t.amount, 0) || 0;
   const avgAmount = totalAmount / (transactions?.length || 1);
   const hasLargeTransactions = transactions?.some(t => t.amount > avgAmount * 2);
@@ -81,7 +79,6 @@ export const startNewAudit = async (title: string) => {
     throw new Error("No data returned after creating audit");
   }
 
-  // Add initial audit items based on risk assessment
   if (transactions) {
     const auditItems = transactions
       .filter(t => t.amount > avgAmount * 1.5)
@@ -108,16 +105,21 @@ export const startNewAudit = async (title: string) => {
 };
 
 export const updateAuditStatus = async (id: string, status: string) => {
-  // Get current audit state
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
   const { data: audit } = await supabase
     .from('audit_reports')
     .select('*, audit_items(*)')
     .eq('id', id)
+    .eq('user_id', user.id)
     .single();
 
   if (!audit) throw new Error("Audit not found");
 
-  // Update recommendations based on findings
   const recommendations = [];
   const findings = [];
 
@@ -136,7 +138,6 @@ export const updateAuditStatus = async (id: string, status: string) => {
     }
   }
 
-  // Update audit status and findings
   const { data, error } = await supabase
     .from('audit_reports')
     .update({
@@ -146,6 +147,7 @@ export const updateAuditStatus = async (id: string, status: string) => {
       risk_level: findings.length > 2 ? 'high' : findings.length > 0 ? 'medium' : 'low'
     })
     .eq('id', id)
+    .eq('user_id', user.id)
     .select()
     .single();
 

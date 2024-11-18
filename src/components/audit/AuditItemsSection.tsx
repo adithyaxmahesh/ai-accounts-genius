@@ -8,20 +8,28 @@ import {
 } from "@/components/ui/tooltip";
 import AuditItemCard from "@/components/AuditItemCard";
 
+interface AuditItem {
+  id: string;
+  category: string;
+  description: string;
+  amount: number;
+  status: string;
+}
+
 interface AuditItemsSectionProps {
-  auditItems: any[];
+  auditItems: AuditItem[];
 }
 
 const AuditItemsSection = ({ auditItems }: AuditItemsSectionProps) => {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
-  const getFraudInsights = (item: any) => {
+  const getFraudInsights = (item: AuditItem) => {
     const insights = [];
     
     if (item.status === 'flagged') {
       insights.push({
         description: 'Transaction has been flagged for suspicious activity',
-        severity: 'high',
+        severity: 'high' as const,
         amount: item.amount
       });
     }
@@ -29,7 +37,7 @@ const AuditItemsSection = ({ auditItems }: AuditItemsSectionProps) => {
     if (item.amount > 10000) {
       insights.push({
         description: 'Large transaction amount detected',
-        severity: 'medium',
+        severity: 'medium' as const,
         amount: item.amount
       });
     }
@@ -37,14 +45,22 @@ const AuditItemsSection = ({ auditItems }: AuditItemsSectionProps) => {
     return insights;
   };
 
+  if (!Array.isArray(auditItems)) {
+    return (
+      <p className="text-muted-foreground text-center py-4">
+        No audit items available
+      </p>
+    );
+  }
+
   return (
     <div className="relative">
       <div className="flex items-center gap-2 mb-2">
         <h3 className="text-lg font-semibold">
-          Audit Items ({auditItems?.length || 0})
+          Audit Items ({auditItems.length})
         </h3>
         <Badge variant="outline" className="ml-2">
-          {auditItems?.filter(item => item.status === 'flagged').length || 0} Flagged
+          {auditItems.filter(item => item.status === 'flagged').length} Flagged
         </Badge>
         <Tooltip>
           <TooltipTrigger>
@@ -57,7 +73,7 @@ const AuditItemsSection = ({ auditItems }: AuditItemsSectionProps) => {
       </div>
       
       <div className="space-y-4">
-        {auditItems?.map((item) => {
+        {auditItems.map((item) => {
           const insights = getFraudInsights(item);
           return (
             <div key={item.id} className="relative">
@@ -70,7 +86,7 @@ const AuditItemsSection = ({ auditItems }: AuditItemsSectionProps) => {
             </div>
           );
         })}
-        {(!auditItems || auditItems.length === 0) && (
+        {auditItems.length === 0 && (
           <p className="text-muted-foreground text-center py-4">
             No audit items added yet
           </p>
