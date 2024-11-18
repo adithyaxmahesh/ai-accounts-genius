@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query"; // Ensure useQueryClient is imported
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,13 +9,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { AddBalanceSheetItem } from "@/components/AddBalanceSheetItem";
 import { BalanceSheetSection } from "@/components/BalanceSheetSection";
 import { useAuth } from "@/components/AuthProvider";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 
 const BalanceSheet = () => {
   const { session } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [showAddForm, setShowAddForm] = useState(false);
-  const queryClient = useQueryClient(); // This line uses the imported hook
+  const queryClient = useQueryClient();
+
+  // Enable real-time updates
+  useRealtimeSubscription('balance_sheet_items', ['balanceSheetItems', session?.user.id]);
 
   const { data: balanceSheetItems, isLoading } = useQuery({
     queryKey: ["balanceSheetItems", session?.user.id],
@@ -24,7 +28,7 @@ const BalanceSheet = () => {
         .from("balance_sheet_items")
         .select("*")
         .order("created_at", { ascending: false });
-
+      
       if (error) throw error;
       return data;
     },

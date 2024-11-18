@@ -7,6 +7,7 @@ import { ArrowLeft, DollarSign, TrendingUp, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/components/AuthProvider";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import {
   BarChart,
   Bar,
@@ -21,6 +22,9 @@ const Revenue = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { session } = useAuth();
+
+  // Enable real-time updates
+  useRealtimeSubscription('revenue_records', ['revenue', session?.user.id]);
 
   const { data: revenueData, isLoading } = useQuery({
     queryKey: ['revenue', session?.user.id],

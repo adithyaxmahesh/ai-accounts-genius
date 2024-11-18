@@ -9,11 +9,15 @@ import { WriteOffDialog } from "@/components/write-offs/WriteOffDialog";
 import { WriteOffsList } from "@/components/write-offs/WriteOffsList";
 import TaxCodesList from "@/components/write-offs/TaxCodesList";
 import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 
 const WriteOffs = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // Enable real-time updates
+  useRealtimeSubscription('write_offs', ['writeOffsTotalDeductions', session?.user.id]);
 
   const { data: totalDeductions } = useQuery({
     queryKey: ['writeOffsTotalDeductions', session?.user.id],
