@@ -6,6 +6,45 @@ interface DocumentAnalysis {
   findings: string[];
   riskLevel: string;
   recommendations: string[];
+  writeOffs: WriteOff[];
+}
+
+interface WriteOff {
+  amount: number;
+  description: string;
+  taxCodeId?: string;
+  category: string;
+}
+
+async function findMatchingTaxCode(supabaseClient: ReturnType<typeof createClient>, description: string, amount: number): Promise<string | undefined> {
+  const keywords = {
+    'Transportation': ['fuel', 'car', 'vehicle', 'mileage', 'parking', 'toll'],
+    'Office': ['supplies', 'paper', 'printer', 'desk', 'chair', 'computer'],
+    'Marketing': ['advertising', 'promotion', 'campaign', 'marketing'],
+    'Travel': ['hotel', 'flight', 'accommodation', 'travel'],
+    'Equipment': ['machine', 'equipment', 'tool', 'hardware'],
+    'Services': ['consulting', 'service', 'subscription', 'software']
+  };
+
+  const descLower = description.toLowerCase();
+  let matchedCategory = '';
+
+  for (const [category, words] of Object.entries(keywords)) {
+    if (words.some(word => descLower.includes(word))) {
+      matchedCategory = category;
+      break;
+    }
+  }
+
+  if (matchedCategory) {
+    const { data: taxCode } = await supabaseClient
+      .from('tax_codes')
+      .select('id')
+      .eq('expense_category', matchedCategory)
+      .single();
+
+    return taxCode?.id;
+  }
 }
 
 export async function processDocument(
@@ -18,59 +57,83 @@ export async function processDocument(
   
   const findings: string[] = [];
   const transactions: any[] = [];
+  const writeOffs: WriteOff[] = [];
   let riskLevel = 'low';
   let totalAmount = 0;
-  let suspiciousTransactions = 0;
 
   const numberPattern = /\$?\d{1,3}(,\d{3})*(\.\d{2})?/;
+  const expenseKeywords = ['expense', 'payment', 'purchase', 'cost', 'fee', 'charge'];
 
-  lines.forEach((line, index) => {
+  for (const line of lines) {
     const matches = line.match(numberPattern);
     if (matches) {
       const amount = parseFloat(matches[0].replace(/[$,]/g, ''));
       if (!isNaN(amount)) {
-        totalAmount += amount;
+        const isExpense = expenseKeywords.some(keyword => 
+          line.toLowerCase().includes(keyword)
+        );
+
+        if (isExpense) {
+          const taxCodeId = await findMatchingTaxCode(supabaseClient, line, amount);
+          const category = taxCodeId ? 'Categorized' : 'Uncategorized';
+          
+          writeOffs.push({
+            amount,
+            description: line.trim(),
+            taxCodeId,
+            category
+          });
+
+          findings.push(`Potential write-off detected: $${amount.toLocaleString()} - ${category}`);
+        }
+
         transactions.push({
-          amount,
+          amount: isExpense ? -amount : amount,
           description: line.trim(),
-          line: index + 1
+          line: lines.indexOf(line) + 1
         });
 
-        if (amount > 10000) {
-          findings.push(`Large transaction detected: $${amount.toLocaleString()} on line ${index + 1}`);
-          suspiciousTransactions++;
-        }
+        totalAmount += amount;
       }
     }
-  });
-
-  riskLevel = suspiciousTransactions > 5 ? 'high' : suspiciousTransactions > 2 ? 'medium' : 'low';
+  }
 
   const recommendations = [
-    "Review all transactions above $10,000",
-    "Verify supporting documentation for large transactions",
-    "Consider implementing additional controls for high-value transactions"
+    "Review identified write-offs for accuracy",
+    "Verify tax code assignments",
+    "Collect supporting documentation for write-offs"
   ];
-
-  if (suspiciousTransactions > 0) {
-    recommendations.push(`Review ${suspiciousTransactions} flagged transactions`);
-  }
 
   return {
     transactions,
     findings,
     riskLevel,
-    recommendations
+    recommendations,
+    writeOffs
   };
 }
 
 export async function updateFinancialRecords(
   supabaseClient: ReturnType<typeof createClient>,
   userId: string,
-  transactions: any[]
+  analysis: DocumentAnalysis
 ) {
-  // Update revenue records
-  const revenueTransactions = transactions.filter(t => t.amount > 0);
+  // Update write-offs
+  if (analysis.writeOffs.length > 0) {
+    await supabaseClient.from('write_offs').insert(
+      analysis.writeOffs.map(writeOff => ({
+        user_id: userId,
+        amount: writeOff.amount,
+        description: writeOff.description,
+        tax_code_id: writeOff.taxCodeId,
+        date: new Date().toISOString().split('T')[0],
+        status: 'pending'
+      }))
+    );
+  }
+
+  // Update revenue records for non-expense transactions
+  const revenueTransactions = analysis.transactions.filter(t => t.amount > 0);
   if (revenueTransactions.length > 0) {
     await supabaseClient.from('revenue_records').insert(
       revenueTransactions.map(t => ({
@@ -83,22 +146,8 @@ export async function updateFinancialRecords(
     );
   }
 
-  // Update write-offs
-  const writeOffTransactions = transactions.filter(t => t.amount < 0);
-  if (writeOffTransactions.length > 0) {
-    await supabaseClient.from('write_offs').insert(
-      writeOffTransactions.map(t => ({
-        user_id: userId,
-        amount: Math.abs(t.amount),
-        description: t.description,
-        date: new Date().toISOString().split('T')[0],
-        status: 'pending'
-      }))
-    );
-  }
-
   // Update balance sheet
-  const totalAmount = transactions.reduce((sum, t) => sum + t.amount, 0);
+  const totalAmount = analysis.transactions.reduce((sum, t) => sum + t.amount, 0);
   if (totalAmount !== 0) {
     await supabaseClient.from('balance_sheet_items').insert({
       user_id: userId,

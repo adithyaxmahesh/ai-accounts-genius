@@ -40,21 +40,25 @@ serve(async (req) => {
 
     if (downloadError) throw downloadError;
 
-    // Process document
+    // Process document and detect write-offs
     const analysis = await processDocument(supabaseClient, document, fileData);
 
-    // Update document status
+    // Update document status and extracted data
     await supabaseClient
       .from('processed_documents')
       .update({
-        extracted_data: { transactions: analysis.transactions, findings: analysis.findings },
+        extracted_data: {
+          transactions: analysis.transactions,
+          findings: analysis.findings,
+          writeOffs: analysis.writeOffs
+        },
         processing_status: 'analyzed',
         confidence_score: 0.85
       })
       .eq('id', documentId);
 
-    // Update financial records
-    await updateFinancialRecords(supabaseClient, document.user_id, analysis.transactions);
+    // Update financial records including write-offs
+    await updateFinancialRecords(supabaseClient, document.user_id, analysis);
 
     // Generate new forecast
     await supabaseClient.functions.invoke('generate-forecast', {
@@ -66,7 +70,8 @@ serve(async (req) => {
         success: true,
         findings: analysis.findings,
         riskLevel: analysis.riskLevel,
-        recommendations: analysis.recommendations
+        recommendations: analysis.recommendations,
+        writeOffs: analysis.writeOffs
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
