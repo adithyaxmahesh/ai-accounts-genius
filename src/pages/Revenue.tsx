@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/components/AuthProvider";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
+import { ShopifyConnect } from "@/components/shopify/ShopifyConnect";
 import {
   BarChart,
   Bar,
@@ -74,6 +75,8 @@ const Revenue = () => {
           Export Data
         </Button>
       </div>
+
+      <ShopifyConnect />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="p-6 glass-card">

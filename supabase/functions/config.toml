@@ -1,4 +1,4 @@
 project_id = "nmrjqfntvxflkabdigfl"
 
-[functions.categorize-write-off]
+[functions.shopify-integration]
 verify_jwt = true
