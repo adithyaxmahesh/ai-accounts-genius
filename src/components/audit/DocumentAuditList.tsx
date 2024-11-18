@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { ProcessedDocument } from "@/components/document-management/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useState } from "react";
 
 interface DocumentAuditListProps {
   documents: ProcessedDocument[];
@@ -13,6 +14,7 @@ interface DocumentAuditListProps {
 
 export const DocumentAuditList = ({ documents, onViewDetails }: DocumentAuditListProps) => {
   const { toast } = useToast();
+  const [loading, setLoading] = useState<string | null>(null);
 
   const handleDownload = async (doc: ProcessedDocument) => {
     try {
@@ -37,6 +39,55 @@ export const DocumentAuditList = ({ documents, onViewDetails }: DocumentAuditLis
         description: "Failed to download the document",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleViewDetails = async (documentId: string) => {
+    setLoading(documentId);
+    try {
+      // First check if an audit already exists for this document
+      const { data: existingAudit, error: auditError } = await supabase
+        .from('audit_reports')
+        .select('id')
+        .eq('document_id', documentId)
+        .single();
+
+      if (auditError && auditError.code !== 'PGRST116') {
+        throw auditError;
+      }
+
+      if (existingAudit?.id) {
+        onViewDetails(existingAudit.id);
+        return;
+      }
+
+      // Create a new audit for this document
+      const { data: newAudit, error: createError } = await supabase
+        .from('audit_reports')
+        .insert({
+          title: `Document Analysis Audit ${format(new Date(), 'MM/dd/yyyy')}`,
+          description: 'Document analysis and verification',
+          status: 'pending',
+          document_id: documentId,
+          user_id: (await supabase.auth.getUser()).data.user?.id
+        })
+        .select()
+        .single();
+
+      if (createError) throw createError;
+
+      if (newAudit) {
+        onViewDetails(newAudit.id);
+      }
+    } catch (error) {
+      console.error("Error handling document view:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create audit for document",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(null);
     }
   };
 
@@ -67,9 +118,10 @@ export const DocumentAuditList = ({ documents, onViewDetails }: DocumentAuditLis
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onViewDetails(doc.id)}
+              onClick={() => handleViewDetails(doc.id)}
+              disabled={loading === doc.id}
             >
-              <Search className="h-4 w-4" />
+              <Search className={`h-4 w-4 ${loading === doc.id ? 'animate-spin' : ''}`} />
             </Button>
           </div>
         </Card>
