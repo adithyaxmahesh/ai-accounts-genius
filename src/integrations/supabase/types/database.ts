@@ -6,9 +6,67 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type Database = {
+export interface Database {
   public: {
     Tables: {
+      tax_deadlines: {
+        Row: {
+          id: string
+          user_id: string | null
+          title: string
+          description: string | null
+          due_date: string
+          status: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          title: string
+          description?: string | null
+          due_date: string
+          status?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          title?: string
+          description?: string | null
+          due_date?: string
+          status?: string | null
+          created_at?: string
+        }
+      }
+      tax_planning_scenarios: {
+        Row: {
+          id: string
+          user_id: string | null
+          name: string
+          description: string | null
+          scenario_data: Json | null
+          estimated_tax_impact: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          name: string
+          description?: string | null
+          scenario_data?: Json | null
+          estimated_tax_impact?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          name?: string
+          description?: string | null
+          scenario_data?: Json | null
+          estimated_tax_impact?: number | null
+          created_at?: string
+        }
+      }
       ai_insights: {
         Row: {
           category: string
@@ -34,15 +92,6 @@ export type Database = {
           insight?: string
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "ai_insights_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       audit_items: {
         Row: {
@@ -72,15 +121,6 @@ export type Database = {
           id?: string
           status?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "audit_items_audit_id_fkey"
-            columns: ["audit_id"]
-            isOneToOne: false
-            referencedRelation: "audit_reports"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       audit_reports: {
         Row: {
@@ -102,8 +142,8 @@ export type Database = {
           findings?: Json | null
           id?: string
           recommendations?: string[] | null
-          risk_level?: string | null
-          status?: string
+          risk_level?: string
+          status: string
           title: string
           user_id?: string | null
         }
@@ -114,27 +154,11 @@ export type Database = {
           findings?: Json | null
           id?: string
           recommendations?: string[] | null
-          risk_level?: string | null
+          risk_level?: string
           status?: string
           title?: string
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "audit_reports_document_id_fkey"
-            columns: ["document_id"]
-            isOneToOne: false
-            referencedRelation: "processed_documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "audit_reports_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       balance_sheet_items: {
         Row: {
@@ -167,15 +191,6 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "balance_sheet_items_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       business_insights: {
         Row: {
@@ -205,15 +220,6 @@ export type Database = {
           recommendations?: string[] | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "business_insights_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       compliance_checks: {
         Row: {
@@ -243,15 +249,6 @@ export type Database = {
           risk_level?: string | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "compliance_checks_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       expense_patterns: {
         Row: {
@@ -284,15 +281,6 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "expense_patterns_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       forecasts: {
         Row: {
@@ -325,15 +313,6 @@ export type Database = {
           predicted_revenue?: number
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "forecasts_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       fraud_alerts: {
         Row: {
@@ -363,15 +342,6 @@ export type Database = {
           status?: string | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "fraud_alerts_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       inventory_analytics: {
         Row: {
@@ -401,15 +371,6 @@ export type Database = {
           reorder_points?: Json | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "inventory_analytics_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       irs_publications: {
         Row: {
@@ -430,7 +391,7 @@ export type Database = {
           id?: string
           publication_number: string
           title: string
-          updated_at?: string
+          updated_at: string
         }
         Update: {
           content?: string
@@ -442,7 +403,6 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
       }
       processed_documents: {
         Row: {
@@ -481,15 +441,6 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "processed_documents_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       profiles: {
         Row: {
@@ -510,7 +461,6 @@ export type Database = {
           id?: string
           role?: string | null
         }
-        Relationships: []
       }
       receipt_analysis: {
         Row: {
@@ -543,15 +493,6 @@ export type Database = {
           suggested_tax_codes?: Json | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "receipt_analysis_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       revenue_records: {
         Row: {
@@ -581,15 +522,6 @@ export type Database = {
           id?: string
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "revenue_records_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       state_operations: {
         Row: {
@@ -619,15 +551,6 @@ export type Database = {
           tax_implications?: Json | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "state_operations_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       tax_analysis: {
         Row: {
@@ -657,15 +580,6 @@ export type Database = {
           tax_impact?: number | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "tax_analysis_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       tax_code_rules: {
         Row: {
@@ -689,22 +603,6 @@ export type Database = {
           tax_code_id?: string | null
           tax_rule_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "tax_code_rules_tax_code_id_fkey"
-            columns: ["tax_code_id"]
-            isOneToOne: false
-            referencedRelation: "tax_codes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tax_code_rules_tax_rule_id_fkey"
-            columns: ["tax_rule_id"]
-            isOneToOne: false
-            referencedRelation: "tax_rules"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       tax_codes: {
         Row: {
@@ -737,45 +635,6 @@ export type Database = {
           id?: string
           state?: string | null
         }
-        Relationships: []
-      }
-      tax_deadlines: {
-        Row: {
-          created_at: string
-          description: string | null
-          due_date: string
-          id: string
-          status: string | null
-          title: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          due_date: string
-          id?: string
-          status?: string | null
-          title: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          due_date?: string
-          id?: string
-          status?: string | null
-          title?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tax_deadlines_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       tax_planning_chats: {
         Row: {
@@ -802,53 +661,6 @@ export type Database = {
           question?: string | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "tax_planning_chats_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tax_planning_scenarios: {
-        Row: {
-          created_at: string
-          description: string | null
-          estimated_tax_impact: number | null
-          id: string
-          name: string
-          scenario_data: Json | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          estimated_tax_impact?: number | null
-          id?: string
-          name: string
-          scenario_data?: Json | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          estimated_tax_impact?: number | null
-          id?: string
-          name?: string
-          scenario_data?: Json | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tax_planning_scenarios_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       tax_rules: {
         Row: {
@@ -871,7 +683,7 @@ export type Database = {
           id?: string
           publication_id?: string | null
           rule_code: string
-          updated_at?: string
+          updated_at: string
         }
         Update: {
           calculation_formula?: string | null
@@ -884,15 +696,6 @@ export type Database = {
           rule_code?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "tax_rules_publication_id_fkey"
-            columns: ["publication_id"]
-            isOneToOne: false
-            referencedRelation: "irs_publications"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       user_settings: {
         Row: {
@@ -913,7 +716,6 @@ export type Database = {
           notifications?: boolean | null
           theme?: string | null
         }
-        Relationships: []
       }
       write_offs: {
         Row: {
@@ -946,22 +748,6 @@ export type Database = {
           tax_code_id?: string | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "write_offs_tax_code_id_fkey"
-            columns: ["tax_code_id"]
-            isOneToOne: false
-            referencedRelation: "tax_codes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "write_offs_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Views: {
@@ -978,100 +764,3 @@ export type Database = {
     }
   }
 }
-
-type PublicSchema = Database[Extract<keyof Database, "public">]
-
-export type Tables<
-  PublicTableNameOrOptions extends
-    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
-    : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
-    }
-    ? R
-    : never
-  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-        PublicSchema["Views"])
-    ? (PublicSchema["Tables"] &
-        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
-
-export type TablesInsert<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
-
-export type TablesUpdate<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
-
-export type Enums<
-  PublicEnumNameOrOptions extends
-    | keyof PublicSchema["Enums"]
-    | { schema: keyof Database },
-  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
-> = PublicEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
-    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
-    : never
-
-export type CompositeTypes<
-  PublicCompositeTypeNameOrOptions extends
-    | keyof PublicSchema["CompositeTypes"]
-    | { schema: keyof Database },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
-    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
