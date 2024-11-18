@@ -86,6 +86,7 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          document_id: string | null
           findings: Json | null
           id: string
           recommendations: string[] | null
@@ -97,6 +98,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          document_id?: string | null
           findings?: Json | null
           id?: string
           recommendations?: string[] | null
@@ -108,6 +110,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          document_id?: string | null
           findings?: Json | null
           id?: string
           recommendations?: string[] | null
@@ -117,6 +120,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "audit_reports_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "processed_documents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "audit_reports_user_id_fkey"
             columns: ["user_id"]
