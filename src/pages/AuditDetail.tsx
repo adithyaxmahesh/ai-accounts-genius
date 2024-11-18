@@ -18,6 +18,7 @@ const AuditDetail = () => {
   useEffect(() => {
     if (!session) {
       navigate('/auth');
+      return;
     }
   }, [session, navigate]);
 
@@ -25,6 +26,9 @@ const AuditDetail = () => {
   const { data: audit, isLoading, error } = useQuery({
     queryKey: ['audit', id],
     queryFn: async () => {
+      console.log('Fetching audit data for ID:', id);
+      console.log('Session user ID:', session?.user?.id);
+      
       if (!id || !session?.user?.id) {
         throw new Error('No audit ID provided or user not authenticated');
       }
@@ -49,7 +53,7 @@ const AuditDetail = () => {
         throw new Error('Audit not found');
       }
       
-      console.log('Fetched audit data:', data);
+      console.log('Successfully fetched audit data:', data);
       return data;
     },
     enabled: !!session && !!id,
