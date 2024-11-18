@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { TaxDeadline } from "@/components/types";
+import { TaxDeadline } from "@/integrations/supabase/types/tax";
 
 export const TaxDeadlines = () => {
   const { session } = useAuth();

@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Calculator } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
-import { TaxPlanningScenario } from "@/components/types";
+import { TaxPlanningScenario } from "@/integrations/supabase/types/tax";
 
 export const TaxPlanner = () => {
   const { session } = useAuth();
