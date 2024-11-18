@@ -4,11 +4,12 @@ export const corsHeaders = {
 };
 
 export const validateEnvironment = () => {
-  const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-  if (!openAIApiKey) {
-    throw new Error('OpenAI API key is not configured');
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Supabase configuration is missing');
   }
-  return openAIApiKey;
+  return { supabaseUrl, supabaseKey };
 };
 
 export const parseFileContent = async (fileData: Blob, fileExt: string | undefined) => {
@@ -20,8 +21,6 @@ export const parseFileContent = async (fileData: Blob, fileExt: string | undefin
     if (fileExt === 'csv') {
       const rows = text.split('\n').map(row => row.split(','));
       return rows.slice(1); // Skip header row
-    } else if (['xls', 'xlsx'].includes(fileExt || '')) {
-      throw new Error('Excel files not supported yet');
     } else {
       // For text files, PDFs, etc., return lines of text
       return text.split('\n').filter(line => line.trim());
@@ -32,53 +31,83 @@ export const parseFileContent = async (fileData: Blob, fileExt: string | undefin
   }
 };
 
-export const analyzeWithAI = async (openAIApiKey: string, parsedData: any[]) => {
-  console.log('Sending data to OpenAI for analysis');
+export const analyzeWithRules = async (parsedData: any[]) => {
+  console.log('Analyzing data with rule-based system');
   
-  // Limit data sent to OpenAI to avoid token limits
-  const sampleData = parsedData.slice(0, 50);
-  
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${openAIApiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a financial document analyzer. Analyze this data and provide a structured response with:
-            1. transactions: Array of identified transactions with amounts, categories, and whether they should be flagged
-            2. findings: Array of key findings or issues identified
-            3. risk_level: Overall risk assessment (low, medium, high)
-            4. recommendations: Array of actionable recommendations
-            5. confidence_score: Number between 0 and 1 indicating analysis confidence
-            Format response as JSON with these exact sections.`
-        },
-        {
-          role: 'user',
-          content: `Analyze this financial data:\n${JSON.stringify(sampleData, null, 2)}`
+  const transactions = [];
+  const findings = [];
+  let riskLevel = 'low';
+  const recommendations = [];
+  let confidenceScore = 0.85;
+
+  // Basic pattern matching for financial data
+  parsedData.forEach((line, index) => {
+    if (Array.isArray(line)) {
+      // CSV data analysis
+      const [date, description, amount] = line;
+      const numAmount = parseFloat(amount);
+      
+      if (!isNaN(numAmount)) {
+        transactions.push({
+          date,
+          description,
+          amount: numAmount,
+          category: detectCategory(description),
+          flagged: numAmount > 10000 // Flag large transactions
+        });
+
+        if (numAmount > 10000) {
+          findings.push(`Large transaction detected: $${numAmount} on ${date}`);
+          riskLevel = 'medium';
         }
-      ],
-      temperature: 0.5,
-      max_tokens: 2000
-    }),
+      }
+    } else if (typeof line === 'string') {
+      // Text document analysis
+      if (line.toLowerCase().includes('expense') || line.toLowerCase().includes('payment')) {
+        const amount = extractAmount(line);
+        if (amount) {
+          transactions.push({
+            description: line,
+            amount,
+            category: detectCategory(line),
+            flagged: amount > 10000
+          });
+        }
+      }
+    }
   });
 
-  if (!response.ok) {
-    console.error('OpenAI API error:', await response.text());
-    throw new Error('Failed to analyze document with OpenAI');
+  // Generate recommendations based on findings
+  if (findings.length > 0) {
+    recommendations.push('Review all flagged transactions for compliance');
+    recommendations.push('Consider implementing transaction limits');
+  } else {
+    recommendations.push('No immediate actions required');
+    recommendations.push('Continue monitoring transactions regularly');
   }
 
-  const aiResponse = await response.json();
-  console.log('Received analysis from OpenAI');
-  
-  try {
-    return JSON.parse(aiResponse.choices[0].message.content);
-  } catch (error) {
-    console.error('Error parsing OpenAI response:', error);
-    throw new Error('Invalid response format from OpenAI');
-  }
+  return {
+    transactions,
+    findings,
+    risk_level: riskLevel,
+    recommendations,
+    confidence_score: confidenceScore
+  };
 };
+
+function detectCategory(text: string): string {
+  const lowercase = text.toLowerCase();
+  if (lowercase.includes('salary') || lowercase.includes('payroll')) return 'Payroll';
+  if (lowercase.includes('rent') || lowercase.includes('lease')) return 'Rent';
+  if (lowercase.includes('equipment') || lowercase.includes('supplies')) return 'Equipment';
+  if (lowercase.includes('utility') || lowercase.includes('electric')) return 'Utilities';
+  return 'Other';
+}
+
+function extractAmount(text: string): number | null {
+  const matches = text.match(/\$?\d+([,.]\d{2})?/);
+  if (matches) {
+    return parseFloat(matches[0].replace(/[$,]/g, ''));
+  }
+  return null;
+}
