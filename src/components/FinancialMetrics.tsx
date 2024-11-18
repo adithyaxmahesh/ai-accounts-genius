@@ -12,15 +12,17 @@ export const FinancialMetrics = () => {
   const { data: metrics } = useQuery({
     queryKey: ['financial-metrics', session?.user.id],
     queryFn: async () => {
-      // Fetch revenue data for the last two months
-      const twoMonthsAgo = new Date();
-      twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const lastYear = currentYear - 1;
       
+      // Fetch all revenue data for current and previous year
       const { data: revenueData } = await supabase
         .from('revenue_records')
         .select('amount, date')
         .eq('user_id', session?.user.id)
-        .gte('date', twoMonthsAgo.toISOString())
+        .gte('date', `${lastYear}-01-01`)
+        .lte('date', `${currentYear}-12-31`)
         .order('date', { ascending: false });
 
       // Fetch active fraud alerts
@@ -30,22 +32,53 @@ export const FinancialMetrics = () => {
         .eq('user_id', session?.user.id)
         .eq('status', 'pending');
 
-      // Calculate metrics
-      const currentMonth = new Date().getMonth();
+      if (!revenueData) return { revenue: 0, growthRate: 0, alertCount: 0 };
+
+      // Calculate current month's revenue
+      const currentMonth = now.getMonth();
+      const currentMonthStart = new Date(currentYear, currentMonth, 1);
+      const currentMonthEnd = new Date(currentYear, currentMonth + 1, 0);
+
       const currentMonthRevenue = revenueData
-        ?.filter(record => new Date(record.date).getMonth() === currentMonth)
-        .reduce((sum, record) => sum + Number(record.amount), 0) || 0;
+        .filter(record => {
+          const recordDate = new Date(record.date);
+          return recordDate >= currentMonthStart && recordDate <= currentMonthEnd;
+        })
+        .reduce((sum, record) => sum + Number(record.amount), 0);
+
+      // Calculate last month's revenue
+      const lastMonthStart = new Date(currentYear, currentMonth - 1, 1);
+      const lastMonthEnd = new Date(currentYear, currentMonth, 0);
 
       const lastMonthRevenue = revenueData
-        ?.filter(record => new Date(record.date).getMonth() === (currentMonth - 1))
-        .reduce((sum, record) => sum + Number(record.amount), 0) || 0;
+        .filter(record => {
+          const recordDate = new Date(record.date);
+          return recordDate >= lastMonthStart && recordDate <= lastMonthEnd;
+        })
+        .reduce((sum, record) => sum + Number(record.amount), 0);
 
-      const growthRate = lastMonthRevenue ? 
+      // Calculate year-over-year growth
+      const sameMonthLastYearStart = new Date(lastYear, currentMonth, 1);
+      const sameMonthLastYearEnd = new Date(lastYear, currentMonth + 1, 0);
+
+      const lastYearRevenue = revenueData
+        .filter(record => {
+          const recordDate = new Date(record.date);
+          return recordDate >= sameMonthLastYearStart && recordDate <= sameMonthLastYearEnd;
+        })
+        .reduce((sum, record) => sum + Number(record.amount), 0);
+
+      // Calculate growth rates
+      const monthOverMonthGrowth = lastMonthRevenue ? 
         ((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 : 0;
+
+      const yearOverYearGrowth = lastYearRevenue ? 
+        ((currentMonthRevenue - lastYearRevenue) / lastYearRevenue) * 100 : 0;
 
       return {
         revenue: currentMonthRevenue,
-        growthRate,
+        monthOverMonthGrowth,
+        yearOverYearGrowth,
         alertCount: fraudAlerts?.length || 0
       };
     }
@@ -63,7 +96,7 @@ export const FinancialMetrics = () => {
           ${metrics?.revenue.toLocaleString() || '0'}
         </p>
         <p className="text-sm text-muted-foreground">
-          {metrics?.growthRate > 0 ? '+' : ''}{metrics?.growthRate.toFixed(1)}% from last month
+          {metrics?.monthOverMonthGrowth > 0 ? '+' : ''}{metrics?.monthOverMonthGrowth.toFixed(1)}% from last month
         </p>
       </Card>
       <Card 
@@ -73,7 +106,7 @@ export const FinancialMetrics = () => {
         <TrendingUp className="h-8 w-8 mb-4 text-primary" />
         <h3 className="text-lg font-semibold">Growth</h3>
         <p className="text-3xl font-bold">
-          {metrics?.growthRate > 0 ? '+' : ''}{metrics?.growthRate.toFixed(1)}%
+          {metrics?.yearOverYearGrowth > 0 ? '+' : ''}{metrics?.yearOverYearGrowth.toFixed(1)}%
         </p>
         <p className="text-sm text-muted-foreground">Year over year</p>
       </Card>
