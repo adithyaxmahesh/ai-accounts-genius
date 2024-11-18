@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { ExpensePattern } from "@/integrations/supabase/types/expense-patterns";
 
 export interface CategoryPattern {
   pattern: string;
@@ -10,8 +11,7 @@ export interface CategoryPattern {
 export const categorizeTransaction = async (description: string, amount: number) => {
   const { data: patterns } = await supabase
     .from('expense_patterns')
-    .select('*')
-    .order('confidence', { ascending: false });
+    .select('*') as { data: ExpensePattern[] | null };
 
   // Default categorization rules
   const defaultPatterns: CategoryPattern[] = [
@@ -28,8 +28,8 @@ export const categorizeTransaction = async (description: string, amount: number)
   const allPatterns = [...(patterns || []).map(p => ({
     pattern: p.pattern,
     category: p.category,
-    confidence: p.confidence,
-    isExpense: p.is_expense
+    confidence: p.confidence || 0.5,
+    isExpense: p.is_expense || false
   })), ...defaultPatterns];
   
   const descLower = description.toLowerCase();
@@ -72,7 +72,7 @@ export const learnFromTransaction = async (
       category,
       is_expense: isExpense,
       confidence: 0.7, // Initial confidence for user-defined patterns
-    });
+    }) as { error: Error | null };
 
   if (error) console.error('Error learning pattern:', error);
 };
