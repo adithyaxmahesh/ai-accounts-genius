@@ -212,19 +212,12 @@ const Audit = () => {
           {audits.map((audit) => (
             <Card 
               key={audit.id}
-              className="p-6 hover:shadow-lg transition-shadow glass-card"
+              className="p-6 hover:shadow-lg transition-shadow glass-card cursor-pointer"
+              onClick={() => navigate(`/audit/${audit.id}`)}
             >
               <div className="flex justify-between items-start mb-4">
                 {getStatusIcon(audit.status)}
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigate(`/audit/${audit.id}`)}
-                    className="hover:bg-secondary"
-                  >
-                    <Search className="h-4 w-4" />
-                  </Button>
+                <div className="flex gap-2 absolute top-4 right-4">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -238,7 +231,6 @@ const Audit = () => {
                   </Button>
                 </div>
               </div>
-              
               <h3 className="text-lg font-semibold mb-2">{audit.title}</h3>
               <p className="text-sm text-muted-foreground mb-4">
                 {audit.description || getStatusExplanation(audit.status)}

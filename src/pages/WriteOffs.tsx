@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -10,27 +10,47 @@ import { WriteOffsList } from "@/components/write-offs/WriteOffsList";
 import TaxCodesList from "@/components/write-offs/TaxCodesList";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
+import { useToast } from "@/components/ui/use-toast";
 
 const WriteOffs = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
+  const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+  useEffect(() => {
+    if (!session) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to view write-offs",
+        variant: "destructive"
+      });
+      navigate("/auth");
+    }
+  }, [session, navigate, toast]);
+
   // Enable real-time updates
-  useRealtimeSubscription('write_offs', ['writeOffsTotalDeductions', session?.user.id]);
+  useRealtimeSubscription('write_offs', ['writeOffsTotalDeductions', session?.user?.id]);
 
   const { data: totalDeductions } = useQuery({
-    queryKey: ['writeOffsTotalDeductions', session?.user.id],
+    queryKey: ['writeOffsTotalDeductions', session?.user?.id],
     queryFn: async () => {
+      if (!session?.user?.id) return 0;
+      
       const { data, error } = await supabase
         .from('write_offs')
         .select('amount')
-        .eq('user_id', session?.user.id);
+        .eq('user_id', session.user.id);
       
       if (error) throw error;
       return data.reduce((sum, record) => sum + Number(record.amount), 0);
-    }
+    },
+    enabled: !!session?.user?.id
   });
+
+  if (!session) {
+    return null;
+  }
 
   return (
     <div className="container mx-auto p-6 space-y-6 fade-in">
@@ -68,7 +88,7 @@ const WriteOffs = () => {
       </div>
 
       <TaxCodesList />
-      <WriteOffsList userId={session?.user.id ?? ''} />
+      <WriteOffsList userId={session?.user?.id ?? ''} />
 
       <WriteOffDialog
         isOpen={isDialogOpen}
@@ -76,7 +96,7 @@ const WriteOffs = () => {
         onSuccess={() => {
           // Refetch queries will happen automatically due to React Query's cache invalidation
         }}
-        userId={session?.user.id ?? ''}
+        userId={session?.user?.id ?? ''}
       />
     </div>
   );
