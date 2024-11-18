@@ -21,39 +21,66 @@ export const DocumentUpload = ({ className }: { className?: string }) => {
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
     setIsDragging(true);
   };
 
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setIsDragging(false);
+    e.stopPropagation();
+    
+    // Check if we're leaving the main drop zone
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX;
+    const y = e.clientY;
+    
+    if (
+      x <= rect.left ||
+      x >= rect.right ||
+      y <= rect.top ||
+      y >= rect.bottom
+    ) {
+      setIsDragging(false);
+    }
   };
 
   const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
 
-    const file = e.dataTransfer.files[0];
-    if (!file) return;
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length === 0) return;
 
-    // Create a new change event
-    const event = {
+    // Handle only the first file for now
+    const file = files[0];
+
+    // Create a synthetic event
+    const syntheticEvent = {
       target: {
-        files: [file]
+        files: [file],
+        value: ''  // Add this to match the expected event shape
       }
     } as unknown as React.ChangeEvent<HTMLInputElement>;
 
-    handleFileUpload(event);
+    await handleFileUpload(syntheticEvent);
   };
 
   return (
     <Card 
       className={cn(
-        "p-4 glass-card transition-colors", 
+        "p-4 glass-card transition-colors relative min-h-[200px]", 
         isDragging && "border-primary border-2 bg-primary/5",
         className
       )}
       onDragOver={handleDragOver}
+      onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
@@ -90,8 +117,11 @@ export const DocumentUpload = ({ className }: { className?: string }) => {
       </div>
 
       {isDragging ? (
-        <div className="text-center py-12 text-muted-foreground">
-          Drop your file here to upload
+        <div className="absolute inset-0 flex items-center justify-center bg-primary/5 rounded-lg border-2 border-dashed border-primary">
+          <div className="text-center text-muted-foreground">
+            <Upload className="h-8 w-8 mx-auto mb-2 text-primary" />
+            Drop your file here to upload
+          </div>
         </div>
       ) : (
         <DocumentList 
