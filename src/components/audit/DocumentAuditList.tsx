@@ -1,4 +1,3 @@
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Download, Search } from "lucide-react";
 import { format } from "date-fns";
@@ -6,6 +5,7 @@ import { ProcessedDocument } from "@/components/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface DocumentAuditListProps {
   documents: ProcessedDocument[];
@@ -15,6 +15,7 @@ interface DocumentAuditListProps {
 export const DocumentAuditList = ({ documents, onViewDetails }: DocumentAuditListProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const handleDownload = async (doc: ProcessedDocument) => {
     try {
@@ -57,9 +58,14 @@ export const DocumentAuditList = ({ documents, onViewDetails }: DocumentAuditLis
       }
 
       if (existingAudit?.id) {
-        onViewDetails(existingAudit.id);
+        navigate(`/audit/${existingAudit.id}`);
         return;
       }
+
+      toast({
+        title: "Processing",
+        description: "Analyzing document and creating audit report...",
+      });
 
       // Create a new audit for this document
       const { data: newAudit, error: createError } = await supabase
@@ -110,7 +116,12 @@ export const DocumentAuditList = ({ documents, onViewDetails }: DocumentAuditLis
 
         if (updateError) throw updateError;
         
-        onViewDetails(newAudit.id);
+        toast({
+          title: "Success",
+          description: "Document analyzed successfully",
+        });
+
+        navigate(`/audit/${newAudit.id}`);
       }
     } catch (error) {
       console.error("Error handling document view:", error);
@@ -127,7 +138,7 @@ export const DocumentAuditList = ({ documents, onViewDetails }: DocumentAuditLis
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {documents.map((doc) => (
-        <Card key={doc.id} className="p-4 hover:shadow-lg transition-shadow">
+        <div key={doc.id} className="p-4 border rounded-lg shadow-sm bg-white">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center space-x-3">
               <FileText className="h-6 w-6 text-blue-500" />
@@ -157,7 +168,7 @@ export const DocumentAuditList = ({ documents, onViewDetails }: DocumentAuditLis
               <Search className={`h-4 w-4 ${loading === doc.id ? 'animate-spin' : ''}`} />
             </Button>
           </div>
-        </Card>
+        </div>
       ))}
     </div>
   );
