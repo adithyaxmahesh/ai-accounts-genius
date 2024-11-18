@@ -10,31 +10,26 @@ import AuditDetailsTab from "@/components/AuditDetailsTab";
 import { useState } from "react";
 import { updateAuditStatus, getStatusExplanation, getRiskLevelExplanation } from "@/utils/auditUtils";
 import AuditItemCard from "@/components/AuditItemCard";
+import { useAuth } from "@/components/AuthProvider";
 
 const AuditDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const { session } = useAuth();
 
-  const isValidUUID = (uuid: string | undefined) => {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    return uuid ? uuidRegex.test(uuid) : false;
-  };
+  // Redirect to auth if not authenticated
+  if (!session) {
+    navigate('/auth');
+    return null;
+  }
 
   const { data: audit, isLoading, error } = useQuery({
     queryKey: ['audit', id],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      if (!id) throw new Error('No audit ID provided');
       
-      if (!user) {
-        throw new Error('Authentication required');
-      }
-
-      if (!isValidUUID(id)) {
-        throw new Error('Invalid audit ID format');
-      }
-
       const { data, error } = await supabase
         .from('audit_reports')
         .select(`
@@ -42,7 +37,7 @@ const AuditDetail = () => {
           audit_items (*)
         `)
         .eq('id', id)
-        .eq('user_id', user.id)
+        .eq('user_id', session.user.id)
         .single();
       
       if (error) throw error;
@@ -50,14 +45,14 @@ const AuditDetail = () => {
       
       return data;
     },
+    enabled: !!session && !!id,
     retry: false
   });
 
   if (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to load audit details';
     toast({
       title: "Error",
-      description: errorMessage,
+      description: error instanceof Error ? error.message : 'Failed to load audit details',
       variant: "destructive"
     });
     navigate('/audit');
@@ -70,6 +65,18 @@ const AuditDetail = () => {
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-gray-200 rounded w-1/4"></div>
           <div className="h-32 bg-gray-200 rounded"></div>
+          <div className="h-64 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!audit) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold mb-4">Audit Not Found</h2>
+          <Button onClick={() => navigate('/audit')}>Return to Audits</Button>
         </div>
       </div>
     );
@@ -158,7 +165,7 @@ const AuditDetail = () => {
       </div>
 
       {flaggedItems.length > 0 && (
-        <div className="p-6 bg-red-50 border-red-200 rounded-lg">
+        <div className="p-6 bg-red-50 border border-red-200 rounded-lg">
           <h2 className="text-lg font-semibold text-red-700 mb-4 flex items-center">
             <AlertTriangle className="mr-2 h-5 w-5" />
             Flagged Items Requiring Attention ({flaggedItems.length})
