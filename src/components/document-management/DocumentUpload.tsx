@@ -1,4 +1,3 @@
-import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Upload, Loader2, Brain } from "lucide-react";
@@ -6,9 +5,11 @@ import { useToast } from "@/components/ui/use-toast";
 import { DocumentList } from "./DocumentList";
 import { useDocumentUpload } from "./useDocumentUpload";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 export const DocumentUpload = ({ className }: { className?: string }) => {
   const { toast } = useToast();
+  const [isDragging, setIsDragging] = useState(false);
   const { 
     uploading, 
     processing, 
@@ -18,8 +19,44 @@ export const DocumentUpload = ({ className }: { className?: string }) => {
     handleDeleteDocument 
   } = useDocumentUpload();
 
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+
+    // Create a new change event
+    const event = {
+      target: {
+        files: [file]
+      }
+    } as unknown as React.ChangeEvent<HTMLInputElement>;
+
+    handleFileUpload(event);
+  };
+
   return (
-    <Card className={cn("p-4 glass-card", className)}>
+    <Card 
+      className={cn(
+        "p-4 glass-card transition-colors", 
+        isDragging && "border-primary border-2 bg-primary/5",
+        className
+      )}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold">Document Processing</h3>
         <div className="relative">
@@ -52,12 +89,18 @@ export const DocumentUpload = ({ className }: { className?: string }) => {
         </div>
       </div>
 
-      <DocumentList 
-        documents={documents}
-        processing={processing}
-        onAnalyze={analyzeDocument}
-        onDelete={handleDeleteDocument}
-      />
+      {isDragging ? (
+        <div className="text-center py-12 text-muted-foreground">
+          Drop your file here to upload
+        </div>
+      ) : (
+        <DocumentList 
+          documents={documents}
+          processing={processing}
+          onAnalyze={analyzeDocument}
+          onDelete={handleDeleteDocument}
+        />
+      )}
     </Card>
   );
 };
