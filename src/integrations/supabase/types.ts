@@ -215,6 +215,38 @@ export type Database = {
           },
         ]
       }
+      collaborator_access: {
+        Row: {
+          access_level: string
+          collaborator_email: string
+          created_at: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          access_level: string
+          collaborator_email: string
+          created_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          access_level?: string
+          collaborator_email?: string
+          created_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collaborator_access_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compliance_checks: {
         Row: {
           check_type: string | null
@@ -246,6 +278,45 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "compliance_checks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_comments: {
+        Row: {
+          comment: string
+          created_at: string
+          document_id: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_comments_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "processed_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_comments_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -512,6 +583,44 @@ export type Database = {
         }
         Relationships: []
       }
+      push_notifications: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          read: boolean | null
+          title: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          read?: boolean | null
+          title: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          read?: boolean | null
+          title?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       receipt_analysis: {
         Row: {
           confidence_score: number | null
@@ -587,6 +696,79 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopify_connections: {
+        Row: {
+          access_token: string
+          created_at: string
+          id: string
+          last_sync_at: string | null
+          shop_url: string
+          user_id: string | null
+          webhook_secret: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          shop_url: string
+          user_id?: string | null
+          webhook_secret: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          shop_url?: string
+          user_id?: string | null
+          webhook_secret?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopify_connections_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopify_sync_logs: {
+        Row: {
+          connection_id: string | null
+          created_at: string
+          details: Json | null
+          id: string
+          status: string
+          sync_type: string
+        }
+        Insert: {
+          connection_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          status: string
+          sync_type: string
+        }
+        Update: {
+          connection_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          status?: string
+          sync_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopify_sync_logs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "shopify_connections"
             referencedColumns: ["id"]
           },
         ]
@@ -890,6 +1072,54 @@ export type Database = {
             columns: ["publication_id"]
             isOneToOne: false
             referencedRelation: "irs_publications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_tasks: {
+        Row: {
+          assignee_id: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          status: string | null
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          assignee_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          status?: string | null
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          assignee_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          status?: string | null
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_tasks_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tax_tasks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
