@@ -1,15 +1,67 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LineChart, TrendingUp, ArrowUpRight, ArrowDownRight, RefreshCw } from "lucide-react";
+import { LineChart, TrendingUp, ArrowUpRight, ArrowDownRight, RefreshCw, DollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { categorizeTransaction } from "@/utils/expenseCategories";
 
 export const BusinessIntelligence = () => {
   const { session } = useAuth();
   const { toast } = useToast();
+
+  const { data: financialData } = useQuery({
+    queryKey: ['financial-metrics', session?.user.id],
+    queryFn: async () => {
+      // Fetch all financial transactions
+      const { data: transactions } = await supabase
+        .from('revenue_records')
+        .select('*')
+        .eq('user_id', session?.user.id);
+
+      const { data: expenses } = await supabase
+        .from('write_offs')
+        .select('*')
+        .eq('user_id', session?.user.id);
+
+      // Categorize and analyze all transactions
+      const categorizedTransactions = await Promise.all([
+        ...(transactions || []).map(async t => ({
+          ...t,
+          ...(await categorizeTransaction(t.description, t.amount))
+        })),
+        ...(expenses || []).map(async e => ({
+          ...e,
+          ...(await categorizeTransaction(e.description, -e.amount))
+        }))
+      ]);
+
+      // Calculate metrics by month
+      const monthlyData = categorizedTransactions.reduce((acc, curr) => {
+        const date = new Date(curr.date);
+        const month = date.toLocaleString('default', { month: 'short' });
+        const year = date.getFullYear();
+        const key = `${month} ${year}`;
+
+        if (!acc[key]) {
+          acc[key] = { revenue: 0, expenses: 0, profit: 0, month: key };
+        }
+
+        if (curr.isExpense) {
+          acc[key].expenses += Math.abs(Number(curr.amount));
+        } else {
+          acc[key].revenue += Number(curr.amount);
+        }
+        acc[key].profit = acc[key].revenue - acc[key].expenses;
+
+        return acc;
+      }, {} as Record<string, any>);
+
+      return Object.values(monthlyData);
+    }
+  });
 
   const { data: insights, refetch } = useQuery({
     queryKey: ['business-insights', session?.user.id],
@@ -33,14 +85,11 @@ export const BusinessIntelligence = () => {
         description: "Analyzing your business data...",
       });
 
-      const { data, error } = await supabase.functions.invoke('generate-insights', {
-        body: { 
-          userId: session?.user.id 
-        }
+      const { error } = await supabase.functions.invoke('generate-insights', {
+        body: { userId: session?.user.id }
       });
 
       if (error) throw error;
-
       await refetch();
 
       toast({
@@ -57,12 +106,9 @@ export const BusinessIntelligence = () => {
     }
   };
 
-  const quarterlyData = [
-    { quarter: 'Q1', revenue: 120000 },
-    { quarter: 'Q2', revenue: 150000 },
-    { quarter: 'Q3', revenue: 180000 },
-    { quarter: 'Q4', revenue: 220000 }
-  ];
+  const totalRevenue = financialData?.reduce((sum, month) => sum + month.revenue, 0) || 0;
+  const totalExpenses = financialData?.reduce((sum, month) => sum + month.expenses, 0) || 0;
+  const totalProfit = totalRevenue - totalExpenses;
 
   return (
     <Card className="p-6">
@@ -77,14 +123,34 @@ export const BusinessIntelligence = () => {
         </Button>
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="p-4 bg-muted rounded-lg">
+          <DollarSign className="h-5 w-5 text-green-500 mb-2" />
+          <h3 className="text-sm font-medium">Total Revenue</h3>
+          <p className="text-2xl font-bold text-green-500">${totalRevenue.toLocaleString()}</p>
+        </div>
+        <div className="p-4 bg-muted rounded-lg">
+          <ArrowDownRight className="h-5 w-5 text-red-500 mb-2" />
+          <h3 className="text-sm font-medium">Total Expenses</h3>
+          <p className="text-2xl font-bold text-red-500">${totalExpenses.toLocaleString()}</p>
+        </div>
+        <div className="p-4 bg-muted rounded-lg">
+          <ArrowUpRight className="h-5 w-5 text-blue-500 mb-2" />
+          <h3 className="text-sm font-medium">Net Profit</h3>
+          <p className="text-2xl font-bold text-blue-500">${totalProfit.toLocaleString()}</p>
+        </div>
+      </div>
+
       <div className="h-64 mb-6">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={quarterlyData}>
+          <BarChart data={financialData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="quarter" />
+            <XAxis dataKey="month" />
             <YAxis />
             <Tooltip />
-            <Bar dataKey="revenue" fill="#9b87f5" />
+            <Bar dataKey="revenue" name="Revenue" fill="#22c55e" />
+            <Bar dataKey="expenses" name="Expenses" fill="#ef4444" />
+            <Bar dataKey="profit" name="Profit" fill="#3b82f6" />
           </BarChart>
         </ResponsiveContainer>
       </div>

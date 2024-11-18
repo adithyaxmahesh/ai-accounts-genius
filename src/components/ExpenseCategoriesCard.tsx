@@ -4,6 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
+import { categorizeTransaction } from "@/utils/expenseCategories";
 
 export const ExpenseCategoriesCard = () => {
   const { session } = useAuth();
@@ -11,27 +12,35 @@ export const ExpenseCategoriesCard = () => {
   const { data: expenses } = useQuery({
     queryKey: ['categorized-expenses', session?.user.id],
     queryFn: async () => {
-      const { data: writeOffs, error } = await supabase
+      const { data: transactions } = await supabase
         .from('write_offs')
-        .select(`
-          amount,
-          tax_codes (
-            expense_category
-          )
-        `)
+        .select('amount, description, date')
         .eq('user_id', session?.user.id);
 
-      if (error) throw error;
+      const categorizedExpenses = await Promise.all(
+        (transactions || []).map(async (transaction) => {
+          const { category, isExpense } = await categorizeTransaction(
+            transaction.description,
+            transaction.amount
+          );
+          return {
+            ...transaction,
+            category,
+            isExpense
+          };
+        })
+      );
 
-      const categories = writeOffs?.reduce((acc, curr) => {
-        const category = curr.tax_codes?.expense_category || 'Uncategorized';
-        acc[category] = (acc[category] || 0) + Number(curr.amount);
+      const categories = categorizedExpenses.reduce((acc, curr) => {
+        if (curr.isExpense) {
+          acc[curr.category] = (acc[curr.category] || 0) + Number(curr.amount);
+        }
         return acc;
       }, {} as Record<string, number>);
 
-      return Object.entries(categories || {}).map(([name, value]) => ({
+      return Object.entries(categories).map(([name, value]) => ({
         name,
-        value
+        value: Math.abs(value) // Use absolute value for display
       }));
     }
   });
