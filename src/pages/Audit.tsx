@@ -13,7 +13,8 @@ import {
   Search,
   FileCheck,
   Plus,
-  Info
+  Info,
+  Trash2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -23,6 +24,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 
 const getStatusIcon = (status: string) => {
   switch (status) {
@@ -45,6 +47,8 @@ const Audit = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isCreating, setIsCreating] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [auditToDelete, setAuditToDelete] = useState<string | null>(null);
 
   const { data: audits, isLoading, refetch } = useQuery({
     queryKey: ['audits'],
@@ -113,6 +117,50 @@ const Audit = () => {
     }
   };
 
+  const handleDeleteClick = (auditId: string) => {
+    setAuditToDelete(auditId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!auditToDelete) return;
+
+    try {
+      // Delete audit items first
+      const { error: itemsError } = await supabase
+        .from('audit_items')
+        .delete()
+        .eq('audit_id', auditToDelete);
+
+      if (itemsError) throw itemsError;
+
+      // Then delete the audit report
+      const { error: auditError } = await supabase
+        .from('audit_reports')
+        .delete()
+        .eq('id', auditToDelete);
+
+      if (auditError) throw auditError;
+
+      await refetch();
+      
+      toast({
+        title: "Success",
+        description: "Audit deleted successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting audit:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete audit",
+        variant: "destructive"
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setAuditToDelete(null);
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6 fade-in">
       <div className="flex items-center space-x-4 mb-6">
@@ -164,28 +212,33 @@ const Audit = () => {
           {audits.map((audit) => (
             <Card 
               key={audit.id}
-              className="p-6 hover:shadow-lg transition-shadow cursor-pointer glass-card"
-              onClick={() => navigate(`/audit/${audit.id}`)}
+              className="p-6 hover:shadow-lg transition-shadow glass-card"
             >
               <div className="flex justify-between items-start mb-4">
                 {getStatusIcon(audit.status)}
-                <Tooltip>
-                  <TooltipTrigger>
-                    <div className={`px-3 py-1 rounded-full text-sm ${
-                      audit.status === 'completed' ? 'bg-green-100 text-green-800' :
-                      audit.status === 'review' ? 'bg-orange-100 text-orange-800' :
-                      audit.status === 'evidence_gathering' ? 'bg-purple-100 text-purple-800' :
-                      audit.status === 'control_evaluation' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-blue-100 text-blue-800'
-                    }`}>
-                      {audit.status.replace('_', ' ')}
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{getStatusExplanation(audit.status)}</p>
-                  </TooltipContent>
-                </Tooltip>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigate(`/audit/${audit.id}`)}
+                    className="hover:bg-secondary"
+                  >
+                    <Search className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteClick(audit.id);
+                    }}
+                    className="hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
+              
               <h3 className="text-lg font-semibold mb-2">{audit.title}</h3>
               <p className="text-sm text-muted-foreground mb-4">
                 {audit.description || getStatusExplanation(audit.status)}
@@ -224,6 +277,14 @@ const Audit = () => {
           ))}
         </div>
       )}
+
+      <DeleteConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Audit"
+        description="Are you sure you want to delete this audit? This action cannot be undone and all associated data will be permanently deleted."
+      />
     </div>
   );
 };

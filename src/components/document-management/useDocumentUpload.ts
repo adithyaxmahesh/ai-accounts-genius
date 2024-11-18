@@ -154,11 +154,49 @@ export const useDocumentUpload = () => {
     }
   };
 
+  const handleDeleteDocument = async (documentId: string) => {
+    try {
+      const document = documents.find(doc => doc.id === documentId);
+      if (!document) throw new Error("Document not found");
+
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from('documents')
+        .remove([document.storage_path]);
+
+      if (storageError) throw storageError;
+
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from('processed_documents')
+        .delete()
+        .eq('id', documentId);
+
+      if (dbError) throw dbError;
+
+      // Update UI
+      setDocuments(prev => prev.filter(doc => doc.id !== documentId));
+
+      toast({
+        title: "Success",
+        description: "Document deleted successfully",
+      });
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast({
+        title: "Delete Failed",
+        description: error instanceof Error ? error.message : "Failed to delete document",
+        variant: "destructive",
+      });
+    }
+  };
+
   return {
     uploading,
     processing,
     documents,
     handleFileUpload,
-    analyzeDocument
+    analyzeDocument,
+    handleDeleteDocument
   };
 };
