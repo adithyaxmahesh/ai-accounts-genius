@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LineChart, TrendingUp, ArrowUpRight, ArrowDownRight, RefreshCw } from "lucide-react";
+import { LineChart, TrendingUp, ArrowUpRight, ArrowDownRight, RefreshCw, DollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
@@ -11,58 +11,49 @@ export const BusinessIntelligence = () => {
   const { session } = useAuth();
   const { toast } = useToast();
 
-  const { data: insights, refetch } = useQuery({
-    queryKey: ['business-insights', session?.user.id],
+  const { data: financialData } = useQuery({
+    queryKey: ['financial-metrics', session?.user.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('business_insights')
-        .select('*')
-        .eq('user_id', session?.user.id)
-        .order('created_at', { ascending: false })
-        .limit(1);
-      
-      if (error) throw error;
-      return data;
+      const { data: revenue } = await supabase
+        .from('revenue_records')
+        .select('amount, date')
+        .eq('user_id', session?.user.id);
+
+      const { data: expenses } = await supabase
+        .from('write_offs')
+        .select('amount, date')
+        .eq('user_id', session?.user.id);
+
+      // Calculate monthly metrics
+      const monthlyData = (revenue || []).concat((expenses || []).map(e => ({ 
+        ...e, 
+        amount: -e.amount 
+      }))).reduce((acc, curr) => {
+        const month = new Date(curr.date).toLocaleString('default', { month: 'short' });
+        if (!acc[month]) {
+          acc[month] = { revenue: 0, expenses: 0 };
+        }
+        if (curr.amount > 0) {
+          acc[month].revenue += curr.amount;
+        } else {
+          acc[month].expenses += Math.abs(curr.amount);
+        }
+        return acc;
+      }, {} as Record<string, { revenue: number; expenses: number }>);
+
+      return Object.entries(monthlyData).map(([month, data]) => ({
+        month,
+        revenue: data.revenue,
+        expenses: data.expenses,
+        profit: data.revenue - data.expenses
+      }));
     }
   });
 
-  const generateInsights = async () => {
-    try {
-      toast({
-        title: "Generating Insights",
-        description: "Analyzing your business data...",
-      });
-
-      const { data, error } = await supabase.functions.invoke('generate-insights', {
-        body: { 
-          userId: session?.user.id 
-        }
-      });
-
-      if (error) throw error;
-
-      await refetch();
-
-      toast({
-        title: "Insights Generated",
-        description: "New business insights are available",
-      });
-    } catch (error) {
-      console.error("Error generating insights:", error);
-      toast({
-        title: "Error",
-        description: "Failed to generate insights. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const quarterlyData = [
-    { quarter: 'Q1', revenue: 120000 },
-    { quarter: 'Q2', revenue: 150000 },
-    { quarter: 'Q3', revenue: 180000 },
-    { quarter: 'Q4', revenue: 220000 }
-  ];
+  const totalRevenue = financialData?.reduce((sum, data) => sum + data.revenue, 0) || 0;
+  const totalExpenses = financialData?.reduce((sum, data) => sum + data.expenses, 0) || 0;
+  const totalProfit = totalRevenue - totalExpenses;
+  const profitMargin = totalRevenue ? (totalProfit / totalRevenue) * 100 : 0;
 
   return (
     <Card className="p-6">
@@ -71,20 +62,41 @@ export const BusinessIntelligence = () => {
           <LineChart className="h-6 w-6 text-primary" />
           <h2 className="text-xl font-semibold">Business Intelligence</h2>
         </div>
-        <Button onClick={generateInsights} className="hover-scale">
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Generate New Insights
-        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="p-4 bg-muted rounded-lg">
+          <DollarSign className="h-5 w-5 text-green-500 mb-2" />
+          <p className="text-sm text-muted-foreground">Total Revenue</p>
+          <p className="text-2xl font-bold">${totalRevenue.toLocaleString()}</p>
+        </div>
+        
+        <div className="p-4 bg-muted rounded-lg">
+          <ArrowDownRight className="h-5 w-5 text-red-500 mb-2" />
+          <p className="text-sm text-muted-foreground">Total Expenses</p>
+          <p className="text-2xl font-bold">${totalExpenses.toLocaleString()}</p>
+        </div>
+
+        <div className="p-4 bg-muted rounded-lg">
+          <TrendingUp className="h-5 w-5 text-blue-500 mb-2" />
+          <p className="text-sm text-muted-foreground">Net Profit</p>
+          <p className="text-2xl font-bold">${totalProfit.toLocaleString()}</p>
+          <p className="text-sm text-muted-foreground">
+            Margin: {profitMargin.toFixed(1)}%
+          </p>
+        </div>
       </div>
 
       <div className="h-64 mb-6">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={quarterlyData}>
+          <BarChart data={financialData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="quarter" />
+            <XAxis dataKey="month" />
             <YAxis />
-            <Tooltip />
-            <Bar dataKey="revenue" fill="#9b87f5" />
+            <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
+            <Bar dataKey="revenue" name="Revenue" fill="#22c55e" />
+            <Bar dataKey="expenses" name="Expenses" fill="#ef4444" />
+            <Bar dataKey="profit" name="Profit" fill="#3b82f6" />
           </BarChart>
         </ResponsiveContainer>
       </div>
