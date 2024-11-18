@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TaxSummaryTab from "@/components/TaxSummaryTab";
 import AuditDetailsTab from "@/components/AuditDetailsTab";
 import { useState } from "react";
+import { updateAuditStatus, getStatusExplanation, getRiskLevelExplanation } from "@/utils/auditUtils";
 
 const AuditDetail = () => {
   const { id } = useParams();
@@ -96,13 +97,13 @@ const AuditDetail = () => {
         <div className="space-x-2">
           <Button
             variant="outline"
-            onClick={() => updateAuditStatus('in_progress')}
+            onClick={() => updateAuditStatus(id, 'in_progress')}
             className="hover-scale"
           >
             Start Review
           </Button>
           <Button
-            onClick={() => updateAuditStatus('completed')}
+            onClick={() => updateAuditStatus(id, 'completed')}
             className="hover-scale"
           >
             Complete Audit
