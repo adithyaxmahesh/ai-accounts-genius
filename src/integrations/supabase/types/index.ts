@@ -1,4 +1,5 @@
-export * from './database';
+import { Database } from './database.types';
+export * from './database.types';
 export * from './tax';
 export * from './expense-patterns';
 

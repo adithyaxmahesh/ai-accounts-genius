@@ -1,4 +1,4 @@
-import { Database } from './database';
+import { Database } from './database.types';
 
 export type TaxDeadline = Database['public']['Tables']['tax_deadlines']['Row'];
 export type TaxPlanningScenario = Database['public']['Tables']['tax_planning_scenarios']['Row'];
