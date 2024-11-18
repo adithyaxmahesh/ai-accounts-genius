@@ -7,6 +7,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useToast } from "@/components/ui/use-toast";
+import { Badge } from "@/components/ui/badge";
 import AuditItemCard from "@/components/AuditItemCard";
 import AuditFindings from "@/components/audit/AuditFindings";
 import AuditProgress from "@/components/audit/AuditProgress";
@@ -52,6 +53,18 @@ const AuditDetailsTab = ({ audit, getStatusExplanation, getRiskLevelExplanation 
     }
   };
 
+  const getAuditHealthStatus = () => {
+    const flaggedItems = audit?.audit_items?.filter(item => item.status === 'flagged') || [];
+    const totalItems = audit?.audit_items?.length || 0;
+    
+    if (totalItems === 0) return { status: 'pending', message: 'No items to review' };
+    if (flaggedItems.length === 0) return { status: 'good', message: 'No issues found' };
+    if (flaggedItems.length / totalItems < 0.2) return { status: 'warning', message: 'Minor issues found' };
+    return { status: 'bad', message: 'Significant issues found' };
+  };
+
+  const healthStatus = getAuditHealthStatus();
+
   return (
     <Card className="p-6 glass-card">
       <div className="flex justify-between items-start mb-6">
@@ -60,25 +73,52 @@ const AuditDetailsTab = ({ audit, getStatusExplanation, getRiskLevelExplanation 
           getStatusExplanation={getStatusExplanation} 
         />
         
-        <div>
-          <div className="flex items-center gap-2">
-            <p className="text-muted-foreground">Risk Level</p>
-            <Tooltip>
-              <TooltipTrigger>
-                <Info className="h-4 w-4 text-muted-foreground" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{getRiskLevelExplanation(audit?.risk_level)}</p>
-              </TooltipContent>
-            </Tooltip>
+        <div className="space-y-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <p className="text-muted-foreground">Risk Level</p>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{getRiskLevelExplanation(audit?.risk_level)}</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <div className="mt-1 flex items-center">
+              {audit?.risk_level === 'high' ? (
+                <AlertTriangle className="h-4 w-4 text-destructive mr-1" />
+              ) : audit?.status === 'completed' ? (
+                <Check className="h-4 w-4 text-green-500 mr-1" />
+              ) : null}
+              {audit?.risk_level}
+            </div>
           </div>
-          <div className="mt-1 flex items-center">
-            {audit?.risk_level === 'high' ? (
-              <AlertTriangle className="h-4 w-4 text-destructive mr-1" />
-            ) : audit?.status === 'completed' ? (
-              <Check className="h-4 w-4 text-green-500 mr-1" />
-            ) : null}
-            {audit?.risk_level}
+
+          <div>
+            <div className="flex items-center gap-2">
+              <p className="text-muted-foreground">Audit Health</p>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Overall assessment based on findings and flagged items</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <Badge 
+              variant={
+                healthStatus.status === 'good' ? 'success' :
+                healthStatus.status === 'warning' ? 'warning' :
+                healthStatus.status === 'bad' ? 'destructive' :
+                'secondary'
+              }
+              className="mt-1"
+            >
+              {healthStatus.message}
+            </Badge>
           </div>
         </div>
       </div>
@@ -94,7 +134,7 @@ const AuditDetailsTab = ({ audit, getStatusExplanation, getRiskLevelExplanation 
       <div className="space-y-6">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-lg font-semibold">Findings</h3>
+            <h3 className="text-lg font-semibold">Findings ({audit?.findings?.length || 0})</h3>
             <Tooltip>
               <TooltipTrigger>
                 <Info className="h-4 w-4 text-muted-foreground" />
@@ -109,7 +149,12 @@ const AuditDetailsTab = ({ audit, getStatusExplanation, getRiskLevelExplanation 
 
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-lg font-semibold">Audit Items</h3>
+            <h3 className="text-lg font-semibold">
+              Audit Items ({audit?.audit_items?.length || 0})
+            </h3>
+            <Badge variant="outline" className="ml-2">
+              {audit?.audit_items?.filter(item => item.status === 'flagged').length || 0} Flagged
+            </Badge>
             <Tooltip>
               <TooltipTrigger>
                 <Info className="h-4 w-4 text-muted-foreground" />
@@ -129,7 +174,9 @@ const AuditDetailsTab = ({ audit, getStatusExplanation, getRiskLevelExplanation 
         {audit?.recommendations?.length > 0 && (
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <h3 className="text-lg font-semibold">Recommendations</h3>
+              <h3 className="text-lg font-semibold">
+                Recommendations ({audit.recommendations.length})
+              </h3>
               <Tooltip>
                 <TooltipTrigger>
                   <Info className="h-4 w-4 text-muted-foreground" />
