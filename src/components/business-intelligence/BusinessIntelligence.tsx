@@ -1,32 +1,86 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { LineChart, TrendingUp, ArrowUpRight, ArrowDownRight, RefreshCw, DollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { categorizeTransaction } from "@/utils/expenseCategories";
+import { useState } from "react";
+import { startOfYear, endOfYear, startOfQuarter, endOfQuarter, subYears } from "date-fns";
 
 export const BusinessIntelligence = () => {
   const { session } = useAuth();
   const { toast } = useToast();
+  const [timeRange, setTimeRange] = useState("total");
+
+  const getDateRange = () => {
+    const now = new Date();
+    switch (timeRange) {
+      case "1year":
+        return {
+          start: subYears(now, 1),
+          end: now
+        };
+      case "q1":
+        return {
+          start: startOfQuarter(new Date(now.getFullYear(), 0, 1)),
+          end: endOfQuarter(new Date(now.getFullYear(), 0, 1))
+        };
+      case "q2":
+        return {
+          start: startOfQuarter(new Date(now.getFullYear(), 3, 1)),
+          end: endOfQuarter(new Date(now.getFullYear(), 3, 1))
+        };
+      case "q3":
+        return {
+          start: startOfQuarter(new Date(now.getFullYear(), 6, 1)),
+          end: endOfQuarter(new Date(now.getFullYear(), 6, 1))
+        };
+      case "q4":
+        return {
+          start: startOfQuarter(new Date(now.getFullYear(), 9, 1)),
+          end: endOfQuarter(new Date(now.getFullYear(), 9, 1))
+        };
+      default:
+        return {
+          start: null,
+          end: null
+        };
+    }
+  };
 
   const { data: financialData } = useQuery({
-    queryKey: ['financial-metrics', session?.user.id],
+    queryKey: ['financial-metrics', session?.user.id, timeRange],
     queryFn: async () => {
-      // Fetch all financial transactions
-      const { data: transactions } = await supabase
+      const dateRange = getDateRange();
+      let revenueQuery = supabase
         .from('revenue_records')
         .select('*')
         .eq('user_id', session?.user.id);
 
-      const { data: expenses } = await supabase
+      let expensesQuery = supabase
         .from('write_offs')
         .select('*')
         .eq('user_id', session?.user.id);
 
-      // Categorize and analyze all transactions
+      if (dateRange.start && dateRange.end) {
+        revenueQuery = revenueQuery
+          .gte('date', dateRange.start.toISOString())
+          .lte('date', dateRange.end.toISOString());
+        
+        expensesQuery = expensesQuery
+          .gte('date', dateRange.start.toISOString())
+          .lte('date', dateRange.end.toISOString());
+      }
+
+      const [{ data: transactions }, { data: expenses }] = await Promise.all([
+        revenueQuery,
+        expensesQuery
+      ]);
+
       const categorizedTransactions = await Promise.all([
         ...(transactions || []).map(async t => ({
           ...t,
@@ -38,7 +92,6 @@ export const BusinessIntelligence = () => {
         }))
       ]);
 
-      // Calculate metrics by month
       const monthlyData = categorizedTransactions.reduce((acc, curr) => {
         const date = new Date(curr.date);
         const month = date.toLocaleString('default', { month: 'short' });
@@ -123,6 +176,29 @@ export const BusinessIntelligence = () => {
         </Button>
       </div>
 
+      <div className="mb-4">
+        <ToggleGroup type="single" value={timeRange} onValueChange={(value) => value && setTimeRange(value)}>
+          <ToggleGroupItem value="total" aria-label="View all time data">
+            Total
+          </ToggleGroupItem>
+          <ToggleGroupItem value="1year" aria-label="View last year data">
+            1 Year
+          </ToggleGroupItem>
+          <ToggleGroupItem value="q1" aria-label="View Q1 data">
+            Q1
+          </ToggleGroupItem>
+          <ToggleGroupItem value="q2" aria-label="View Q2 data">
+            Q2
+          </ToggleGroupItem>
+          <ToggleGroupItem value="q3" aria-label="View Q3 data">
+            Q3
+          </ToggleGroupItem>
+          <ToggleGroupItem value="q4" aria-label="View Q4 data">
+            Q4
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="p-4 bg-muted rounded-lg">
           <DollarSign className="h-5 w-5 text-green-500 mb-2" />
@@ -143,9 +219,16 @@ export const BusinessIntelligence = () => {
 
       <div className="h-64 mb-6">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={financialData}>
+          <BarChart data={financialData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
+            <XAxis 
+              dataKey="month"
+              tick={{ fontSize: 12 }}
+              interval={0}
+              angle={-45}
+              textAnchor="end"
+              height={60}
+            />
             <YAxis />
             <Tooltip />
             <Bar dataKey="revenue" name="Revenue" fill="#22c55e" />
