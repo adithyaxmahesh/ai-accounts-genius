@@ -14,7 +14,8 @@ export const DocumentUpload = ({ className }: { className?: string }) => {
     processing, 
     documents, 
     handleFileUpload, 
-    analyzeDocument 
+    analyzeDocument,
+    handleDeleteDocument 
   } = useDocumentUpload();
 
   return (
@@ -55,6 +56,7 @@ export const DocumentUpload = ({ className }: { className?: string }) => {
         documents={documents}
         processing={processing}
         onAnalyze={analyzeDocument}
+        onDelete={handleDeleteDocument}
       />
     </Card>
   );
