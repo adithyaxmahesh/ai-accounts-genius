@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { ArrowLeft, TrendingUp, Brain, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/components/AuthProvider";
 import {
   LineChart,
   Line,
@@ -19,32 +20,100 @@ import {
 const Forecast = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { session } = useAuth();
 
-  const { data: forecasts, isLoading } = useQuery({
-    queryKey: ['forecasts'],
+  const { data: revenueData } = useQuery({
+    queryKey: ['revenue-data', session?.user.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('revenue_records')
+        .select('*')
+        .eq('user_id', session?.user.id)
+        .order('date', { ascending: true });
+      
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
+  const { data: forecasts } = useQuery({
+    queryKey: ['forecasts', session?.user.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('forecasts')
         .select('*')
+        .eq('user_id', session?.user.id)
         .order('period_start', { ascending: true });
       
       if (error) throw error;
-      return data;
+      return data || [];
     }
   });
+
+  // Calculate actual growth rate based on revenue data
+  const calculateGrowthRate = () => {
+    if (!revenueData || revenueData.length < 2) return 0;
+
+    const sortedData = [...revenueData].sort((a, b) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    const firstQuarterRevenue = sortedData.slice(0, Math.floor(sortedData.length / 4))
+      .reduce((sum, record) => sum + Number(record.amount), 0);
+    
+    const lastQuarterRevenue = sortedData.slice(-Math.floor(sortedData.length / 4))
+      .reduce((sum, record) => sum + Number(record.amount), 0);
+
+    if (firstQuarterRevenue === 0) return 0;
+    
+    return ((lastQuarterRevenue - firstQuarterRevenue) / firstQuarterRevenue) * 100;
+  };
+
+  // Calculate confidence level based on forecast consistency
+  const calculateConfidenceLevel = () => {
+    if (!forecasts || forecasts.length === 0) return 0;
+    
+    // Use the average confidence_level from forecasts
+    const avgConfidence = forecasts.reduce((sum, forecast) => 
+      sum + (forecast.confidence_level || 0), 0) / forecasts.length;
+    
+    return Math.round(avgConfidence);
+  };
+
+  const growthRate = calculateGrowthRate();
+  const confidenceLevel = calculateConfidenceLevel();
 
   const generateNewForecast = async () => {
     toast({
       title: "Generating Forecast",
       description: "AI is analyzing historical data to generate a new forecast...",
     });
-    // Here we would typically call an edge function to generate the forecast
+    
+    try {
+      const { error } = await supabase.functions.invoke('generate-forecast', {
+        body: { userId: session?.user.id }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Forecast Generated",
+        description: "New financial forecast is now available",
+      });
+    } catch (error) {
+      console.error('Error generating forecast:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate forecast. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const chartData = forecasts?.map(forecast => ({
     date: new Date(forecast.period_start).toLocaleDateString(),
     actual: forecast.predicted_revenue,
-    predicted: forecast.predicted_revenue * (1 + (Math.random() * 0.2 - 0.1)) // Simulated variation
+    predicted: forecast.predicted_revenue * (1 + (forecast.confidence_level || 0) / 100)
   }));
 
   return (
@@ -72,14 +141,14 @@ const Forecast = () => {
         <Card className="p-6 glass-card">
           <TrendingUp className="h-8 w-8 mb-4 text-primary" />
           <h3 className="text-lg font-semibold">Projected Growth</h3>
-          <p className="text-3xl font-bold">8.3%</p>
+          <p className="text-3xl font-bold">{growthRate.toFixed(1)}%</p>
           <p className="text-sm text-muted-foreground">Next quarter</p>
         </Card>
         
         <Card className="p-6 glass-card">
           <AlertTriangle className="h-8 w-8 mb-4 text-yellow-500" />
           <h3 className="text-lg font-semibold">Confidence Level</h3>
-          <p className="text-3xl font-bold">92%</p>
+          <p className="text-3xl font-bold">{confidenceLevel}%</p>
           <p className="text-sm text-muted-foreground">Based on historical data</p>
         </Card>
       </div>
