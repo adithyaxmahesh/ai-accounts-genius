@@ -8,9 +8,11 @@ interface AuditDetailTabsProps {
 }
 
 const AuditDetailTabs = ({ audit }: AuditDetailTabsProps) => {
+  if (!audit) return null;
+
   return (
     <Tabs defaultValue="details" className="w-full">
-      <TabsList>
+      <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="details">Audit Details</TabsTrigger>
         <TabsTrigger value="tax">Tax Summary</TabsTrigger>
       </TabsList>

@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import AuditDetailHeader from "@/components/audit/AuditDetailHeader";
 import AuditDetailTabs from "@/components/audit/AuditDetailTabs";
@@ -14,19 +14,18 @@ const AuditDetail = () => {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const { session } = useAuth();
 
-  // Redirect to auth if not logged in
-  useEffect(() => {
-    if (!session) {
-      navigate('/auth');
-      return;
-    }
-  }, [session, navigate]);
-
+  // Fetch audit data
   const { data: audit, isLoading, error } = useQuery({
     queryKey: ['audit', id],
     queryFn: async () => {
-      if (!id || !session?.user?.id) {
-        throw new Error('No audit ID provided or user not authenticated');
+      if (!id) {
+        throw new Error('No audit ID provided');
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate('/auth');
+        throw new Error('User not authenticated');
       }
       
       const { data, error } = await supabase
@@ -36,7 +35,7 @@ const AuditDetail = () => {
           audit_items (*)
         `)
         .eq('id', id)
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .single();
       
       if (error) throw error;
@@ -44,28 +43,11 @@ const AuditDetail = () => {
       
       return data;
     },
-    enabled: !!session && !!id,
-    retry: 1
+    enabled: !!id,
+    retry: false
   });
 
-  // Handle errors
-  useEffect(() => {
-    if (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : 'Failed to load audit details',
-        variant: "destructive"
-      });
-      navigate('/audit');
-    }
-  }, [error, navigate, toast]);
-
-  // Return null if not authenticated
-  if (!session) {
-    return null;
-  }
-
-  // Show loading state
+  // Handle loading state
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
@@ -78,7 +60,18 @@ const AuditDetail = () => {
     );
   }
 
-  // Show not found state
+  // Handle error state
+  if (error) {
+    toast({
+      title: "Error",
+      description: error instanceof Error ? error.message : 'Failed to load audit details',
+      variant: "destructive"
+    });
+    navigate('/audit');
+    return null;
+  }
+
+  // Handle not found state
   if (!audit) {
     return (
       <div className="container mx-auto p-6">
