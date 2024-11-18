@@ -1,47 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  FileText, 
-  AlertTriangle, 
-  Check, 
-  ArrowLeft,
-  ClipboardList,
-  Shield,
-  Search,
-  FileCheck,
-  Plus,
-  Info,
-  Trash2
-} from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { startNewAudit, getStatusExplanation } from "@/utils/auditUtils";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { startNewAudit } from "@/utils/auditUtils";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
-
-const getStatusIcon = (status: string) => {
-  switch (status) {
-    case 'planning':
-      return <ClipboardList className="h-8 w-8 text-blue-500" />;
-    case 'control_evaluation':
-      return <Shield className="h-8 w-8 text-yellow-500" />;
-    case 'evidence_gathering':
-      return <Search className="h-8 w-8 text-purple-500" />;
-    case 'review':
-      return <FileCheck className="h-8 w-8 text-orange-500" />;
-    case 'completed':
-      return <Check className="h-8 w-8 text-green-500" />;
-    default:
-      return <FileText className="h-8 w-8 text-gray-500" />;
-  }
-};
+import AuditList from "@/components/audit/AuditList";
+import EmptyAuditState from "@/components/audit/EmptyAuditState";
 
 const Audit = () => {
   const navigate = useNavigate();
@@ -77,6 +44,7 @@ const Audit = () => {
 
   const handleNewAudit = async () => {
     try {
+      setIsCreating(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast({
@@ -88,9 +56,7 @@ const Audit = () => {
         return;
       }
 
-      setIsCreating(true);
       const title = `Audit Report ${new Date().toLocaleDateString()}`;
-      
       const newAudit = await startNewAudit(title);
       
       if (!newAudit || !newAudit.id) {
@@ -126,7 +92,6 @@ const Audit = () => {
     if (!auditToDelete) return;
 
     try {
-      // Delete audit items first
       const { error: itemsError } = await supabase
         .from('audit_items')
         .delete()
@@ -134,7 +99,6 @@ const Audit = () => {
 
       if (itemsError) throw itemsError;
 
-      // Then delete the audit report
       const { error: auditError } = await supabase
         .from('audit_reports')
         .delete()
@@ -196,86 +160,9 @@ const Audit = () => {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       ) : !audits?.length ? (
-        <Card className="p-8 text-center">
-          <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">No Audits Yet</h3>
-          <p className="text-muted-foreground mb-4">
-            Start your first audit to track and manage your financial reviews
-          </p>
-          <Button onClick={handleNewAudit} disabled={isCreating}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Your First Audit
-          </Button>
-        </Card>
+        <EmptyAuditState onCreateAudit={handleNewAudit} isCreating={isCreating} />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {audits.map((audit) => (
-            <Card 
-              key={audit.id}
-              className="p-6 hover:shadow-lg transition-shadow glass-card"
-            >
-              <div className="flex justify-between items-start mb-4">
-                {getStatusIcon(audit.status)}
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigate(`/audit/${audit.id}`)}
-                    className="hover:bg-secondary"
-                  >
-                    <Search className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteClick(audit.id);
-                    }}
-                    className="hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              
-              <h3 className="text-lg font-semibold mb-2">{audit.title}</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                {audit.description || getStatusExplanation(audit.status)}
-              </p>
-              <div className="flex justify-between items-center text-sm text-muted-foreground">
-                <span className="flex items-center">
-                  <Info className="h-4 w-4 mr-1" />
-                  Created: {new Date(audit.created_at).toLocaleDateString()}
-                </span>
-                <span className="flex items-center">
-                  {audit.risk_level === 'high' ? (
-                    <AlertTriangle className="h-4 w-4 text-destructive mr-1" />
-                  ) : audit.status === 'completed' ? (
-                    <Check className="h-4 w-4 text-green-500 mr-1" />
-                  ) : null}
-                  {audit.risk_level}
-                </span>
-              </div>
-              <div className="mt-4 pt-4 border-t">
-                <div className="flex justify-between text-sm">
-                  <span className="flex items-center">
-                    <ClipboardList className="h-4 w-4 mr-1" />
-                    Items: {audit.audit_items?.length || 0}
-                  </span>
-                  <span className={`flex items-center ${
-                    audit.risk_level === 'high' ? 'text-red-600' :
-                    audit.risk_level === 'medium' ? 'text-yellow-600' :
-                    'text-green-600'
-                  }`}>
-                    <Shield className="h-4 w-4 mr-1" />
-                    Risk Level: {audit.risk_level}
-                  </span>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+        <AuditList audits={audits} onDeleteClick={handleDeleteClick} />
       )}
 
       <DeleteConfirmDialog
