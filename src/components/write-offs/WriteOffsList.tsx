@@ -19,7 +19,7 @@ type WriteOff = {
     deduction_type: string;
     state: string | null;
     expense_category: string | null;
-  } | null;
+  }[];
 }
 
 export const WriteOffsList = ({ userId }: WriteOffsListProps) => {
@@ -56,10 +56,10 @@ export const WriteOffsList = ({ userId }: WriteOffsListProps) => {
             <div>
               <p className="font-semibold">{writeOff.description}</p>
               <p className="text-sm text-muted-foreground">
-                {writeOff.tax_codes?.state} - {writeOff.tax_codes?.expense_category}
+                {writeOff.tax_codes[0]?.state} - {writeOff.tax_codes[0]?.expense_category}
               </p>
               <p className="text-sm text-muted-foreground">
-                {writeOff.tax_codes?.code} - {writeOff.tax_codes?.description}
+                {writeOff.tax_codes[0]?.code} - {writeOff.tax_codes[0]?.description}
               </p>
             </div>
             <div className="text-right">
