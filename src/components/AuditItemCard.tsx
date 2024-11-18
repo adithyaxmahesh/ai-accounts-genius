@@ -31,7 +31,9 @@ const getFlagExplanation = (status: string) => {
 
 const AuditItemCard = ({ item }: AuditItemProps) => {
   return (
-    <Card className="p-4">
+    <Card className={`p-4 ${
+      item.status === 'flagged' ? 'border-red-500 border-2' : ''
+    }`}>
       <div className="flex justify-between items-start">
         <div>
           <div className="flex items-center gap-2">
@@ -51,13 +53,21 @@ const AuditItemCard = ({ item }: AuditItemProps) => {
           <p className="font-semibold">${item.amount?.toLocaleString()}</p>
           <p className={`text-sm ${
             item.status === 'approved' ? 'text-green-600' :
-            item.status === 'flagged' ? 'text-red-600' :
+            item.status === 'flagged' ? 'text-red-600 font-semibold' :
             'text-muted-foreground'
           }`}>
             {item.status}
           </p>
         </div>
       </div>
+      {item.status === 'flagged' && (
+        <div className="mt-2 p-2 bg-red-50 rounded-md">
+          <p className="text-sm text-red-700">
+            This item has been flagged for review due to potential irregularities. 
+            Please check the transaction details and supporting documentation.
+          </p>
+        </div>
+      )}
     </Card>
   );
 };
