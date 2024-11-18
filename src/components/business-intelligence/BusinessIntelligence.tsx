@@ -50,6 +50,20 @@ export const BusinessIntelligence = () => {
     }
   });
 
+  const { data: businessInsights } = useQuery({
+    queryKey: ['business-insights', session?.user.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('business_insights')
+        .select('*')
+        .eq('user_id', session?.user.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
   const totalRevenue = financialData?.reduce((sum, data) => sum + data.revenue, 0) || 0;
   const totalExpenses = financialData?.reduce((sum, data) => sum + data.expenses, 0) || 0;
   const totalProfit = totalRevenue - totalExpenses;
@@ -102,7 +116,7 @@ export const BusinessIntelligence = () => {
       </div>
 
       <div className="space-y-6">
-        {insights?.map((insight) => (
+        {businessInsights?.map((insight) => (
           <div key={insight.id} className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
