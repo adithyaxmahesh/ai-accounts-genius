@@ -1,31 +1,30 @@
-import { Auth } from "@supabase/auth-ui-react";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Auth as SupabaseAuth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
 import { Card } from "@/components/ui/card";
+import { useAuth } from "@/components/AuthProvider";
 
-const AuthPage = () => {
+const Auth = () => {
   const navigate = useNavigate();
+  const { session } = useAuth();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        navigate("/");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+    if (session) {
+      navigate('/');
+    }
+  }, [session, navigate]);
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md p-6 space-y-6">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold">Audit ai</h1>
-          <p className="text-muted-foreground">Sign up or sign in to your account</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <Card className="w-full max-w-md p-8">
+        <div className="mb-8 text-center">
+          <h1 className="text-2xl font-bold">Welcome</h1>
+          <p className="text-muted-foreground">Sign in to access your account</p>
         </div>
-        <Auth
+        
+        <SupabaseAuth
           supabaseClient={supabase}
           appearance={{
             theme: ThemeSupa,
@@ -39,12 +38,10 @@ const AuthPage = () => {
             }
           }}
           providers={[]}
-          view="sign_up"
-          showLinks={true}
         />
       </Card>
     </div>
   );
 };
 
-export default AuthPage;
+export default Auth;

@@ -1,55 +1,41 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/components/AuthProvider";
-import { useAuth } from "@/components/AuthProvider";
-import { ProfileWidget } from "@/components/ProfileWidget";
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import Audit from "./pages/Audit";
-import AuditDetail from "./pages/AuditDetail";
-import Revenue from "./pages/Revenue";
-import Forecast from "./pages/Forecast";
-import WriteOffs from "./pages/WriteOffs";
-import Documents from "./pages/Documents";
-import BalanceSheet from "./pages/BalanceSheet";
+import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider, useAuth } from "@/components/AuthProvider";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60 * 1000,
-    },
-  },
-});
+// Import your pages
+import Auth from "@/pages/Auth";
+import Index from "@/pages/Index";
+import Revenue from "@/pages/Revenue";
+import Tax from "@/pages/Tax";
+import WriteOffs from "@/pages/WriteOffs";
+import Documents from "@/pages/Documents";
+import Audit from "@/pages/Audit";
+import AuditDetail from "@/pages/AuditDetail";
+import Forecast from "@/pages/Forecast";
+import BalanceSheet from "@/pages/BalanceSheet";
+
+const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { session, isLoading } = useAuth();
-  
-  if (isLoading) {
+  const { session, loading } = useAuth();
+
+  if (loading) {
     return <div>Loading...</div>;
   }
-  
+
   if (!session) {
     return <Navigate to="/auth" />;
   }
 
-  return (
-    <>
-      <ProfileWidget />
-      {children}
-    </>
-  );
+  return <>{children}</>;
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <BrowserRouter>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route
@@ -57,22 +43,6 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Index />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/audit"
-              element={
-                <ProtectedRoute>
-                  <Audit />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/audit/:id"
-              element={
-                <ProtectedRoute>
-                  <AuditDetail />
                 </ProtectedRoute>
               }
             />
@@ -85,10 +55,10 @@ const App = () => (
               }
             />
             <Route
-              path="/forecast"
+              path="/tax"
               element={
                 <ProtectedRoute>
-                  <Forecast />
+                  <Tax />
                 </ProtectedRoute>
               }
             />
@@ -109,6 +79,30 @@ const App = () => (
               }
             />
             <Route
+              path="/audit"
+              element={
+                <ProtectedRoute>
+                  <Audit />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/audit/:id"
+              element={
+                <ProtectedRoute>
+                  <AuditDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/forecast"
+              element={
+                <ProtectedRoute>
+                  <Forecast />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/balance-sheet"
               element={
                 <ProtectedRoute>
@@ -117,10 +111,11 @@ const App = () => (
               }
             />
           </Routes>
-        </TooltipProvider>
-      </AuthProvider>
-    </BrowserRouter>
-  </QueryClientProvider>
-);
+          <Toaster />
+        </AuthProvider>
+      </Router>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
