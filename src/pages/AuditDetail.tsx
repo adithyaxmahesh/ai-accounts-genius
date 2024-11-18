@@ -44,72 +44,6 @@ const AuditDetail = () => {
     enabled: !!id
   });
 
-  if (error) {
-    toast({
-      title: "Error",
-      description: "Failed to load audit details. Please check the audit ID.",
-      variant: "destructive"
-    });
-    navigate('/audit');
-    return null;
-  }
-
-  const updateAuditStatus = async (status) => {
-    if (!isValidUUID(id)) {
-      toast({
-        title: "Error",
-        description: "Invalid audit ID format",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const { error } = await supabase
-      .from('audit_reports')
-      .update({ status })
-      .eq('id', id);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update audit status",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    toast({
-      title: "Success",
-      description: "Audit status updated",
-    });
-  };
-
-  const getStatusExplanation = (status) => {
-    switch (status) {
-      case 'pending':
-        return "Audit has been created but review hasn't started yet";
-      case 'in_progress':
-        return "Currently under review by the auditor";
-      case 'completed':
-        return "All items have been reviewed and findings documented";
-      default:
-        return "Status unknown";
-    }
-  };
-
-  const getRiskLevelExplanation = (level) => {
-    switch (level) {
-      case 'low':
-        return "Minor issues that need attention but don't pose immediate risks";
-      case 'medium':
-        return "Significant issues that should be addressed in the near term";
-      case 'high':
-        return "Critical issues requiring immediate attention";
-      default:
-        return "Risk level not assessed";
-    }
-  };
-
   const getFraudInsights = (item: any) => {
     const insights = [];
     
@@ -131,6 +65,16 @@ const AuditDetail = () => {
 
     return insights;
   };
+
+  if (error) {
+    toast({
+      title: "Error",
+      description: "Failed to load audit details. Please check the audit ID.",
+      variant: "destructive"
+    });
+    navigate('/audit');
+    return null;
+  }
 
   if (isLoading) return <div>Loading audit details...</div>;
 
@@ -175,7 +119,7 @@ const AuditDetail = () => {
           <div className="space-y-4">
             {flaggedItems.map((item) => (
               <AuditItemCard 
-                key={item.id} 
+                key={item.id}
                 item={item}
                 insights={getFraudInsights(item)}
                 isSelected={selectedItemId === item.id}
