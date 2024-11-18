@@ -35,13 +35,31 @@ export const FraudDetection = () => {
         id: alert.id,
         risk_score: alert.risk_score || 0,
         details: {
-          analysis: (alert.details as { analysis: string })?.analysis || '',
+          analysis: formatAnalysis((alert.details as { analysis: string })?.analysis || ''),
           transactions: (alert.details as { transactions?: any[] })?.transactions
         },
         created_at: alert.created_at
       })) as FraudAlert[];
     }
   });
+
+  const formatAnalysis = (analysis: string) => {
+    // Split the analysis into lines
+    const lines = analysis.split('\n');
+    
+    // Group similar alerts
+    const groups: { [key: string]: number } = {};
+    lines.forEach(line => {
+      if (line.trim()) {
+        groups[line] = (groups[line] || 0) + 1;
+      }
+    });
+
+    // Format the condensed output
+    return Object.entries(groups)
+      .map(([alert, count]) => count > 1 ? `${alert} (${count} occurrences)` : alert)
+      .join('\n');
+  };
 
   return (
     <Card className="p-6">
@@ -61,7 +79,7 @@ export const FraudDetection = () => {
               <AlertTriangle className="h-5 w-5 text-yellow-500 mt-1" />
               <div>
                 <div className="font-medium">Risk Score: {(alert.risk_score * 100).toFixed(0)}%</div>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground mt-1 whitespace-pre-line">
                   {alert.details.analysis}
                 </p>
               </div>
