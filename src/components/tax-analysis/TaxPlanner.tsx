@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Calculator } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
+import { TaxPlanningScenario } from "@/components/types";
 
 export const TaxPlanner = () => {
   const { session } = useAuth();
@@ -17,7 +18,7 @@ export const TaxPlanner = () => {
   const [description, setDescription] = useState("");
 
   const { data: scenarios, refetch } = useQuery({
-    queryKey: ['tax-scenarios', session?.user.id],
+    queryKey: ['tax-planning-scenarios', session?.user.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tax_planning_scenarios')
@@ -26,7 +27,7 @@ export const TaxPlanner = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data;
+      return data as TaxPlanningScenario[];
     }
   });
 

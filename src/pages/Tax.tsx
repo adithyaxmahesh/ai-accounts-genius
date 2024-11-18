@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,9 +9,26 @@ import { TaxBreakdown } from "@/components/tax-analysis/TaxBreakdown";
 import { TaxPlanner } from "@/components/tax-analysis/TaxPlanner";
 import { TaxDeadlines } from "@/components/tax-analysis/TaxDeadlines";
 import { TaxChat } from "@/components/tax-analysis/TaxChat";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/AuthProvider";
 
 const Tax = () => {
   const navigate = useNavigate();
+  const { session } = useAuth();
+
+  const { data: analysis } = useQuery({
+    queryKey: ['tax-analysis', session?.user.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tax_analysis')
+        .select('*')
+        .eq('user_id', session?.user.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    }
+  });
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -37,11 +55,11 @@ const Tax = () => {
         </TabsList>
 
         <TabsContent value="summary" className="space-y-6">
-          <TaxSummary />
+          <TaxSummary analysis={analysis || {}} />
         </TabsContent>
 
         <TabsContent value="breakdown" className="space-y-6">
-          <TaxBreakdown />
+          <TaxBreakdown analysis={analysis || {}} />
         </TabsContent>
 
         <TabsContent value="planner" className="space-y-6">
