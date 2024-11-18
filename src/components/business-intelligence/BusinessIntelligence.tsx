@@ -1,15 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { LineChart, TrendingUp, ArrowUpRight, ArrowDownRight, RefreshCw, DollarSign } from "lucide-react";
+import { LineChart, TrendingUp, ArrowUpRight, DollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
-import { useToast } from "@/components/ui/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export const BusinessIntelligence = () => {
   const { session } = useAuth();
-  const { toast } = useToast();
 
   const { data: financialData } = useQuery({
     queryKey: ['financial-metrics', session?.user.id],
@@ -24,7 +21,6 @@ export const BusinessIntelligence = () => {
         .select('amount, date')
         .eq('user_id', session?.user.id);
 
-      // Calculate monthly metrics
       const monthlyData = (revenue || []).concat((expenses || []).map(e => ({ 
         ...e, 
         amount: -e.amount 
@@ -50,102 +46,45 @@ export const BusinessIntelligence = () => {
     }
   });
 
-  const { data: businessInsights } = useQuery({
-    queryKey: ['business-insights', session?.user.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('business_insights')
-        .select('*')
-        .eq('user_id', session?.user.id)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
-    }
-  });
-
   const totalRevenue = financialData?.reduce((sum, data) => sum + data.revenue, 0) || 0;
   const totalExpenses = financialData?.reduce((sum, data) => sum + data.expenses, 0) || 0;
   const totalProfit = totalRevenue - totalExpenses;
-  const profitMargin = totalRevenue ? (totalProfit / totalRevenue) * 100 : 0;
 
   return (
     <Card className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <LineChart className="h-6 w-6 text-primary" />
-          <h2 className="text-xl font-semibold">Business Intelligence</h2>
+      <div className="flex items-center gap-2 mb-6">
+        <LineChart className="h-6 w-6 text-primary" />
+        <h2 className="text-xl font-semibold">Business Intelligence</h2>
+      </div>
+
+      <div className="p-4 bg-muted rounded-lg mb-6">
+        <div className="flex items-center gap-2 mb-2">
+          <DollarSign className="h-5 w-5 text-green-500" />
+          <span className="font-medium">Financial Summary</span>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-sm text-muted-foreground">Revenue</p>
+            <p className="text-lg font-bold">${totalRevenue.toLocaleString()}</p>
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Profit</p>
+            <p className="text-lg font-bold">${totalProfit.toLocaleString()}</p>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="p-4 bg-muted rounded-lg">
-          <DollarSign className="h-5 w-5 text-green-500 mb-2" />
-          <p className="text-sm text-muted-foreground">Total Revenue</p>
-          <p className="text-2xl font-bold">${totalRevenue.toLocaleString()}</p>
-        </div>
-        
-        <div className="p-4 bg-muted rounded-lg">
-          <ArrowDownRight className="h-5 w-5 text-red-500 mb-2" />
-          <p className="text-sm text-muted-foreground">Total Expenses</p>
-          <p className="text-2xl font-bold">${totalExpenses.toLocaleString()}</p>
-        </div>
-
-        <div className="p-4 bg-muted rounded-lg">
-          <TrendingUp className="h-5 w-5 text-blue-500 mb-2" />
-          <p className="text-sm text-muted-foreground">Net Profit</p>
-          <p className="text-2xl font-bold">${totalProfit.toLocaleString()}</p>
-          <p className="text-sm text-muted-foreground">
-            Margin: {profitMargin.toFixed(1)}%
-          </p>
-        </div>
-      </div>
-
-      <div className="h-64 mb-6">
+      <div className="h-48">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={financialData}>
+          <BarChart data={financialData?.slice(-6)}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="month" />
             <YAxis />
             <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
             <Bar dataKey="revenue" name="Revenue" fill="#22c55e" />
             <Bar dataKey="expenses" name="Expenses" fill="#ef4444" />
-            <Bar dataKey="profit" name="Profit" fill="#3b82f6" />
           </BarChart>
         </ResponsiveContainer>
-      </div>
-
-      <div className="space-y-6">
-        {businessInsights?.map((insight) => (
-          <div key={insight.id} className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                <span className="font-medium">{insight.category}</span>
-              </div>
-              <span className={`text-sm font-medium ${
-                insight.priority === 'high' ? 'text-red-500' : 
-                insight.priority === 'medium' ? 'text-yellow-500' : 
-                'text-green-500'
-              }`}>
-                {insight.priority?.toUpperCase()}
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              {insight.recommendations?.map((rec, index) => (
-                <div key={index} className="flex items-start gap-2 p-3 bg-muted rounded-lg">
-                  {rec.includes('increase') || rec.includes('growth') ? (
-                    <ArrowUpRight className="h-4 w-4 text-green-500 mt-1" />
-                  ) : (
-                    <ArrowDownRight className="h-4 w-4 text-red-500 mt-1" />
-                  )}
-                  <p className="text-sm">{rec}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
       </div>
     </Card>
   );
