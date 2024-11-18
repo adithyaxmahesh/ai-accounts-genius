@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Info, AlertTriangle, Check, ClipboardList, Shield, Trash2 } from "lucide-react";
+import { Info, AlertTriangle, Check, ClipboardList, Shield, Trash2, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getStatusExplanation } from "@/utils/auditUtils";
 import StatusIcon from "./StatusIcon";
