@@ -14,16 +14,20 @@ const AuditDetail = () => {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const { session } = useAuth();
 
+  // Redirect to auth if not logged in
   useEffect(() => {
     if (!session) {
       navigate('/auth');
+      return;
     }
   }, [session, navigate]);
 
   const { data: audit, isLoading, error } = useQuery({
     queryKey: ['audit', id],
     queryFn: async () => {
-      if (!id || !session?.user?.id) throw new Error('No audit ID provided or user not authenticated');
+      if (!id || !session?.user?.id) {
+        throw new Error('No audit ID provided or user not authenticated');
+      }
       
       const { data, error } = await supabase
         .from('audit_reports')
@@ -40,9 +44,11 @@ const AuditDetail = () => {
       
       return data;
     },
-    enabled: !!session && !!id
+    enabled: !!session && !!id,
+    retry: 1
   });
 
+  // Handle errors
   useEffect(() => {
     if (error) {
       toast({
@@ -54,10 +60,12 @@ const AuditDetail = () => {
     }
   }, [error, navigate, toast]);
 
+  // Return null if not authenticated
   if (!session) {
     return null;
   }
 
+  // Show loading state
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
@@ -70,12 +78,18 @@ const AuditDetail = () => {
     );
   }
 
+  // Show not found state
   if (!audit) {
     return (
       <div className="container mx-auto p-6">
         <div className="text-center">
           <h2 className="text-2xl font-semibold mb-4">Audit Not Found</h2>
-          <button onClick={() => navigate('/audit')}>Return to Audits</button>
+          <button 
+            onClick={() => navigate('/audit')}
+            className="text-primary hover:underline"
+          >
+            Return to Audits
+          </button>
         </div>
       </div>
     );
