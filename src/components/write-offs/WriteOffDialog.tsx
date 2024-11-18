@@ -15,7 +15,7 @@ interface WriteOffDialogProps {
 
 export const WriteOffDialog = ({ isOpen, onOpenChange, onSuccess, userId }: WriteOffDialogProps) => {
   const { toast } = useToast();
-  const [selectedState, setSelectedState] = useState<string>("");
+  const [selectedState, setSelectedState] = useState<string>("California");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [newWriteOff, setNewWriteOff] = useState({
     amount: '',
@@ -68,6 +68,32 @@ export const WriteOffDialog = ({ isOpen, onOpenChange, onSuccess, userId }: Writ
       return data;
     },
     enabled: !!selectedState && !!selectedCategory
+  });
+
+  // Auto-categorize when description changes
+  useQuery({
+    queryKey: ['categorize', newWriteOff.description],
+    queryFn: async () => {
+      if (!newWriteOff.description) return null;
+      
+      const response = await supabase.functions.invoke('categorize-write-off', {
+        body: { 
+          description: newWriteOff.description,
+          amount: newWriteOff.amount 
+        }
+      });
+
+      if (response.data?.taxCode) {
+        setSelectedCategory(response.data.taxCode.expense_category);
+        setNewWriteOff(prev => ({
+          ...prev,
+          taxCodeId: response.data.taxCode.id
+        }));
+      }
+
+      return response.data;
+    },
+    enabled: !!newWriteOff.description
   });
 
   const addWriteOff = async () => {

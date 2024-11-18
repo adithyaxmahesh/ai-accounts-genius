@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { ArrowLeft, DollarSign, TrendingUp, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/components/AuthProvider";
 import {
   BarChart,
   Bar,
@@ -19,17 +20,19 @@ import {
 const Revenue = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { session } = useAuth();
 
   const { data: revenueData, isLoading } = useQuery({
-    queryKey: ['revenue'],
+    queryKey: ['revenue', session?.user.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('revenue_records')
         .select('*')
+        .eq('user_id', session?.user.id)
         .order('date', { ascending: false });
       
       if (error) throw error;
-      return data;
+      return data || [];
     }
   });
 
@@ -37,12 +40,15 @@ const Revenue = () => {
     const month = new Date(curr.date).toLocaleString('default', { month: 'short' });
     acc[month] = (acc[month] || 0) + Number(curr.amount);
     return acc;
-  }, {});
+  }, {} as Record<string, number>);
 
   const chartData = Object.entries(monthlyRevenue || {}).map(([month, amount]) => ({
     month,
     amount
   }));
+
+  const totalRevenue = revenueData?.reduce((sum, record) => sum + Number(record.amount), 0) || 0;
+  const monthlyAverage = totalRevenue / (Object.keys(monthlyRevenue || {}).length || 1);
 
   return (
     <div className="container mx-auto p-6 space-y-6 fade-in">
@@ -70,7 +76,7 @@ const Revenue = () => {
           <DollarSign className="h-8 w-8 mb-4 text-primary" />
           <h3 className="text-lg font-semibold">Total Revenue</h3>
           <p className="text-3xl font-bold">
-            ${revenueData?.reduce((sum, record) => sum + Number(record.amount), 0).toLocaleString()}
+            ${totalRevenue.toLocaleString()}
           </p>
           <p className="text-sm text-muted-foreground">All time</p>
         </Card>
@@ -79,8 +85,7 @@ const Revenue = () => {
           <TrendingUp className="h-8 w-8 mb-4 text-primary" />
           <h3 className="text-lg font-semibold">Monthly Average</h3>
           <p className="text-3xl font-bold">
-            ${(revenueData?.reduce((sum, record) => sum + Number(record.amount), 0) / 
-              (Object.keys(monthlyRevenue || {}).length || 1)).toLocaleString()}
+            ${monthlyAverage.toLocaleString()}
           </p>
           <p className="text-sm text-muted-foreground">Per month</p>
         </Card>
