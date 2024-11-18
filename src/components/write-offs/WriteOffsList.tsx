@@ -6,6 +6,22 @@ interface WriteOffsListProps {
   userId: string;
 }
 
+type WriteOff = {
+  id: string;
+  description: string;
+  amount: number;
+  date: string;
+  status: string;
+  tax_codes: {
+    code: string;
+    description: string;
+    category: string;
+    deduction_type: string;
+    state: string | null;
+    expense_category: string | null;
+  } | null;
+}
+
 export const WriteOffsList = ({ userId }: WriteOffsListProps) => {
   const { data: writeOffs } = useQuery({
     queryKey: ['writeOffs', userId],
@@ -27,7 +43,7 @@ export const WriteOffsList = ({ userId }: WriteOffsListProps) => {
         .order('date', { ascending: false });
       
       if (error) throw error;
-      return data;
+      return data as WriteOff[];
     }
   });
 
