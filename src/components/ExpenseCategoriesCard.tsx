@@ -12,33 +12,22 @@ export const ExpenseCategoriesCard = () => {
   const { data: expenses } = useQuery({
     queryKey: ['categorized-expenses', session?.user.id],
     queryFn: async () => {
-      // Fetch both revenue and expense transactions
-      const [{ data: writeOffs }, { data: revenues }] = await Promise.all([
-        supabase
-          .from('write_offs')
-          .select('amount, description, date')
-          .eq('user_id', session?.user.id),
-        supabase
-          .from('revenue_records')
-          .select('amount, description, date')
-          .eq('user_id', session?.user.id)
-      ]);
-
-      const transactions = [
-        ...(writeOffs || []).map(t => ({ ...t, amount: -Math.abs(t.amount) })),
-        ...(revenues || [])
-      ];
+      // Only fetch write-offs since they represent expenses
+      const { data: writeOffs } = await supabase
+        .from('write_offs')
+        .select('amount, description, date')
+        .eq('user_id', session?.user.id);
 
       const categorizedExpenses = await Promise.all(
-        transactions.map(async (transaction) => {
-          const { category, isExpense } = await categorizeTransaction(
+        (writeOffs || []).map(async (transaction) => {
+          const { category } = await categorizeTransaction(
             transaction.description,
-            transaction.amount
+            -Math.abs(transaction.amount) // Ensure amount is negative for expenses
           );
           return {
             ...transaction,
             category,
-            isExpense
+            amount: Math.abs(transaction.amount) // Use absolute value for display
           };
         })
       );
@@ -50,7 +39,7 @@ export const ExpenseCategoriesCard = () => {
 
       return Object.entries(categories).map(([name, value]) => ({
         name,
-        value: Math.abs(value)
+        value
       }));
     }
   });
