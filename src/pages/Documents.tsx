@@ -72,36 +72,39 @@ const Documents = () => {
   };
 
   const handleViewDetails = (documentId: string) => {
-    // Create a new audit for this document
     navigate(`/audit/${documentId}`);
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6 fade-in">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-4">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate('/')}
-            className="hover-scale"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
-          </Button>
-          <h1 className="text-3xl font-bold">Document History</h1>
+    <div className="min-h-screen bg-background">
+      <div className="flex flex-col h-screen">
+        <div className="flex items-center justify-between p-6 border-b">
+          <div className="flex items-center space-x-4">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate('/')}
+              className="hover-scale"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+            <h1 className="text-3xl font-bold">Document History</h1>
+          </div>
+        </div>
+
+        <div className="flex-1 p-6 space-y-6 overflow-auto">
+          <DocumentUpload className="w-full" />
+          
+          <Card className="p-6 w-full">
+            <h2 className="text-xl font-semibold mb-4">Document Audit History</h2>
+            <DocumentAuditFilters onFilterChange={handleFilterChange} />
+            <DocumentAuditList 
+              documents={filteredDocuments}
+              onViewDetails={handleViewDetails}
+            />
+          </Card>
         </div>
       </div>
-
-      <DocumentUpload />
-      
-      <Card className="p-6">
-        <h2 className="text-xl font-semibold mb-4">Document Audit History</h2>
-        <DocumentAuditFilters onFilterChange={handleFilterChange} />
-        <DocumentAuditList 
-          documents={filteredDocuments}
-          onViewDetails={handleViewDetails}
-        />
-      </Card>
     </div>
   );
 };
