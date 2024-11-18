@@ -6,23 +6,43 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useState } from "react";
+
+type TimePeriod = 'total' | '1year' | 'q1' | 'q2' | 'q3' | 'q4';
 
 export const BusinessIntelligence = () => {
   const { session } = useAuth();
   const { toast } = useToast();
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('total');
 
   const { data: financialData } = useQuery({
-    queryKey: ['financial-metrics', session?.user.id],
+    queryKey: ['financial-metrics', session?.user.id, timePeriod],
     queryFn: async () => {
+      const now = new Date();
+      let startDate = new Date(0); // Default to earliest possible date
+
+      if (timePeriod === '1year') {
+        startDate = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+      } else if (timePeriod.startsWith('q')) {
+        const year = now.getFullYear();
+        const quarter = parseInt(timePeriod[1]);
+        startDate = new Date(year, (quarter - 1) * 3, 1);
+        now.setMonth(quarter * 3, 0); // End of quarter
+      }
+
       const { data: revenue } = await supabase
         .from('revenue_records')
         .select('amount, date')
-        .eq('user_id', session?.user.id);
+        .eq('user_id', session?.user.id)
+        .gte('date', startDate.toISOString())
+        .lte('date', now.toISOString());
 
       const { data: expenses } = await supabase
         .from('write_offs')
         .select('amount, date')
-        .eq('user_id', session?.user.id);
+        .eq('user_id', session?.user.id)
+        .gte('date', startDate.toISOString())
+        .lte('date', now.toISOString());
 
       // Calculate monthly metrics
       const monthlyData = (revenue || []).concat((expenses || []).map(e => ({ 
@@ -75,6 +95,50 @@ export const BusinessIntelligence = () => {
         <div className="flex items-center gap-2">
           <LineChart className="h-6 w-6 text-primary" />
           <h2 className="text-xl font-semibold">Business Intelligence</h2>
+        </div>
+        <div className="flex gap-2">
+          <Button 
+            variant={timePeriod === 'total' ? 'default' : 'outline'} 
+            onClick={() => setTimePeriod('total')}
+            size="sm"
+          >
+            Total
+          </Button>
+          <Button 
+            variant={timePeriod === '1year' ? 'default' : 'outline'} 
+            onClick={() => setTimePeriod('1year')}
+            size="sm"
+          >
+            1 Year
+          </Button>
+          <Button 
+            variant={timePeriod === 'q1' ? 'default' : 'outline'} 
+            onClick={() => setTimePeriod('q1')}
+            size="sm"
+          >
+            Q1
+          </Button>
+          <Button 
+            variant={timePeriod === 'q2' ? 'default' : 'outline'} 
+            onClick={() => setTimePeriod('q2')}
+            size="sm"
+          >
+            Q2
+          </Button>
+          <Button 
+            variant={timePeriod === 'q3' ? 'default' : 'outline'} 
+            onClick={() => setTimePeriod('q3')}
+            size="sm"
+          >
+            Q3
+          </Button>
+          <Button 
+            variant={timePeriod === 'q4' ? 'default' : 'outline'} 
+            onClick={() => setTimePeriod('q4')}
+            size="sm"
+          >
+            Q4
+          </Button>
         </div>
       </div>
 
