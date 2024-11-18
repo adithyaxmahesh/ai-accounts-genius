@@ -13,6 +13,7 @@ serve(async (req) => {
 
   try {
     const { description, amount } = await req.json()
+    console.log('Categorizing write-off:', { description, amount })
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -20,10 +21,14 @@ serve(async (req) => {
     )
 
     // Get all tax codes
-    const { data: taxCodes } = await supabase
+    const { data: taxCodes, error: taxCodesError } = await supabase
       .from('tax_codes')
       .select('*')
       .order('expense_category')
+
+    if (taxCodesError) {
+      throw taxCodesError
+    }
 
     // Simple keyword matching for demonstration
     const keywords = {
@@ -50,6 +55,8 @@ serve(async (req) => {
       }
     }
 
+    console.log('Found matching tax code:', bestMatch)
+
     return new Response(
       JSON.stringify({ 
         success: true,
@@ -58,6 +65,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
+    console.error('Error in categorize-write-off:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
