@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/components/AuthProvider";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { ShopifyConnect } from "@/components/shopify/ShopifyConnect";
+import { RevenueSourcesHelp } from "@/components/revenue/RevenueSourcesHelp";
 import {
   BarChart,
   Bar,
@@ -69,7 +70,10 @@ const Revenue = () => {
       </div>
 
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Revenue Analysis</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-3xl font-bold">Revenue Analysis</h1>
+          <RevenueSourcesHelp />
+        </div>
         <Button onClick={() => {}} className="hover-scale">
           <Download className="mr-2 h-4 w-4" />
           Export Data
