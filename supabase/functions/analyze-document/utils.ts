@@ -46,21 +46,20 @@ export const analyzeWithAI = async (openAIApiKey: string, parsedData: any[]) => 
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4',
       messages: [
         {
           role: 'system',
-          content: `You are a financial document analyzer. Analyze this data sample and provide:
-            1) Summary of transactions/entries
-            2) Potential anomalies or suspicious patterns
-            3) Tax implications
-            4) Compliance concerns
-            5) Risk assessment
+          content: `You are a financial document analyzer. Analyze this data and provide a structured response with:
+            1. transactions: Array of identified transactions with amounts, categories, and whether they should be flagged
+            2. findings: Array of key findings or issues identified
+            3. risk_level: Overall risk assessment (low, medium, high)
+            4. recommendations: Array of actionable recommendations
             Format response as JSON with these sections.`
         },
         {
           role: 'user',
-          content: `Analyze this data:\n${JSON.stringify(sampleData, null, 2)}`
+          content: `Analyze this financial data:\n${JSON.stringify(sampleData, null, 2)}`
         }
       ],
     }),

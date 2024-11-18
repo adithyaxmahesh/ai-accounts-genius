@@ -5,7 +5,6 @@ import * as XLSX from 'https://esm.sh/xlsx@0.18.5'
 import { corsHeaders, validateEnvironment, parseFileContent, analyzeWithAI } from './utils.ts'
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -13,24 +12,21 @@ serve(async (req) => {
   try {
     console.log('Starting document analysis...');
     
-    // Validate environment and get API key
     const openAIApiKey = validateEnvironment();
-    
-    // Get document ID from request
     const { documentId } = await req.json();
+    
     if (!documentId) {
       throw new Error('Document ID is required');
     }
     
     console.log('Processing document:', documentId);
     
-    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get document metadata
+    // Get document metadata and user ID
     const { data: document, error: docError } = await supabaseClient
       .from('processed_documents')
       .select('*, user_id')
@@ -52,18 +48,12 @@ serve(async (req) => {
       throw downloadError;
     }
 
-    // Parse file content
+    // Parse and analyze file content
     const fileExt = document.storage_path.split('.').pop()?.toLowerCase();
     const parsedData = await parseFileContent(fileData, fileExt);
-
-    if (!parsedData || parsedData.length === 0) {
-      throw new Error('No data found in file');
-    }
-
-    // Analyze data with OpenAI
     const analysis = await analyzeWithAI(openAIApiKey, parsedData);
 
-    // Update document with analysis results
+    // Update document status
     const { error: updateError } = await supabaseClient
       .from('processed_documents')
       .update({
@@ -73,37 +63,68 @@ serve(async (req) => {
       })
       .eq('id', documentId);
 
-    if (updateError) {
-      console.error('Error updating document:', updateError);
-      throw updateError;
-    }
+    if (updateError) throw updateError;
 
-    // Create or update audit findings if needed
-    const { data: existingAudit } = await supabaseClient
+    // Create or update audit report
+    const { data: existingAudit, error: auditError } = await supabaseClient
       .from('audit_reports')
       .select('id')
       .eq('user_id', document.user_id)
       .eq('status', 'evidence_gathering')
       .single();
 
-    if (existingAudit?.id && analysis.anomalies) {
-      const auditFindings = analysis.anomalies.map(anomaly => ({
-        category: 'Financial Review',
-        description: anomaly.description,
-        impact: anomaly.impact || 'Unknown',
-        severity: anomaly.risk_level || 'medium',
-        status: 'pending',
-        details: anomaly.details || []
+    let auditId = existingAudit?.id;
+
+    if (!auditId) {
+      // Create new audit if none exists
+      const { data: newAudit, error: createError } = await supabaseClient
+        .from('audit_reports')
+        .insert({
+          title: `Document Analysis Audit ${new Date().toLocaleDateString()}`,
+          status: 'evidence_gathering',
+          user_id: document.user_id,
+          findings: [],
+          risk_level: 'low'
+        })
+        .select()
+        .single();
+
+      if (createError) throw createError;
+      auditId = newAudit.id;
+    }
+
+    // Create audit items from analysis
+    if (analysis.transactions) {
+      const auditItems = analysis.transactions.map((transaction: any) => ({
+        audit_id: auditId,
+        category: transaction.category || 'Uncategorized',
+        description: transaction.description || 'Transaction from document analysis',
+        amount: transaction.amount || 0,
+        status: transaction.flagged ? 'flagged' : 'pending'
       }));
 
-      await supabaseClient
+      const { error: itemsError } = await supabaseClient
+        .from('audit_items')
+        .insert(auditItems);
+
+      if (itemsError) {
+        console.error('Error creating audit items:', itemsError);
+        throw itemsError;
+      }
+    }
+
+    // Update audit findings
+    if (analysis.findings) {
+      const { error: findingsError } = await supabaseClient
         .from('audit_reports')
         .update({
-          findings: auditFindings,
-          risk_level: analysis.risk_assessment?.overall_risk || 'low',
+          findings: analysis.findings,
+          risk_level: analysis.risk_level || 'low',
           recommendations: analysis.recommendations || []
         })
-        .eq('id', existingAudit.id);
+        .eq('id', auditId);
+
+      if (findingsError) throw findingsError;
     }
 
     console.log('Document analysis completed successfully');
@@ -112,7 +133,7 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         analysis,
-        hasAuditFindings: Boolean(analysis.anomalies?.length)
+        auditId
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
