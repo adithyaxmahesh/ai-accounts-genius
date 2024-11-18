@@ -14,6 +14,7 @@ interface AuditItemProps {
     amount: number;
     status: string;
   };
+  onSearchInsights?: () => void;
 }
 
 const getFlagExplanation = (status: string) => {
@@ -29,11 +30,14 @@ const getFlagExplanation = (status: string) => {
   }
 };
 
-const AuditItemCard = ({ item }: AuditItemProps) => {
+const AuditItemCard = ({ item, onSearchInsights }: AuditItemProps) => {
   return (
-    <Card className={`p-4 ${
-      item.status === 'flagged' ? 'border-red-500 border-2' : ''
-    }`}>
+    <Card 
+      className={`p-4 ${
+        item.status === 'flagged' ? 'border-red-500 border-2' : ''
+      }`}
+      onClick={onSearchInsights}
+    >
       <div className="flex justify-between items-start">
         <div>
           <div className="flex items-center gap-2">

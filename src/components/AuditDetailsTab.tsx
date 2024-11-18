@@ -8,9 +8,9 @@ import {
 } from "@/components/ui/tooltip";
 import { useToast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
-import AuditItemCard from "@/components/AuditItemCard";
 import AuditFindings from "@/components/audit/AuditFindings";
 import AuditProgress from "@/components/audit/AuditProgress";
+import AuditItemsSection from "@/components/audit/AuditItemsSection";
 import { updateAuditStatus } from "@/utils/auditUtils";
 
 interface AuditDetailsProps {
@@ -158,34 +158,7 @@ const AuditDetailsTab = ({ audit, getStatusExplanation, getRiskLevelExplanation 
           </div>
         </div>
 
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-lg font-semibold">
-              Audit Items ({audit?.audit_items?.length || 0})
-            </h3>
-            <Badge variant="outline" className="ml-2">
-              {audit?.audit_items?.filter(item => item.status === 'flagged').length || 0} Flagged
-            </Badge>
-            <Tooltip>
-              <TooltipTrigger>
-                <Info className="h-4 w-4 text-muted-foreground" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Individual transactions or records being reviewed</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-          <div className="space-y-4">
-            {audit?.audit_items?.map((item) => (
-              <AuditItemCard key={item.id} item={item} />
-            ))}
-            {(!audit?.audit_items || audit.audit_items.length === 0) && (
-              <p className="text-muted-foreground text-center py-4">
-                No audit items added yet
-              </p>
-            )}
-          </div>
-        </div>
+        <AuditItemsSection auditItems={audit?.audit_items || []} />
 
         {Array.isArray(audit?.recommendations) && audit.recommendations.length > 0 && (
           <div>
