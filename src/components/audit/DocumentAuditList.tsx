@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Download, Search } from "lucide-react";
 import { format } from "date-fns";
-import { ProcessedDocument } from "@/components/document-management/types";
+import { ProcessedDocument } from "@/components/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
@@ -69,7 +69,13 @@ export const DocumentAuditList = ({ documents, onViewDetails }: DocumentAuditLis
           description: 'Document analysis and verification',
           status: 'pending',
           document_id: documentId,
-          user_id: (await supabase.auth.getUser()).data.user?.id
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+          findings: [],
+          recommendations: [
+            "Review document contents thoroughly",
+            "Verify all financial calculations",
+            "Check for compliance with regulations"
+          ]
         })
         .select()
         .single();
@@ -77,13 +83,40 @@ export const DocumentAuditList = ({ documents, onViewDetails }: DocumentAuditLis
       if (createError) throw createError;
 
       if (newAudit) {
+        // Analyze the document and update the audit with findings
+        const response = await fetch('/api/analyze-document', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ documentId }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to analyze document');
+        }
+
+        const analysisResult = await response.json();
+        
+        // Update audit with analysis results
+        const { error: updateError } = await supabase
+          .from('audit_reports')
+          .update({
+            findings: analysisResult.findings || [],
+            risk_level: analysisResult.risk_level || 'low',
+            recommendations: analysisResult.recommendations || []
+          })
+          .eq('id', newAudit.id);
+
+        if (updateError) throw updateError;
+        
         onViewDetails(newAudit.id);
       }
     } catch (error) {
       console.error("Error handling document view:", error);
       toast({
         title: "Error",
-        description: "Failed to create audit for document",
+        description: "Failed to analyze document",
         variant: "destructive",
       });
     } finally {
