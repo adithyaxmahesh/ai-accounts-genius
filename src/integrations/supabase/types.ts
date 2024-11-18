@@ -411,6 +411,39 @@ export type Database = {
           },
         ]
       }
+      irs_publications: {
+        Row: {
+          content: string
+          created_at: string
+          effective_date: string
+          expiration_date: string | null
+          id: string
+          publication_number: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          effective_date: string
+          expiration_date?: string | null
+          id?: string
+          publication_number: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          effective_date?: string
+          expiration_date?: string | null
+          id?: string
+          publication_number?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       processed_documents: {
         Row: {
           confidence_score: number | null
@@ -634,6 +667,45 @@ export type Database = {
           },
         ]
       }
+      tax_code_rules: {
+        Row: {
+          created_at: string
+          id: string
+          priority: number
+          tax_code_id: string | null
+          tax_rule_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          priority?: number
+          tax_code_id?: string | null
+          tax_rule_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          priority?: number
+          tax_code_id?: string | null
+          tax_rule_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_code_rules_tax_code_id_fkey"
+            columns: ["tax_code_id"]
+            isOneToOne: false
+            referencedRelation: "tax_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tax_code_rules_tax_rule_id_fkey"
+            columns: ["tax_rule_id"]
+            isOneToOne: false
+            referencedRelation: "tax_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tax_codes: {
         Row: {
           category: string
@@ -698,6 +770,50 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_rules: {
+        Row: {
+          calculation_formula: string | null
+          created_at: string
+          description: string
+          effective_date: string
+          expiration_date: string | null
+          id: string
+          publication_id: string | null
+          rule_code: string
+          updated_at: string
+        }
+        Insert: {
+          calculation_formula?: string | null
+          created_at?: string
+          description: string
+          effective_date: string
+          expiration_date?: string | null
+          id?: string
+          publication_id?: string | null
+          rule_code: string
+          updated_at?: string
+        }
+        Update: {
+          calculation_formula?: string | null
+          created_at?: string
+          description?: string
+          effective_date?: string
+          expiration_date?: string | null
+          id?: string
+          publication_id?: string | null
+          rule_code?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_rules_publication_id_fkey"
+            columns: ["publication_id"]
+            isOneToOne: false
+            referencedRelation: "irs_publications"
             referencedColumns: ["id"]
           },
         ]
