@@ -4,18 +4,6 @@ import { AlertTriangle, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 
-interface FraudAlertDetails {
-  analysis: string;
-  transactions?: any[];
-}
-
-interface FraudAlert {
-  id: string;
-  risk_score: number;
-  details: FraudAlertDetails;
-  created_at: string;
-}
-
 export const FraudDetection = () => {
   const { session } = useAuth();
 
@@ -30,16 +18,7 @@ export const FraudDetection = () => {
         .limit(3);
       
       if (error) throw error;
-      
-      return (data || []).map(alert => ({
-        id: alert.id,
-        risk_score: alert.risk_score || 0,
-        details: {
-          analysis: (alert.details as { analysis: string })?.analysis || 'Suspicious activity detected',
-          transactions: (alert.details as { transactions?: any[] })?.transactions
-        },
-        created_at: alert.created_at
-      })) as FraudAlert[];
+      return data;
     }
   });
 
@@ -62,7 +41,7 @@ export const FraudDetection = () => {
               <div>
                 <div className="font-medium">Risk Score: {(alert.risk_score * 100).toFixed(0)}%</div>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {alert.details.analysis}
+                  {alert.details?.analysis || 'Suspicious activity detected'}
                 </p>
               </div>
             </div>
