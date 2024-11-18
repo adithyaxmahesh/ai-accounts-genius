@@ -8,11 +8,13 @@ import AuditItemCard from "@/components/AuditItemCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TaxSummaryTab from "@/components/TaxSummaryTab";
 import AuditDetailsTab from "@/components/AuditDetailsTab";
+import { useState } from "react";
 
 const AuditDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
   // Validate UUID format
   const isValidUUID = (uuid: string | undefined) => {
@@ -108,6 +110,28 @@ const AuditDetail = () => {
     }
   };
 
+  const getFraudInsights = (item: any) => {
+    const insights = [];
+    
+    if (item.status === 'flagged') {
+      insights.push({
+        description: 'Transaction has been flagged for suspicious activity',
+        severity: 'high',
+        amount: item.amount
+      });
+    }
+
+    if (item.amount > 10000) {
+      insights.push({
+        description: 'Large transaction amount detected',
+        severity: 'medium',
+        amount: item.amount
+      });
+    }
+
+    return insights;
+  };
+
   if (isLoading) return <div>Loading audit details...</div>;
 
   const flaggedItems = audit?.audit_items?.filter(item => item.status === 'flagged') || [];
@@ -150,7 +174,13 @@ const AuditDetail = () => {
           </h2>
           <div className="space-y-4">
             {flaggedItems.map((item) => (
-              <AuditItemCard key={item.id} item={item} />
+              <AuditItemCard 
+                key={item.id} 
+                item={item}
+                insights={getFraudInsights(item)}
+                isSelected={selectedItemId === item.id}
+                onSelect={() => setSelectedItemId(selectedItemId === item.id ? null : item.id)}
+              />
             ))}
           </div>
         </div>
