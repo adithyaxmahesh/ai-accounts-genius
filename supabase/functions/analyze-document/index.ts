@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import "https://deno.land/x/xhr@0.1.0/mod.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import * as XLSX from 'https://esm.sh/xlsx@0.18.5'
 import { corsHeaders, validateEnvironment, parseFileContent, analyzeWithAI } from './utils.ts'
 
 serve(async (req) => {
@@ -38,6 +37,8 @@ serve(async (req) => {
       throw docError;
     }
 
+    console.log('Retrieved document:', document.id, 'for user:', document.user_id);
+
     // Download file content
     const { data: fileData, error: downloadError } = await supabaseClient.storage
       .from('documents')
@@ -48,10 +49,15 @@ serve(async (req) => {
       throw downloadError;
     }
 
+    console.log('Successfully downloaded file, parsing content...');
+
     // Parse and analyze file content
     const fileExt = document.storage_path.split('.').pop()?.toLowerCase();
     const parsedData = await parseFileContent(fileData, fileExt);
+    console.log('File parsed, sending to OpenAI for analysis...');
+    
     const analysis = await analyzeWithAI(openAIApiKey, parsedData);
+    console.log('Received analysis from OpenAI:', analysis);
 
     // Update document status
     const { error: updateError } = await supabaseClient
@@ -59,14 +65,17 @@ serve(async (req) => {
       .update({
         extracted_data: analysis,
         processing_status: 'analyzed',
-        confidence_score: 0.95
+        confidence_score: analysis.confidence_score || 0.95
       })
       .eq('id', documentId);
 
-    if (updateError) throw updateError;
+    if (updateError) {
+      console.error('Error updating document status:', updateError);
+      throw updateError;
+    }
 
     // Create or update audit report
-    const { data: existingAudit, error: auditError } = await supabaseClient
+    const { data: existingAudit } = await supabaseClient
       .from('audit_reports')
       .select('id')
       .eq('user_id', document.user_id)
@@ -76,25 +85,31 @@ serve(async (req) => {
     let auditId = existingAudit?.id;
 
     if (!auditId) {
-      // Create new audit if none exists
+      console.log('Creating new audit report...');
       const { data: newAudit, error: createError } = await supabaseClient
         .from('audit_reports')
         .insert({
           title: `Document Analysis Audit ${new Date().toLocaleDateString()}`,
           status: 'evidence_gathering',
           user_id: document.user_id,
-          findings: [],
-          risk_level: 'low'
+          findings: analysis.findings || [],
+          risk_level: analysis.risk_level || 'low',
+          recommendations: analysis.recommendations || []
         })
         .select()
         .single();
 
-      if (createError) throw createError;
+      if (createError) {
+        console.error('Error creating audit:', createError);
+        throw createError;
+      }
       auditId = newAudit.id;
+      console.log('Created new audit:', auditId);
     }
 
     // Create audit items from analysis
-    if (analysis.transactions) {
+    if (analysis.transactions && analysis.transactions.length > 0) {
+      console.log('Creating audit items from transactions...');
       const auditItems = analysis.transactions.map((transaction: any) => ({
         audit_id: auditId,
         category: transaction.category || 'Uncategorized',
@@ -111,10 +126,12 @@ serve(async (req) => {
         console.error('Error creating audit items:', itemsError);
         throw itemsError;
       }
+      console.log(`Created ${auditItems.length} audit items`);
     }
 
     // Update audit findings
     if (analysis.findings) {
+      console.log('Updating audit findings...');
       const { error: findingsError } = await supabaseClient
         .from('audit_reports')
         .update({
@@ -124,7 +141,10 @@ serve(async (req) => {
         })
         .eq('id', auditId);
 
-      if (findingsError) throw findingsError;
+      if (findingsError) {
+        console.error('Error updating audit findings:', findingsError);
+        throw findingsError;
+      }
     }
 
     console.log('Document analysis completed successfully');

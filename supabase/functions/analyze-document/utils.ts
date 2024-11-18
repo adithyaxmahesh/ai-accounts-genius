@@ -11,21 +11,20 @@ export const validateEnvironment = () => {
   return openAIApiKey;
 };
 
-export const parseFileContent = async (fileData: Blob, fileExt: string) => {
+export const parseFileContent = async (fileData: Blob, fileExt: string | undefined) => {
   console.log('Parsing file with extension:', fileExt);
   
   try {
+    const text = await fileData.text();
+    
     if (fileExt === 'csv') {
-      const text = await fileData.text();
       const rows = text.split('\n').map(row => row.split(','));
       return rows.slice(1); // Skip header row
-    } else if (['xls', 'xlsx'].includes(fileExt)) {
-      const arrayBuffer = await fileData.arrayBuffer();
-      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      return XLSX.utils.sheet_to_json(firstSheet);
+    } else if (['xls', 'xlsx'].includes(fileExt || '')) {
+      throw new Error('Excel files not supported yet');
     } else {
-      throw new Error(`Unsupported file type: ${fileExt}`);
+      // For text files, PDFs, etc., return lines of text
+      return text.split('\n').filter(line => line.trim());
     }
   } catch (error) {
     console.error('Error parsing file:', error);
@@ -55,13 +54,16 @@ export const analyzeWithAI = async (openAIApiKey: string, parsedData: any[]) => 
             2. findings: Array of key findings or issues identified
             3. risk_level: Overall risk assessment (low, medium, high)
             4. recommendations: Array of actionable recommendations
-            Format response as JSON with these sections.`
+            5. confidence_score: Number between 0 and 1 indicating analysis confidence
+            Format response as JSON with these exact sections.`
         },
         {
           role: 'user',
           content: `Analyze this financial data:\n${JSON.stringify(sampleData, null, 2)}`
         }
       ],
+      temperature: 0.5,
+      max_tokens: 2000
     }),
   });
 
