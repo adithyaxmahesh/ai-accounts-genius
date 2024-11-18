@@ -7,20 +7,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import AuditItemCard from "@/components/AuditItemCard";
-import AuditFraudInsights from "./AuditFraudInsights";
 
 interface AuditItemsSectionProps {
   auditItems: any[];
 }
 
 const AuditItemsSection = ({ auditItems }: AuditItemsSectionProps) => {
-  const [showFraudInsights, setShowFraudInsights] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
-  const getFraudInsights = (itemId: string) => {
-    const item = auditItems.find(i => i.id === itemId);
-    if (!item) return [];
-
+  const getFraudInsights = (item: any) => {
     const insights = [];
     
     if (item.status === 'flagged') {
@@ -40,11 +35,6 @@ const AuditItemsSection = ({ auditItems }: AuditItemsSectionProps) => {
     }
 
     return insights;
-  };
-
-  const handleSearchInsights = (itemId: string) => {
-    setSelectedItemId(itemId);
-    setShowFraudInsights(true);
   };
 
   return (
@@ -67,18 +57,19 @@ const AuditItemsSection = ({ auditItems }: AuditItemsSectionProps) => {
       </div>
       
       <div className="space-y-4">
-        {auditItems?.map((item) => (
-          <div key={item.id} className="relative">
-            <AuditItemCard 
-              item={item} 
-              onSearchInsights={() => handleSearchInsights(item.id)}
-            />
-            <AuditFraudInsights
-              insights={getFraudInsights(item.id)}
-              isVisible={showFraudInsights && selectedItemId === item.id}
-            />
-          </div>
-        ))}
+        {auditItems?.map((item) => {
+          const insights = getFraudInsights(item);
+          return (
+            <div key={item.id} className="relative">
+              <AuditItemCard 
+                item={item}
+                insights={insights}
+                isSelected={selectedItemId === item.id}
+                onSelect={() => setSelectedItemId(item.id === selectedItemId ? null : item.id)}
+              />
+            </div>
+          );
+        })}
         {(!auditItems || auditItems.length === 0) && (
           <p className="text-muted-foreground text-center py-4">
             No audit items added yet
