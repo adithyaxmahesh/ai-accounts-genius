@@ -134,7 +134,7 @@ const AuditDetailsTab = ({ audit, getStatusExplanation, getRiskLevelExplanation 
       <div className="space-y-6">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-lg font-semibold">Findings ({audit?.findings?.length || 0})</h3>
+            <h3 className="text-lg font-semibold">Findings ({Array.isArray(audit?.findings) ? audit.findings.length : 0})</h3>
             <Tooltip>
               <TooltipTrigger>
                 <Info className="h-4 w-4 text-muted-foreground" />
@@ -144,7 +144,18 @@ const AuditDetailsTab = ({ audit, getStatusExplanation, getRiskLevelExplanation 
               </TooltipContent>
             </Tooltip>
           </div>
-          <AuditFindings findings={audit?.findings || []} status={audit?.status} />
+          <div className="space-y-4">
+            {Array.isArray(audit?.findings) && audit.findings.map((finding, index) => (
+              <div key={index} className="p-4 bg-muted rounded-lg">
+                <p className="text-sm">{finding}</p>
+              </div>
+            ))}
+            {(!Array.isArray(audit?.findings) || audit.findings.length === 0) && (
+              <p className="text-muted-foreground text-center py-4">
+                No findings recorded yet
+              </p>
+            )}
+          </div>
         </div>
 
         <div>
@@ -168,10 +179,15 @@ const AuditDetailsTab = ({ audit, getStatusExplanation, getRiskLevelExplanation 
             {audit?.audit_items?.map((item) => (
               <AuditItemCard key={item.id} item={item} />
             ))}
+            {(!audit?.audit_items || audit.audit_items.length === 0) && (
+              <p className="text-muted-foreground text-center py-4">
+                No audit items added yet
+              </p>
+            )}
           </div>
         </div>
 
-        {audit?.recommendations?.length > 0 && (
+        {Array.isArray(audit?.recommendations) && audit.recommendations.length > 0 && (
           <div>
             <div className="flex items-center gap-2 mb-2">
               <h3 className="text-lg font-semibold">

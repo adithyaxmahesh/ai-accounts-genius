@@ -1,7 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import "https://deno.land/x/xhr@0.1.0/mod.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { corsHeaders, validateEnvironment, parseFileContent, analyzeWithRules } from './utils.ts'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -11,7 +15,13 @@ serve(async (req) => {
   try {
     console.log('Starting document analysis...');
     
-    const { supabaseUrl, supabaseKey } = validateEnvironment();
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing environment variables');
+    }
+    
     const { documentId } = await req.json();
     
     if (!documentId) {
@@ -34,8 +44,6 @@ serve(async (req) => {
       throw docError;
     }
 
-    console.log('Retrieved document:', document.id, 'for user:', document.user_id);
-
     // Download file content
     const { data: fileData, error: downloadError } = await supabaseClient.storage
       .from('documents')
@@ -46,52 +54,101 @@ serve(async (req) => {
       throw downloadError;
     }
 
-    console.log('Successfully downloaded file, parsing content...');
-
-    // Parse and analyze file content
-    const fileExt = document.storage_path.split('.').pop()?.toLowerCase();
-    const parsedData = await parseFileContent(fileData, fileExt);
-    console.log('File parsed, analyzing with rules...');
+    // Analyze content
+    const text = await fileData.text();
+    const lines = text.split('\n');
     
-    const analysis = await analyzeWithRules(parsedData);
-    console.log('Analysis complete:', analysis);
+    // Extract potential findings
+    const findings = [];
+    const transactions = [];
+    let riskLevel = 'low';
+
+    // Basic pattern matching for financial data
+    const numberPattern = /\$?\d{1,3}(,\d{3})*(\.\d{2})?/;
+    let totalAmount = 0;
+    let suspiciousTransactions = 0;
+
+    lines.forEach((line, index) => {
+      const matches = line.match(numberPattern);
+      if (matches) {
+        const amount = parseFloat(matches[0].replace(/[$,]/g, ''));
+        if (!isNaN(amount)) {
+          totalAmount += amount;
+          transactions.push({
+            amount,
+            description: line.trim(),
+            line: index + 1
+          });
+
+          if (amount > 10000) {
+            findings.push(`Large transaction detected: $${amount.toLocaleString()} on line ${index + 1}`);
+            suspiciousTransactions++;
+          }
+        }
+      }
+    });
+
+    // Determine risk level based on findings
+    if (suspiciousTransactions > 5) {
+      riskLevel = 'high';
+    } else if (suspiciousTransactions > 2) {
+      riskLevel = 'medium';
+    }
+
+    // Generate recommendations
+    const recommendations = [
+      "Review all transactions above $10,000",
+      "Verify supporting documentation for large transactions",
+      "Consider implementing additional controls for high-value transactions"
+    ];
+
+    if (suspiciousTransactions > 0) {
+      recommendations.push(`Review ${suspiciousTransactions} flagged transactions`);
+    }
 
     // Update document status
     const { error: updateError } = await supabaseClient
       .from('processed_documents')
       .update({
-        extracted_data: analysis,
+        extracted_data: { transactions, findings },
         processing_status: 'analyzed',
-        confidence_score: analysis.confidence_score
+        confidence_score: 0.85
       })
       .eq('id', documentId);
 
-    if (updateError) {
-      console.error('Error updating document status:', updateError);
-      throw updateError;
-    }
+    if (updateError) throw updateError;
 
     // Create or update audit report
     const { data: existingAudit } = await supabaseClient
       .from('audit_reports')
       .select('id')
-      .eq('user_id', document.user_id)
-      .eq('status', 'evidence_gathering')
+      .eq('document_id', documentId)
       .single();
 
-    let auditId = existingAudit?.id;
+    const auditData = {
+      title: `Document Analysis Audit ${new Date().toLocaleDateString()}`,
+      status: 'evidence_gathering',
+      document_id: documentId,
+      user_id: document.user_id,
+      findings,
+      risk_level: riskLevel,
+      recommendations,
+      description: `Analysis of document ${document.original_filename}`
+    };
 
-    if (!auditId) {
+    let auditId;
+    if (existingAudit?.id) {
+      const { error: updateAuditError } = await supabaseClient
+        .from('audit_reports')
+        .update(auditData)
+        .eq('id', existingAudit.id);
+
+      if (updateAuditError) throw updateAuditError;
+      auditId = existingAudit.id;
+    } else {
       const { data: newAudit, error: createError } = await supabaseClient
         .from('audit_reports')
-        .insert({
-          title: `Document Analysis Audit ${new Date().toLocaleDateString()}`,
-          status: 'evidence_gathering',
-          user_id: document.user_id,
-          findings: analysis.findings,
-          risk_level: analysis.risk_level,
-          recommendations: analysis.recommendations
-        })
+        .insert([auditData])
         .select()
         .single();
 
@@ -99,14 +156,14 @@ serve(async (req) => {
       auditId = newAudit.id;
     }
 
-    // Create audit items from analysis
-    if (analysis.transactions?.length > 0) {
-      const auditItems = analysis.transactions.map((transaction: any) => ({
+    // Create audit items from transactions
+    if (transactions.length > 0) {
+      const auditItems = transactions.map(transaction => ({
         audit_id: auditId,
-        category: transaction.category || 'Uncategorized',
-        description: transaction.description || 'Transaction from document analysis',
-        amount: transaction.amount || 0,
-        status: transaction.flagged ? 'flagged' : 'pending'
+        category: 'financial_transaction',
+        description: transaction.description,
+        amount: transaction.amount,
+        status: transaction.amount > 10000 ? 'flagged' : 'pending'
       }));
 
       const { error: itemsError } = await supabaseClient
@@ -116,25 +173,40 @@ serve(async (req) => {
       if (itemsError) throw itemsError;
     }
 
+    // Trigger fraud detection
+    await supabaseClient.functions.invoke('fraud-detection', {
+      body: { 
+        userId: document.user_id,
+        transactions: transactions.map(t => ({
+          amount: t.amount,
+          description: t.description,
+          date: new Date().toISOString()
+        }))
+      }
+    });
+
+    // Generate forecast
+    await supabaseClient.functions.invoke('generate-forecast', {
+      body: { 
+        userId: document.user_id
+      }
+    });
+
     return new Response(
       JSON.stringify({ 
-        success: true, 
-        analysis,
-        auditId
+        success: true,
+        auditId,
+        findings,
+        riskLevel,
+        recommendations
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Error in document analysis:', error);
     return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        details: error.stack
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
-        status: 400 
-      }
+      JSON.stringify({ error: error.message }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
     );
   }
 });
