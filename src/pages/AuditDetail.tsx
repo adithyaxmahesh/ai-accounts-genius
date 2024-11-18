@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import AuditDetailHeader from "@/components/audit/AuditDetailHeader";
 import AuditDetailTabs from "@/components/audit/AuditDetailTabs";
@@ -14,18 +14,19 @@ const AuditDetail = () => {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const { session } = useAuth();
 
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!session) {
+      navigate('/auth');
+    }
+  }, [session, navigate]);
+
   // Fetch audit data
   const { data: audit, isLoading, error } = useQuery({
     queryKey: ['audit', id],
     queryFn: async () => {
-      if (!id) {
-        throw new Error('No audit ID provided');
-      }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate('/auth');
-        throw new Error('User not authenticated');
+      if (!id || !session?.user?.id) {
+        throw new Error('No audit ID provided or user not authenticated');
       }
       
       const { data, error } = await supabase
@@ -35,16 +36,24 @@ const AuditDetail = () => {
           audit_items (*)
         `)
         .eq('id', id)
-        .eq('user_id', user.id)
+        .eq('user_id', session.user.id)
         .single();
       
-      if (error) throw error;
-      if (!data) throw new Error('Audit not found');
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
       
+      if (!data) {
+        console.error('No data found for audit:', id);
+        throw new Error('Audit not found');
+      }
+      
+      console.log('Fetched audit data:', data);
       return data;
     },
-    enabled: !!id,
-    retry: false
+    enabled: !!session && !!id,
+    retry: 1
   });
 
   // Handle loading state
@@ -62,6 +71,7 @@ const AuditDetail = () => {
 
   // Handle error state
   if (error) {
+    console.error('Error in AuditDetail:', error);
     toast({
       title: "Error",
       description: error instanceof Error ? error.message : 'Failed to load audit details',

@@ -8,7 +8,10 @@ interface AuditDetailTabsProps {
 }
 
 const AuditDetailTabs = ({ audit }: AuditDetailTabsProps) => {
-  if (!audit) return null;
+  if (!audit) {
+    console.error('No audit data provided to AuditDetailTabs');
+    return null;
+  }
 
   return (
     <Tabs defaultValue="details" className="w-full">
