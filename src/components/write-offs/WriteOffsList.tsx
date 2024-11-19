@@ -11,7 +11,7 @@ interface WriteOffsListProps {
 }
 
 type WriteOff = Tables<"write_offs"> & {
-  tax_codes: Tables<"tax_codes">;
+  tax_codes: Tables<"tax_codes"> | null;
 };
 
 export const WriteOffsList = ({ userId }: WriteOffsListProps) => {
@@ -87,12 +87,16 @@ export const WriteOffsList = ({ userId }: WriteOffsListProps) => {
           <div key={writeOff.id} className="flex justify-between items-center p-4 bg-muted rounded-lg">
             <div>
               <p className="font-semibold">{writeOff.description}</p>
-              <p className="text-sm text-muted-foreground">
-                {writeOff.tax_codes?.state} - {writeOff.tax_codes?.expense_category}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {writeOff.tax_codes?.code} - {writeOff.tax_codes?.description}
-              </p>
+              {writeOff.tax_codes && (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    {writeOff.tax_codes.state} - {writeOff.tax_codes.expense_category}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {writeOff.tax_codes.code} - {writeOff.tax_codes.description}
+                  </p>
+                </>
+              )}
             </div>
             <div className="text-right">
               <p className="font-semibold">${Number(writeOff.amount).toLocaleString()}</p>
