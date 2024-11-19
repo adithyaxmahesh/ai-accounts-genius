@@ -19,6 +19,23 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Get user's state from profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('state')
+      .eq('id', userId)
+      .single()
+
+    const userState = profile?.state || 'California' // Default to California if not set
+
+    // Get state tax rates
+    const { data: taxRates } = await supabase
+      .from('state_tax_rates')
+      .select('*')
+      .eq('state', userState)
+      .eq('tax_year', 2024)
+      .order('min_income', { ascending: true })
+
     // Fetch revenue records
     const { data: revenue } = await supabase
       .from('revenue_records')
@@ -38,19 +55,6 @@ serve(async (req) => {
         )
       `)
       .eq('user_id', userId)
-
-    // Fetch applicable tax rules
-    const { data: taxRules } = await supabase
-      .from('tax_rules')
-      .select(`
-        *,
-        irs_publications (
-          publication_number,
-          title
-        )
-      `)
-      .lte('effective_date', new Date().toISOString())
-      .gt('expiration_date', new Date().toISOString())
 
     // Calculate total revenue
     const totalRevenue = revenue?.reduce((sum, record) => sum + record.amount, 0) || 0
@@ -77,7 +81,21 @@ serve(async (req) => {
 
     const totalDeductions = deductions.reduce((sum, d) => sum + d.amount, 0)
     const taxableIncome = totalRevenue - totalDeductions
-    const estimatedTax = taxableIncome * 0.25 // Simplified tax rate for example
+
+    // Calculate tax using progressive tax brackets
+    let estimatedTax = 0
+    if (taxRates) {
+      for (const bracket of taxRates) {
+        const min = bracket.min_income
+        const max = bracket.max_income || Infinity
+        const rate = bracket.rate
+
+        if (taxableIncome > min) {
+          const taxableAmount = Math.min(taxableIncome - min, (max - min) || Infinity)
+          estimatedTax += taxableAmount * rate
+        }
+      }
+    }
 
     // Store analysis results
     const { error: analysisError } = await supabase
@@ -86,15 +104,13 @@ serve(async (req) => {
         user_id: userId,
         analysis_type: 'annual',
         tax_impact: estimatedTax,
+        jurisdiction: userState,
         recommendations: {
           items: deductions,
           total_deductions: totalDeductions,
           missing_docs: deductions.filter(d => d.status === 'pending'),
-          applicable_rules: taxRules?.map(rule => ({
-            code: rule.rule_code,
-            description: rule.description,
-            publication: rule.irs_publications?.publication_number
-          }))
+          state_tax_rates: taxRates,
+          taxable_income: taxableIncome
         }
       })
 
@@ -104,7 +120,9 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true,
         taxDue: estimatedTax,
-        deductions: totalDeductions
+        deductions: totalDeductions,
+        state: userState,
+        taxableIncome
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
