@@ -18,7 +18,7 @@ export const WriteOffsList = ({ userId }: WriteOffsListProps) => {
         .from('write_offs')
         .select(`
           *,
-          tax_codes (
+          tax_codes:tax_code_id (
             id,
             code,
             description,
@@ -34,10 +34,7 @@ export const WriteOffsList = ({ userId }: WriteOffsListProps) => {
       
       if (error) throw error;
       
-      return (data as any[]).map(writeOff => ({
-        ...writeOff,
-        tax_codes: writeOff.tax_codes[0] || null
-      })) as WriteOff[];
+      return data as WriteOff[];
     },
     enabled: !!userId
   });
