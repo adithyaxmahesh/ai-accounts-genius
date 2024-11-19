@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
@@ -7,9 +6,9 @@ import { useAuth } from "@/components/AuthProvider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, TrendingDown } from "lucide-react";
-import type { Tables } from "@/integrations/supabase/types";
+import type { Database } from "@/integrations/supabase/types/database.types";
 
-type AutomaticTaxCalculation = Tables<'automatic_tax_calculations'>;
+type AutomaticTaxCalculation = Database['public']['Tables']['automatic_tax_calculations']['Row'];
 
 export const AutomaticTaxCard = () => {
   const { session } = useAuth();
