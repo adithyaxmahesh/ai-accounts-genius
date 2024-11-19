@@ -5,6 +5,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { WriteOffFormFields } from "./WriteOffFormFields";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface WriteOffDialogProps {
   isOpen: boolean;
@@ -24,7 +26,7 @@ export const WriteOffDialog = ({ isOpen, onOpenChange, onSuccess, userId }: Writ
     taxCodeId: ''
   });
 
-  const { data: states } = useQuery({
+  const { data: states, isLoading: statesLoading, error: statesError } = useQuery({
     queryKey: ['states'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -34,11 +36,11 @@ export const WriteOffDialog = ({ isOpen, onOpenChange, onSuccess, userId }: Writ
         .order('state');
       
       if (error) throw error;
-      return Array.from(new Set(data.map(item => item.state))); // Using Set to filter unique states
+      return Array.from(new Set(data.map(item => item.state)));
     }
   });
 
-  const { data: categories } = useQuery({
+  const { data: categories, isLoading: categoriesLoading, error: categoriesError } = useQuery({
     queryKey: ['categories', selectedState],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -49,12 +51,12 @@ export const WriteOffDialog = ({ isOpen, onOpenChange, onSuccess, userId }: Writ
         .order('expense_category');
       
       if (error) throw error;
-      return Array.from(new Set(data.map(item => item.expense_category))); // Using Set to filter unique categories
+      return Array.from(new Set(data.map(item => item.expense_category)));
     },
     enabled: !!selectedState
   });
 
-  const { data: taxCodes } = useQuery({
+  const { data: taxCodes, isLoading: taxCodesLoading, error: taxCodesError } = useQuery({
     queryKey: ['taxCodes', selectedState, selectedCategory],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -70,8 +72,7 @@ export const WriteOffDialog = ({ isOpen, onOpenChange, onSuccess, userId }: Writ
     enabled: !!selectedState && !!selectedCategory
   });
 
-  // Auto-categorize when description changes
-  useQuery({
+  const { error: categorizationError } = useQuery({
     queryKey: ['categorize', newWriteOff.description],
     queryFn: async () => {
       if (!newWriteOff.description) return null;
@@ -134,6 +135,9 @@ export const WriteOffDialog = ({ isOpen, onOpenChange, onSuccess, userId }: Writ
     }
   };
 
+  const isLoading = statesLoading || categoriesLoading || taxCodesLoading;
+  const error = statesError || categoriesError || taxCodesError || categorizationError;
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -141,6 +145,15 @@ export const WriteOffDialog = ({ isOpen, onOpenChange, onSuccess, userId }: Writ
           <DialogTitle>Add New Write-Off</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                An error occurred while loading the form. Please try again.
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <WriteOffFormFields
             states={states}
             categories={categories}
@@ -151,11 +164,13 @@ export const WriteOffDialog = ({ isOpen, onOpenChange, onSuccess, userId }: Writ
             setSelectedState={setSelectedState}
             setSelectedCategory={setSelectedCategory}
             setNewWriteOff={setNewWriteOff}
+            isLoading={isLoading}
           />
+          
           <Button 
             className="w-full" 
             onClick={addWriteOff}
-            disabled={!newWriteOff.amount || !newWriteOff.description || !newWriteOff.taxCodeId}
+            disabled={!newWriteOff.amount || !newWriteOff.description || !newWriteOff.taxCodeId || isLoading}
           >
             Add Write-Off
           </Button>

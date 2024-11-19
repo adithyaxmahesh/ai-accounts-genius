@@ -1,10 +1,13 @@
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tables } from "@/integrations/supabase/types";
+
+type TaxCode = Tables<"tax_codes">;
 
 interface WriteOffFormFieldsProps {
   states: string[] | undefined;
   categories: string[] | undefined;
-  taxCodes: any[] | undefined;
+  taxCodes: TaxCode[] | undefined;
   selectedState: string;
   selectedCategory: string;
   newWriteOff: {
@@ -16,6 +19,7 @@ interface WriteOffFormFieldsProps {
   setSelectedState: (state: string) => void;
   setSelectedCategory: (category: string) => void;
   setNewWriteOff: (writeOff: any) => void;
+  isLoading?: boolean;
 }
 
 export const WriteOffFormFields = ({
@@ -28,7 +32,19 @@ export const WriteOffFormFields = ({
   setSelectedState,
   setSelectedCategory,
   setNewWriteOff,
+  isLoading = false,
 }: WriteOffFormFieldsProps) => {
+  if (isLoading) {
+    return <div className="space-y-4 animate-pulse">
+      <div className="h-10 bg-muted rounded" />
+      <div className="h-10 bg-muted rounded" />
+      <div className="h-10 bg-muted rounded" />
+      <div className="h-10 bg-muted rounded" />
+      <div className="h-10 bg-muted rounded" />
+      <div className="h-10 bg-muted rounded" />
+    </div>;
+  }
+
   return (
     <div className="space-y-4">
       <div>
