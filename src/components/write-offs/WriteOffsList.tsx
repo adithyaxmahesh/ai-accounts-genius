@@ -18,17 +18,25 @@ export const WriteOffsList = ({ userId }: WriteOffsListProps) => {
         .from('write_offs')
         .select(`
           *,
-          tax_codes (*)
+          tax_codes (
+            id,
+            code,
+            description,
+            category,
+            deduction_type,
+            created_at,
+            state,
+            expense_category
+          )
         `)
         .eq('user_id', userId)
         .order('date', { ascending: false });
       
       if (error) throw error;
       
-      // Transform the data to match our WriteOff type
       return (data as any[]).map(writeOff => ({
         ...writeOff,
-        tax_codes: writeOff.tax_codes[0] || null // Take the first tax code or null
+        tax_codes: writeOff.tax_codes[0] || null
       })) as WriteOff[];
     },
     enabled: !!userId
