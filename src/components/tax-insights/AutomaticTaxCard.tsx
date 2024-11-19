@@ -9,7 +9,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, TrendingDown } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
-type AutomaticTaxCalculation = Database['public']['Tables']['automatic_tax_calculations']['Row'];
+type Tables = Database['public']['Tables']
+type AutomaticTaxCalculation = Tables['automatic_tax_calculations']['Row']
 
 export const AutomaticTaxCard = () => {
   const { session } = useAuth();
