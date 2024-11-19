@@ -3,6 +3,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  TooltipProvider
 } from "@/components/ui/tooltip";
 import { Card } from "@/components/ui/card";
 
@@ -56,18 +57,20 @@ const AuditFindings = ({ findings, status }: AuditFindingsProps) => {
         <Card key={index} className="p-4">
           <div className="flex items-start justify-between">
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                {getSeverityIcon(finding.severity)}
-                <h4 className="font-semibold">{finding.category}</h4>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="h-4 w-4 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Impact Level: {finding.impact}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
+              <TooltipProvider>
+                <div className="flex items-center gap-2">
+                  {getSeverityIcon(finding.severity)}
+                  <h4 className="font-semibold">{finding.category}</h4>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Impact Level: {finding.impact}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              </TooltipProvider>
               <p className="text-sm text-muted-foreground">{finding.description}</p>
               
               {finding.details && (
