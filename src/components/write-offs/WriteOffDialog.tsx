@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
@@ -25,6 +25,34 @@ export const WriteOffDialog = ({ isOpen, onOpenChange, onSuccess, userId }: Writ
     date: new Date().toISOString().split('T')[0],
     taxCodeId: ''
   });
+
+  // Auto-categorization when description changes
+  useEffect(() => {
+    const autoCategorize = async () => {
+      if (!newWriteOff.description) return;
+
+      try {
+        const { data } = await supabase.functions.invoke('categorize-write-off', {
+          body: { 
+            description: newWriteOff.description,
+            amount: parseFloat(newWriteOff.amount) || 0
+          }
+        });
+
+        if (data?.taxCode) {
+          setSelectedCategory(data.taxCode.expense_category);
+          setNewWriteOff(prev => ({
+            ...prev,
+            taxCodeId: data.taxCode.id
+          }));
+        }
+      } catch (error) {
+        console.error('Auto-categorization error:', error);
+      }
+    };
+
+    autoCategorize();
+  }, [newWriteOff.description]);
 
   const { data: states, isLoading: statesLoading, error: statesError } = useQuery({
     queryKey: ['states'],
@@ -70,32 +98,6 @@ export const WriteOffDialog = ({ isOpen, onOpenChange, onSuccess, userId }: Writ
       return data;
     },
     enabled: !!selectedState && !!selectedCategory
-  });
-
-  // Auto-categorization query
-  useQuery({
-    queryKey: ['categorize', newWriteOff.description],
-    queryFn: async () => {
-      if (!newWriteOff.description) return null;
-      
-      const response = await supabase.functions.invoke('categorize-write-off', {
-        body: { 
-          description: newWriteOff.description,
-          amount: newWriteOff.amount 
-        }
-      });
-
-      if (response.data?.taxCode) {
-        setSelectedCategory(response.data.taxCode.expense_category);
-        setNewWriteOff(prev => ({
-          ...prev,
-          taxCodeId: response.data.taxCode.id
-        }));
-      }
-
-      return response.data;
-    },
-    enabled: !!newWriteOff.description
   });
 
   const addWriteOff = async () => {

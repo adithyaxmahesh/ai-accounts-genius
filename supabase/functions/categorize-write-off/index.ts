@@ -32,21 +32,22 @@ serve(async (req) => {
 
     // Keyword matching for common business expenses
     const keywords = {
-      'Transportation': ['fuel', 'car', 'vehicle', 'mileage', 'parking', 'toll'],
-      'Office': ['supplies', 'paper', 'printer', 'desk', 'chair', 'computer', 'office'],
-      'Marketing': ['advertising', 'promotion', 'campaign', 'marketing', 'ads'],
-      'Travel': ['hotel', 'flight', 'accommodation', 'travel', 'lodging'],
-      'Equipment': ['machine', 'equipment', 'tool', 'hardware'],
-      'Services': ['consulting', 'service', 'subscription', 'software'],
-      'Education': ['training', 'conference', 'seminar', 'workshop', 'course'],
-      'Insurance': ['insurance', 'coverage', 'policy'],
-      'Utilities': ['utility', 'electric', 'water', 'gas', 'internet', 'phone'],
-      'Rent': ['rent', 'lease', 'office space']
+      'Transportation': ['fuel', 'car', 'vehicle', 'mileage', 'parking', 'toll', 'uber', 'lyft', 'taxi'],
+      'Office': ['supplies', 'paper', 'printer', 'desk', 'chair', 'computer', 'office', 'software', 'subscription'],
+      'Marketing': ['advertising', 'promotion', 'campaign', 'marketing', 'ads', 'social media'],
+      'Travel': ['hotel', 'flight', 'accommodation', 'travel', 'lodging', 'airfare', 'airline'],
+      'Equipment': ['machine', 'equipment', 'tool', 'hardware', 'device'],
+      'Services': ['consulting', 'service', 'subscription', 'software', 'contractor'],
+      'Education': ['training', 'conference', 'seminar', 'workshop', 'course', 'education'],
+      'Insurance': ['insurance', 'coverage', 'policy', 'liability'],
+      'Utilities': ['utility', 'electric', 'water', 'gas', 'internet', 'phone', 'mobile'],
+      'Rent': ['rent', 'lease', 'office space', 'workspace']
     }
 
     let bestMatch = null
     const descLower = description.toLowerCase()
 
+    // Try to find a match using keywords
     for (const [category, words] of Object.entries(keywords)) {
       if (words.some(word => descLower.includes(word))) {
         const matchingTaxCode = taxCodes?.find(code => 
@@ -56,6 +57,17 @@ serve(async (req) => {
           bestMatch = matchingTaxCode
           break
         }
+      }
+    }
+
+    // If no keyword match, try to find a match based on amount patterns
+    if (!bestMatch && amount) {
+      if (amount >= 1000) {
+        bestMatch = taxCodes?.find(code => code.expense_category === 'Equipment')
+      } else if (amount >= 500) {
+        bestMatch = taxCodes?.find(code => code.expense_category === 'Services')
+      } else if (amount >= 100) {
+        bestMatch = taxCodes?.find(code => code.expense_category === 'Office')
       }
     }
 
