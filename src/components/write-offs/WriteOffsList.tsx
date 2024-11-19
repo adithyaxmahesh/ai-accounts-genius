@@ -22,7 +22,7 @@ export const WriteOffsList = ({ userId }: WriteOffsListProps) => {
         .from('write_offs')
         .select(`
           *,
-          tax_codes (*)
+          tax_codes:tax_code_id (*)
         `)
         .eq('user_id', userId)
         .order('date', { ascending: false });
