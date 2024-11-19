@@ -7,6 +7,7 @@ import { FraudDetection } from "@/components/fraud-detection/FraudDetection";
 import { DocumentUpload } from "@/components/document-management/DocumentUpload";
 import { ExpenseCategoriesCard } from "@/components/ExpenseCategoriesCard";
 import { TaxInsightsCard } from "@/components/tax-insights/TaxInsightsCard";
+import { AutomaticTaxCard } from "@/components/tax-insights/AutomaticTaxCard";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -70,6 +71,7 @@ const Index = () => {
         <FinancialMetrics />
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <AutomaticTaxCard />
           <BusinessIntelligence />
           <TaxInsightsCard />
           <AiInsights />
