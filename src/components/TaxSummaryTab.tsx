@@ -1,11 +1,14 @@
 import { Card } from "@/components/ui/card";
 import { DollarSign, MapPin } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 interface TaxSummaryProps {
   audit: any;
 }
 
 const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
+  const { toast } = useToast();
+
   const calculateTaxes = () => {
     if (!audit?.audit_items) return { 
       totalAmount: 0, 
@@ -16,10 +19,16 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
       taxableIncome: 0
     };
     
+    // Calculate total from audit items
     const totalAmount = audit.audit_items.reduce((sum, item) => sum + (item.amount || 0), 0);
-    const deductions = audit.audit_items
-      .filter(item => item.category === 'deduction')
-      .reduce((sum, item) => sum + (item.amount || 0), 0);
+    
+    // Get approved write-offs as deductions
+    const deductions = audit.write_offs?.reduce((sum, item) => {
+      if (item.status === 'approved' && item.tax_codes) {
+        return sum + (item.amount || 0);
+      }
+      return sum;
+    }, 0) || 0;
     
     const taxableIncome = totalAmount - deductions;
     const estimatedTax = audit.tax_impact || 0;

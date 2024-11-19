@@ -26,23 +26,28 @@ serve(async (req) => {
       .eq('id', userId)
       .single()
 
-    const userState = profile?.state || 'California' // Default to California if not set
+    const userState = profile?.state || 'California'
 
     // Get state tax rates
     const { data: taxRates } = await supabase
       .from('state_tax_rates')
       .select('*')
       .eq('state', userState)
-      .eq('tax_year', 2024)
+      .eq('tax_year', new Date().getFullYear())
       .order('min_income', { ascending: true })
 
-    // Fetch revenue records
-    const { data: revenue } = await supabase
-      .from('revenue_records')
+    // Fetch audit items and their status
+    const { data: auditItems } = await supabase
+      .from('audit_items')
       .select('*')
       .eq('user_id', userId)
 
-    // Fetch write-offs and their associated tax codes
+    // Calculate total revenue from audit items
+    const totalRevenue = auditItems?.reduce((sum, item) => {
+      return sum + (item.amount || 0)
+    }, 0) || 0
+
+    // Get write-offs with valid tax codes
     const { data: writeOffs } = await supabase
       .from('write_offs')
       .select(`
@@ -55,34 +60,19 @@ serve(async (req) => {
         )
       `)
       .eq('user_id', userId)
+      .eq('status', 'approved')
 
-    // Calculate total revenue
-    const totalRevenue = revenue?.reduce((sum, record) => sum + record.amount, 0) || 0
-
-    // Process deductions
-    const deductions = writeOffs?.reduce((acc, writeOff) => {
-      if (writeOff.tax_codes) {
-        acc.push({
-          amount: writeOff.amount,
-          description: writeOff.description,
-          status: 'approved',
-          rule: `${writeOff.tax_codes.code} - ${writeOff.tax_codes.description}`
-        })
-      } else {
-        acc.push({
-          amount: writeOff.amount,
-          description: writeOff.description,
-          status: 'pending',
-          rule: 'Needs classification'
-        })
+    // Calculate total deductions from approved write-offs
+    const totalDeductions = writeOffs?.reduce((sum, writeOff) => {
+      if (writeOff.tax_codes && writeOff.status === 'approved') {
+        return sum + writeOff.amount
       }
-      return acc
-    }, [] as any[]) || []
+      return sum
+    }, 0) || 0
 
-    const totalDeductions = deductions.reduce((sum, d) => sum + d.amount, 0)
-    const taxableIncome = totalRevenue - totalDeductions
+    const taxableIncome = Math.max(0, totalRevenue - totalDeductions)
 
-    // Calculate tax using progressive tax brackets
+    // Calculate progressive tax using tax brackets
     let estimatedTax = 0
     if (taxRates) {
       for (const bracket of taxRates) {
@@ -91,8 +81,8 @@ serve(async (req) => {
         const rate = bracket.rate
 
         if (taxableIncome > min) {
-          const taxableAmount = Math.min(taxableIncome - min, (max - min) || Infinity)
-          estimatedTax += taxableAmount * (rate / 100) // Convert percentage to decimal
+          const taxableAmount = Math.min(taxableIncome - min, max - min)
+          estimatedTax += taxableAmount * (rate / 100)
         }
       }
     }
@@ -106,11 +96,11 @@ serve(async (req) => {
         tax_impact: estimatedTax,
         jurisdiction: userState,
         recommendations: {
-          items: deductions,
+          total_revenue: totalRevenue,
           total_deductions: totalDeductions,
-          missing_docs: deductions.filter(d => d.status === 'pending'),
-          state_tax_rates: taxRates,
-          taxable_income: taxableIncome
+          taxable_income: taxableIncome,
+          write_offs: writeOffs,
+          state_tax_rates: taxRates
         }
       })
 
@@ -122,7 +112,8 @@ serve(async (req) => {
         taxDue: estimatedTax,
         deductions: totalDeductions,
         state: userState,
-        taxableIncome
+        taxableIncome,
+        totalRevenue
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
