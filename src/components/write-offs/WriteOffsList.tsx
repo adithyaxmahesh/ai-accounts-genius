@@ -18,7 +18,7 @@ export const WriteOffsList = ({ userId }: WriteOffsListProps) => {
         .from('write_offs')
         .select(`
           *,
-          tax_codes:tax_code_id (
+          tax_codes:tax_codes!write_offs_tax_code_id_fkey (
             id,
             code,
             description,
