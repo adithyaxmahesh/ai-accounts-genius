@@ -90,34 +90,46 @@ export const FinancialMetrics = () => {
         className="glass-card p-6 hover-scale cursor-pointer"
         onClick={() => navigate('/revenue')}
       >
-        <DollarSign className="h-8 w-8 mb-4 text-primary" />
-        <h3 className="text-lg font-semibold">Revenue</h3>
-        <p className="text-2xl font-bold truncate">
-          ${metrics?.revenue.toLocaleString() || '0'}
+        <DollarSign className="h-8 w-8 mb-2 text-green-500" />
+        <h3 className="text-lg font-semibold mb-1">Total Revenue</h3>
+        <p className="text-2xl font-bold truncate min-h-[2.5rem] flex items-center justify-start">
+          <span className="text-green-500">
+            ${metrics?.revenue.toLocaleString() || '0'}
+          </span>
         </p>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground mt-1">
           {metrics?.monthOverMonthGrowth > 0 ? '+' : ''}{metrics?.monthOverMonthGrowth.toFixed(1)}% from last month
+        </p>
+      </Card>
+      <Card 
+        className="glass-card p-6 hover-scale cursor-pointer"
+        onClick={() => navigate('/write-offs')}
+      >
+        <TrendingUp className="h-8 w-8 mb-2 text-red-500" />
+        <h3 className="text-lg font-semibold mb-1">Total Expenses</h3>
+        <p className="text-2xl font-bold truncate min-h-[2.5rem] flex items-center justify-start">
+          <span className="text-red-500">
+            ${(metrics?.revenue * 0.2).toLocaleString() || '0'}
+          </span>
+        </p>
+        <p className="text-sm text-muted-foreground mt-1">
+          20% of revenue
         </p>
       </Card>
       <Card 
         className="glass-card p-6 hover-scale cursor-pointer"
         onClick={() => navigate('/forecast')}
       >
-        <TrendingUp className="h-8 w-8 mb-4 text-primary" />
-        <h3 className="text-lg font-semibold">Growth</h3>
-        <p className="text-3xl font-bold">
-          {metrics?.yearOverYearGrowth > 0 ? '+' : ''}{metrics?.yearOverYearGrowth.toFixed(1)}%
+        <AlertTriangle className="h-8 w-8 mb-2 text-blue-500" />
+        <h3 className="text-lg font-semibold mb-1">Net Profit</h3>
+        <p className="text-2xl font-bold truncate min-h-[2.5rem] flex items-center justify-start">
+          <span className="text-blue-500">
+            ${((metrics?.revenue || 0) * 0.8).toLocaleString()}
+          </span>
         </p>
-        <p className="text-sm text-muted-foreground">Year over year</p>
-      </Card>
-      <Card 
-        className="glass-card p-6 hover-scale cursor-pointer"
-        onClick={() => navigate('/audit')}
-      >
-        <AlertTriangle className="h-8 w-8 mb-4 text-destructive" />
-        <h3 className="text-lg font-semibold">Alerts</h3>
-        <p className="text-3xl font-bold">{metrics?.alertCount || 0}</p>
-        <p className="text-sm text-muted-foreground">Require attention</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          80% profit margin
+        </p>
       </Card>
     </div>
   );
