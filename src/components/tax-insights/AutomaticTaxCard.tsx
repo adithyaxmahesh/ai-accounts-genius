@@ -7,6 +7,9 @@ import { useAuth } from "@/components/AuthProvider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, TrendingDown } from "lucide-react";
+import { Tables } from "@/integrations/supabase/types";
+
+type AutomaticTaxCalculation = Tables<"automatic_tax_calculations">;
 
 export const AutomaticTaxCard = () => {
   const { session } = useAuth();
@@ -42,7 +45,7 @@ export const AutomaticTaxCard = () => {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as AutomaticTaxCalculation;
     },
     enabled: !!session?.user.id
   });
@@ -99,7 +102,7 @@ export const AutomaticTaxCard = () => {
       <div>
         <h4 className="font-semibold mb-2">Recommendations</h4>
         <div className="space-y-2">
-          {taxData.recommendations.map((rec: any, index: number) => (
+          {(taxData.recommendations as any[]).map((rec: any, index: number) => (
             <div key={index} className="p-3 bg-muted rounded-lg">
               <p>{rec.message}</p>
               {rec.potentialSavings > 0 && (
