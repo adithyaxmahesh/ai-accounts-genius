@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
@@ -37,7 +38,7 @@ export const AutomaticTaxCard = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('automatic_tax_calculations')
-        .select()
+        .select('*')
         .eq('user_id', session?.user.id)
         .order('created_at', { ascending: false })
         .limit(1)
