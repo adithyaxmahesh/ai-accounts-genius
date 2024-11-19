@@ -30,14 +30,18 @@ serve(async (req) => {
       throw taxCodesError
     }
 
-    // Simple keyword matching for demonstration
+    // Keyword matching for common business expenses
     const keywords = {
       'Transportation': ['fuel', 'car', 'vehicle', 'mileage', 'parking', 'toll'],
-      'Office': ['supplies', 'paper', 'printer', 'desk', 'chair', 'computer'],
-      'Marketing': ['advertising', 'promotion', 'campaign', 'marketing'],
-      'Travel': ['hotel', 'flight', 'accommodation', 'travel'],
+      'Office': ['supplies', 'paper', 'printer', 'desk', 'chair', 'computer', 'office'],
+      'Marketing': ['advertising', 'promotion', 'campaign', 'marketing', 'ads'],
+      'Travel': ['hotel', 'flight', 'accommodation', 'travel', 'lodging'],
       'Equipment': ['machine', 'equipment', 'tool', 'hardware'],
-      'Services': ['consulting', 'service', 'subscription', 'software']
+      'Services': ['consulting', 'service', 'subscription', 'software'],
+      'Education': ['training', 'conference', 'seminar', 'workshop', 'course'],
+      'Insurance': ['insurance', 'coverage', 'policy'],
+      'Utilities': ['utility', 'electric', 'water', 'gas', 'internet', 'phone'],
+      'Rent': ['rent', 'lease', 'office space']
     }
 
     let bestMatch = null

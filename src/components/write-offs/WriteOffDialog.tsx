@@ -72,7 +72,8 @@ export const WriteOffDialog = ({ isOpen, onOpenChange, onSuccess, userId }: Writ
     enabled: !!selectedState && !!selectedCategory
   });
 
-  const { error: categorizationError } = useQuery({
+  // Auto-categorization query
+  useQuery({
     queryKey: ['categorize', newWriteOff.description],
     queryFn: async () => {
       if (!newWriteOff.description) return null;
@@ -136,7 +137,7 @@ export const WriteOffDialog = ({ isOpen, onOpenChange, onSuccess, userId }: Writ
   };
 
   const isLoading = statesLoading || categoriesLoading || taxCodesLoading;
-  const error = statesError || categoriesError || taxCodesError || categorizationError;
+  const error = statesError || categoriesError || taxCodesError;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
