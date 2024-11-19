@@ -5,6 +5,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  TooltipProvider
 } from "@/components/ui/tooltip";
 import { useToast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -66,124 +67,126 @@ const AuditDetailsTab = ({ audit, getStatusExplanation, getRiskLevelExplanation 
   const healthStatus = getAuditHealthStatus();
 
   return (
-    <Card className="p-6 glass-card">
-      <div className="flex justify-between items-start mb-6">
-        <AuditProgress 
-          status={audit?.status} 
-          getStatusExplanation={getStatusExplanation} 
-        />
-        
-        <div className="space-y-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <p className="text-muted-foreground">Risk Level</p>
-              <Tooltip>
-                <TooltipTrigger>
-                  <Info className="h-4 w-4 text-muted-foreground" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{getRiskLevelExplanation(audit?.risk_level)}</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <div className="mt-1 flex items-center">
-              {audit?.risk_level === 'high' ? (
-                <AlertTriangle className="h-4 w-4 text-destructive mr-1" />
-              ) : audit?.status === 'completed' ? (
-                <Check className="h-4 w-4 text-green-500 mr-1" />
-              ) : null}
-              {audit?.risk_level}
-            </div>
-          </div>
-
-          <div>
-            <div className="flex items-center gap-2">
-              <p className="text-muted-foreground">Audit Health</p>
-              <Tooltip>
-                <TooltipTrigger>
-                  <Info className="h-4 w-4 text-muted-foreground" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Overall assessment based on findings and flagged items</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <Badge 
-              variant={
-                healthStatus.status === 'good' ? 'success' :
-                healthStatus.status === 'warning' ? 'warning' :
-                healthStatus.status === 'bad' ? 'destructive' :
-                'secondary'
-              }
-              className="mt-1"
-            >
-              {healthStatus.message}
-            </Badge>
-          </div>
-        </div>
-      </div>
-
-      {audit?.status !== 'completed' && (
-        <div className="mb-6">
-          <Button onClick={handleProgressAudit} className="w-full">
-            Progress to Next Phase
-          </Button>
-        </div>
-      )}
-
-      <div className="space-y-6">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-lg font-semibold">Findings ({Array.isArray(audit?.findings) ? audit.findings.length : 0})</h3>
-            <Tooltip>
-              <TooltipTrigger>
-                <Info className="h-4 w-4 text-muted-foreground" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Detailed findings from the audit process</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
+    <TooltipProvider>
+      <Card className="p-6 glass-card">
+        <div className="flex justify-between items-start mb-6">
+          <AuditProgress 
+            status={audit?.status} 
+            getStatusExplanation={getStatusExplanation} 
+          />
+          
           <div className="space-y-4">
-            {Array.isArray(audit?.findings) && audit.findings.map((finding, index) => (
-              <div key={index} className="p-4 bg-muted rounded-lg">
-                <p className="text-sm">{finding}</p>
+            <div>
+              <div className="flex items-center gap-2">
+                <p className="text-muted-foreground">Risk Level</p>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="h-4 w-4 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{getRiskLevelExplanation(audit?.risk_level)}</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
-            ))}
-            {(!Array.isArray(audit?.findings) || audit.findings.length === 0) && (
-              <p className="text-muted-foreground text-center py-4">
-                No findings recorded yet
-              </p>
-            )}
+              <div className="mt-1 flex items-center">
+                {audit?.risk_level === 'high' ? (
+                  <AlertTriangle className="h-4 w-4 text-destructive mr-1" />
+                ) : audit?.status === 'completed' ? (
+                  <Check className="h-4 w-4 text-green-500 mr-1" />
+                ) : null}
+                {audit?.risk_level}
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2">
+                <p className="text-muted-foreground">Audit Health</p>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="h-4 w-4 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Overall assessment based on findings and flagged items</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <Badge 
+                variant={
+                  healthStatus.status === 'good' ? 'success' :
+                  healthStatus.status === 'warning' ? 'warning' :
+                  healthStatus.status === 'bad' ? 'destructive' :
+                  'secondary'
+                }
+                className="mt-1"
+              >
+                {healthStatus.message}
+              </Badge>
+            </div>
           </div>
         </div>
 
-        <AuditItemsSection auditItems={audit?.audit_items || []} />
-
-        {Array.isArray(audit?.recommendations) && audit.recommendations.length > 0 && (
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <h3 className="text-lg font-semibold">
-                Recommendations ({audit.recommendations.length})
-              </h3>
-              <Tooltip>
-                <TooltipTrigger>
-                  <Info className="h-4 w-4 text-muted-foreground" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Suggested actions to address findings</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <ul className="list-disc pl-5 space-y-2">
-              {audit.recommendations.map((rec, index) => (
-                <li key={index} className="text-muted-foreground">{rec}</li>
-              ))}
-            </ul>
+        {audit?.status !== 'completed' && (
+          <div className="mb-6">
+            <Button onClick={handleProgressAudit} className="w-full">
+              Progress to Next Phase
+            </Button>
           </div>
         )}
-      </div>
-    </Card>
+
+        <div className="space-y-6">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="text-lg font-semibold">Findings ({Array.isArray(audit?.findings) ? audit.findings.length : 0})</h3>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Detailed findings from the audit process</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <div className="space-y-4">
+              {Array.isArray(audit?.findings) && audit.findings.map((finding, index) => (
+                <div key={index} className="p-4 bg-muted rounded-lg">
+                  <p className="text-sm">{finding}</p>
+                </div>
+              ))}
+              {(!Array.isArray(audit?.findings) || audit.findings.length === 0) && (
+                <p className="text-muted-foreground text-center py-4">
+                  No findings recorded yet
+                </p>
+              )}
+            </div>
+          </div>
+
+          <AuditItemsSection auditItems={audit?.audit_items || []} />
+
+          {Array.isArray(audit?.recommendations) && audit.recommendations.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="text-lg font-semibold">
+                  Recommendations ({audit.recommendations.length})
+                </h3>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="h-4 w-4 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Suggested actions to address findings</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <ul className="list-disc pl-5 space-y-2">
+                {audit.recommendations.map((rec, index) => (
+                  <li key={index} className="text-muted-foreground">{rec}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </Card>
+    </TooltipProvider>
   );
 };
 
