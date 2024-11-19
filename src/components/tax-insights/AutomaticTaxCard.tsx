@@ -7,9 +7,18 @@ import { useAuth } from "@/components/AuthProvider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, TrendingDown } from "lucide-react";
-import { Database } from "@/integrations/supabase/types/database.types";
 
-type AutomaticTaxCalculation = Database['public']['Tables']['automatic_tax_calculations']['Row'];
+interface AutomaticTaxCalculation {
+  id: string;
+  user_id: string | null;
+  total_income: number;
+  total_deductions: number;
+  estimated_tax: number;
+  potential_savings: number;
+  recommendations: any[];
+  created_at: string;
+  updated_at: string;
+}
 
 export const AutomaticTaxCard = () => {
   const { session } = useAuth();
