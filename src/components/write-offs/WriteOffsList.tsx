@@ -1,18 +1,14 @@
 import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Tables } from "@/integrations/supabase/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { WriteOff } from "@/components/types";
 
 interface WriteOffsListProps {
   userId: string;
 }
-
-type WriteOff = Tables<"write_offs"> & {
-  tax_codes: Tables<"tax_codes"> | null;
-};
 
 export const WriteOffsList = ({ userId }: WriteOffsListProps) => {
   const { data: writeOffs, isLoading, error } = useQuery({
