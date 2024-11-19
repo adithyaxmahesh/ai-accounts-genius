@@ -811,6 +811,36 @@ export type Database = {
           },
         ]
       }
+      state_tax_rates: {
+        Row: {
+          created_at: string
+          id: string
+          max_income: number | null
+          min_income: number
+          rate: number
+          state: string
+          tax_year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_income?: number | null
+          min_income: number
+          rate: number
+          state: string
+          tax_year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_income?: number | null
+          min_income?: number
+          rate?: number
+          state?: string
+          tax_year?: number
+        }
+        Relationships: []
+      }
       tax_analysis: {
         Row: {
           analysis_type: string

@@ -92,7 +92,7 @@ serve(async (req) => {
 
         if (taxableIncome > min) {
           const taxableAmount = Math.min(taxableIncome - min, (max - min) || Infinity)
-          estimatedTax += taxableAmount * rate
+          estimatedTax += taxableAmount * (rate / 100) // Convert percentage to decimal
         }
       }
     }

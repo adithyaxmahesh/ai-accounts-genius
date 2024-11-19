@@ -12,7 +12,8 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
       estimatedTax: 0, 
       deductions: 0,
       state: 'California',
-      effectiveRate: 0
+      effectiveRate: 0,
+      taxableIncome: 0
     };
     
     const totalAmount = audit.audit_items.reduce((sum, item) => sum + (item.amount || 0), 0);
@@ -29,11 +30,12 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
       deductions,
       estimatedTax,
       state: audit.jurisdiction || 'California',
-      effectiveRate
+      effectiveRate,
+      taxableIncome
     };
   };
 
-  const { totalAmount, deductions, estimatedTax, state, effectiveRate } = calculateTaxes();
+  const { totalAmount, deductions, estimatedTax, state, effectiveRate, taxableIncome } = calculateTaxes();
 
   return (
     <div className="space-y-6">
@@ -48,22 +50,30 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
             {state}
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <div>
             <p className="text-sm text-muted-foreground">Total Amount</p>
-            <p className="text-2xl font-bold">${totalAmount.toLocaleString()}</p>
+            <p className="text-xl font-bold truncate">${totalAmount.toLocaleString()}</p>
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Deductions</p>
-            <p className="text-2xl font-bold text-green-600">-${deductions.toLocaleString()}</p>
+            <p className="text-xl font-bold text-green-600 truncate">-${deductions.toLocaleString()}</p>
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Taxable Income</p>
+            <p className="text-xl font-bold text-purple-600 truncate">${taxableIncome.toLocaleString()}</p>
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Estimated Tax Due</p>
-            <p className="text-2xl font-bold text-blue-600">${estimatedTax.toLocaleString()}</p>
+            <p className="text-xl font-bold text-blue-600 truncate">${estimatedTax.toLocaleString()}</p>
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Effective Tax Rate</p>
-            <p className="text-2xl font-bold text-purple-600">{effectiveRate.toFixed(2)}%</p>
+            <p className="text-xl font-bold text-orange-600 truncate">{effectiveRate.toFixed(2)}%</p>
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">State</p>
+            <p className="text-xl font-bold text-gray-600 truncate">{state}</p>
           </div>
         </div>
       </Card>
