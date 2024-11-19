@@ -18,7 +18,7 @@ export const WriteOffsList = ({ userId }: WriteOffsListProps) => {
         .from('write_offs')
         .select(`
           *,
-          tax_codes:tax_codes!write_offs_tax_code_id_fkey (
+          tax_codes:tax_codes!write_offs_tax_code_id_fkey!inner (
             id,
             code,
             description,
@@ -30,11 +30,12 @@ export const WriteOffsList = ({ userId }: WriteOffsListProps) => {
           )
         `)
         .eq('user_id', userId)
-        .order('date', { ascending: false });
+        .order('date', { ascending: false })
+        .returns<WriteOff[]>();
       
       if (error) throw error;
       
-      return data as WriteOff[];
+      return data;
     },
     enabled: !!userId
   });
