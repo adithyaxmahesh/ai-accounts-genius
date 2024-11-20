@@ -20,7 +20,12 @@ export const AutomaticTaxCard = () => {
         .single();
       
       if (error) throw error;
-      return data;
+      
+      // Transform the data to match AutomaticTaxCalculation type
+      return {
+        ...data,
+        recommendations: data.recommendations as AutomaticTaxCalculation['recommendations']
+      };
     },
     enabled: !!session?.user.id
   });
