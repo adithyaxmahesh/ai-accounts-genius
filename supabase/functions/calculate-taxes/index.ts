@@ -43,7 +43,7 @@ serve(async (req) => {
       .eq('user_id', userId)
 
     // Calculate total revenue from audit items
-    const totalRevenue = auditItems?.reduce((sum, item) => {
+    const totalIncome = auditItems?.reduce((sum, item) => {
       return sum + (item.amount || 0)
     }, 0) || 0
 
@@ -70,7 +70,7 @@ serve(async (req) => {
       return sum
     }, 0) || 0
 
-    const taxableIncome = Math.max(0, totalRevenue - totalDeductions)
+    const taxableIncome = Math.max(0, totalIncome - totalDeductions)
 
     // Calculate progressive tax using tax brackets
     let estimatedTax = 0
@@ -87,7 +87,31 @@ serve(async (req) => {
       }
     }
 
-    // Store analysis results
+    // Calculate potential savings (20% of current tax as an example)
+    const potentialSavings = estimatedTax * 0.2
+
+    // Store calculation results
+    const { error: calculationError } = await supabase
+      .from('automatic_tax_calculations')
+      .insert({
+        user_id: userId,
+        total_income: totalIncome,
+        total_deductions: totalDeductions,
+        estimated_tax: estimatedTax,
+        potential_savings: potentialSavings,
+        recommendations: {
+          missing_docs: writeOffs?.filter(w => !w.tax_codes).map(w => w.description) || [],
+          total_income: totalIncome,
+          total_deductions: totalDeductions,
+          taxable_income: taxableIncome,
+          write_offs: writeOffs,
+          state_tax_rates: taxRates
+        }
+      })
+
+    if (calculationError) throw calculationError
+
+    // Also store in tax_analysis for compatibility
     const { error: analysisError } = await supabase
       .from('tax_analysis')
       .insert({
@@ -96,7 +120,7 @@ serve(async (req) => {
         tax_impact: estimatedTax,
         jurisdiction: userState,
         recommendations: {
-          total_revenue: totalRevenue,
+          total_revenue: totalIncome,
           total_deductions: totalDeductions,
           taxable_income: taxableIncome,
           write_offs: writeOffs,
@@ -113,7 +137,7 @@ serve(async (req) => {
         deductions: totalDeductions,
         state: userState,
         taxableIncome,
-        totalRevenue
+        totalIncome
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
