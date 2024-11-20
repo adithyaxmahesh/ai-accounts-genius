@@ -8,7 +8,7 @@ import { AutomaticTaxCalculation } from "@/integrations/supabase/types/tax";
 export const AutomaticTaxCard = () => {
   const { session } = useAuth();
 
-  const { data: taxCalculation } = useQuery({
+  const { data: taxCalculation } = useQuery<AutomaticTaxCalculation>({
     queryKey: ['automatic-tax-calculation', session?.user.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -20,7 +20,7 @@ export const AutomaticTaxCard = () => {
         .single();
       
       if (error) throw error;
-      return data as AutomaticTaxCalculation;
+      return data;
     },
     enabled: !!session?.user.id
   });
