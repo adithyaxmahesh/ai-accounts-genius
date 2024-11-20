@@ -90,7 +90,13 @@ serve(async (req) => {
     // Calculate potential savings (20% of current tax as an example)
     const potentialSavings = estimatedTax * 0.2
 
-    // Store calculation results
+    // First, delete any existing calculations for this user
+    await supabase
+      .from('automatic_tax_calculations')
+      .delete()
+      .eq('user_id', userId)
+
+    // Then store new calculation results
     const { error: calculationError } = await supabase
       .from('automatic_tax_calculations')
       .insert({
@@ -111,7 +117,13 @@ serve(async (req) => {
 
     if (calculationError) throw calculationError
 
-    // Also store in tax_analysis for compatibility
+    // Delete existing analysis for this user
+    await supabase
+      .from('tax_analysis')
+      .delete()
+      .eq('user_id', userId)
+
+    // Then store in tax_analysis for compatibility
     const { error: analysisError } = await supabase
       .from('tax_analysis')
       .insert({
