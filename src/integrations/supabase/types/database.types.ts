@@ -9,6 +9,48 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      write_offs: {
+        Row: {
+          id: string
+          tax_code_id: string | null
+          amount: number
+          description: string
+          date: string
+          status: string | null
+          created_at: string
+          user_id: string | null
+          tax_codes?: {
+            id: string
+            code: string
+            description: string
+            category: string
+            deduction_type: string
+            created_at: string
+            state: string | null
+            expense_category: string | null
+          } | null
+        }
+        Insert: {
+          id?: string
+          tax_code_id?: string | null
+          amount: number
+          description: string
+          date: string
+          status?: string | null
+          created_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          tax_code_id?: string | null
+          amount?: number
+          description?: string
+          date?: string
+          status?: string | null
+          created_at?: string
+          user_id?: string | null
+        }
+      }
       automatic_tax_calculations: {
         Row: {
           id: string
@@ -687,5 +729,5 @@ export interface Database {
   }
 }
 
-export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row'];
-export type Enums<T extends keyof Database['public']['Enums']> = Database['public']['Enums'][T];
+export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']
+export type Enums<T extends keyof Database['public']['Enums']> = Database['public']['Enums'][T]
