@@ -3,18 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
 
-interface AutomaticTaxCalculation {
-  id: string;
-  user_id: string | null;
-  total_income: number;
-  total_deductions: number;
-  estimated_tax: number;
-  potential_savings: number;
-  recommendations: any | null;
-  created_at: string;
-  updated_at: string;
-}
+type AutomaticTaxCalculation = Tables<'automatic_tax_calculations'>;
 
 export function AutomaticTaxCard() {
   const { session } = useAuth();
@@ -38,7 +29,7 @@ export function AutomaticTaxCard() {
       if (error) throw error;
 
       if (data) {
-        setTaxData(data as AutomaticTaxCalculation);
+        setTaxData(data);
       }
     } catch (error) {
       console.error('Error fetching tax data:', error);
