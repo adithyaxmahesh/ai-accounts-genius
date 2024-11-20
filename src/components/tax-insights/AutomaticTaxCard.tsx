@@ -6,18 +6,7 @@ import { TrendingDown, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
-
-interface AutomaticTaxCalculation {
-  id: string;
-  user_id: string | null;
-  total_income: number;
-  total_deductions: number;
-  estimated_tax: number;
-  potential_savings: number;
-  recommendations: any;
-  created_at: string;
-  updated_at: string;
-}
+import { AutomaticTaxCalculation } from "@/integrations/supabase/types/tax";
 
 export const AutomaticTaxCard = () => {
   const { session } = useAuth();
