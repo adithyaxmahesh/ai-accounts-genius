@@ -3,9 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
-import type { Tables } from "@/integrations/supabase/types";
+import type { Database } from "@/integrations/supabase/types";
 
-type AutomaticTaxCalculation = Tables<'automatic_tax_calculations'>;
+type AutomaticTaxCalculation = Database['public']['Tables']['automatic_tax_calculations']['Row'];
 
 export function AutomaticTaxCard() {
   const { session } = useAuth();
