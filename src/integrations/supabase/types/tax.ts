@@ -1,5 +1,13 @@
-import { Database } from './database.types';
+import { Json } from './database.types';
 
-export type TaxDeadline = Database['public']['Tables']['tax_deadlines']['Row'];
-export type TaxPlanningScenario = Database['public']['Tables']['tax_planning_scenarios']['Row'];
-export type TaxAnalysis = Database['public']['Tables']['tax_analysis']['Row'];
+export interface AutomaticTaxCalculation {
+  id: string;
+  user_id: string | null;
+  total_income: number;
+  total_deductions: number;
+  estimated_tax: number;
+  potential_savings: number;
+  recommendations: Json;
+  created_at: string;
+  updated_at: string;
+}
