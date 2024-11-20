@@ -9,81 +9,62 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
-      write_offs: {
+      tax_deadlines: {
         Row: {
           id: string
-          tax_code_id: string | null
-          amount: number
-          description: string
-          date: string
+          user_id: string | null
+          title: string
+          description: string | null
+          due_date: string
           status: string | null
           created_at: string
-          user_id: string | null
-          tax_codes?: {
-            id: string
-            code: string
-            description: string
-            category: string
-            deduction_type: string
-            created_at: string
-            state: string | null
-            expense_category: string | null
-          } | null
         }
         Insert: {
           id?: string
-          tax_code_id?: string | null
-          amount: number
-          description: string
-          date: string
+          user_id?: string | null
+          title: string
+          description?: string | null
+          due_date: string
           status?: string | null
           created_at?: string
-          user_id?: string | null
         }
         Update: {
           id?: string
-          tax_code_id?: string | null
-          amount?: number
-          description?: string
-          date?: string
+          user_id?: string | null
+          title?: string
+          description?: string | null
+          due_date?: string
           status?: string | null
           created_at?: string
-          user_id?: string | null
         }
       }
-      automatic_tax_calculations: {
+      tax_planning_scenarios: {
         Row: {
           id: string
           user_id: string | null
-          total_income: number
-          total_deductions: number
-          estimated_tax: number
-          potential_savings: number
-          recommendations: Json | null
+          name: string
+          description: string | null
+          scenario_data: Json | null
+          estimated_tax_impact: number | null
           created_at: string
-          updated_at: string
         }
         Insert: {
           id?: string
           user_id?: string | null
-          total_income?: number
-          total_deductions?: number
-          estimated_tax?: number
-          potential_savings?: number
-          recommendations?: Json | null
+          name: string
+          description?: string | null
+          scenario_data?: Json | null
+          estimated_tax_impact?: number | null
           created_at?: string
-          updated_at?: string
         }
         Update: {
           id?: string
           user_id?: string | null
-          total_income?: number
-          total_deductions?: number
-          estimated_tax?: number
-          potential_savings?: number
-          recommendations?: Json | null
+          name?: string
+          description?: string | null
+          scenario_data?: Json | null
+          estimated_tax_impact?: number | null
           created_at?: string
-          updated_at?: string
         }
       }
       ai_insights: {
@@ -161,7 +142,7 @@ export interface Database {
           findings?: Json | null
           id?: string
           recommendations?: string[] | null
-          risk_level?: string | null
+          risk_level?: string
           status: string
           title: string
           user_id?: string | null
@@ -173,7 +154,7 @@ export interface Database {
           findings?: Json | null
           id?: string
           recommendations?: string[] | null
-          risk_level?: string | null
+          risk_level?: string
           status?: string
           title?: string
           user_id?: string | null
@@ -287,7 +268,7 @@ export interface Database {
           id?: string
           is_expense?: boolean | null
           pattern: string
-          updated_at: string
+          updated_at?: string
           user_id?: string | null
         }
         Update: {
@@ -407,7 +388,7 @@ export interface Database {
           created_at?: string
           effective_date: string
           expiration_date?: string | null
-          id: string
+          id?: string
           publication_number: string
           title: string
           updated_at: string
@@ -655,62 +636,62 @@ export interface Database {
           state?: string | null
         }
       }
-      tax_deadlines: {
+      tax_planning_chats: {
         Row: {
-          id: string
-          user_id: string | null
-          title: string
-          description: string | null
-          due_date: string
-          status: string | null
+          answer: string | null
+          context: Json | null
           created_at: string
+          id: string
+          question: string | null
+          user_id: string | null
         }
         Insert: {
-          id?: string
-          user_id?: string | null
-          title: string
-          description?: string | null
-          due_date: string
-          status?: string | null
+          answer?: string | null
+          context?: Json | null
           created_at?: string
+          id?: string
+          question?: string | null
+          user_id?: string | null
         }
         Update: {
-          id?: string
-          user_id?: string | null
-          title?: string
-          description?: string | null
-          due_date?: string
-          status?: string | null
+          answer?: string | null
+          context?: Json | null
           created_at?: string
+          id?: string
+          question?: string | null
+          user_id?: string | null
         }
       }
-      tax_planning_scenarios: {
+      write_offs: {
         Row: {
-          id: string
-          user_id: string | null
-          name: string
-          description: string | null
-          scenario_data: Json | null
-          estimated_tax_impact: number | null
+          amount: number
           created_at: string
+          date: string
+          description: string
+          id: string
+          status: string | null
+          tax_code_id: string | null
+          user_id: string | null
         }
         Insert: {
-          id?: string
-          user_id?: string | null
-          name: string
-          description?: string | null
-          scenario_data?: Json | null
-          estimated_tax_impact?: number | null
+          amount: number
           created_at?: string
+          date: string
+          description: string
+          id?: string
+          status?: string | null
+          tax_code_id?: string | null
+          user_id?: string | null
         }
         Update: {
-          id?: string
-          user_id?: string | null
-          name?: string
-          description?: string | null
-          scenario_data?: Json | null
-          estimated_tax_impact?: number | null
+          amount?: number
           created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          status?: string | null
+          tax_code_id?: string | null
+          user_id?: string | null
         }
       }
     }
@@ -728,6 +709,3 @@ export interface Database {
     }
   }
 }
-
-export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']
-export type Enums<T extends keyof Database['public']['Enums']> = Database['public']['Enums'][T]

@@ -66,14 +66,13 @@ export const learnFromTransaction = async (
   const pattern = significantWords.join('|');
   const { error } = await supabase
     .from('expense_patterns')
-    .insert({
+    .upsert({
+      user_id: userId,
       pattern,
       category,
       is_expense: isExpense,
-      confidence: 0.7,
-      user_id: userId,
-      updated_at: new Date().toISOString()
-    });
+      confidence: 0.7, // Initial confidence for user-defined patterns
+    }) as { error: Error | null };
 
   if (error) console.error('Error learning pattern:', error);
 };

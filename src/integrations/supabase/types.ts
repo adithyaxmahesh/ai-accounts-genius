@@ -136,50 +136,6 @@ export type Database = {
           },
         ]
       }
-      automatic_tax_calculations: {
-        Row: {
-          created_at: string
-          estimated_tax: number
-          id: string
-          potential_savings: number
-          recommendations: Json | null
-          total_deductions: number
-          total_income: number
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          estimated_tax?: number
-          id?: string
-          potential_savings?: number
-          recommendations?: Json | null
-          total_deductions?: number
-          total_income?: number
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          estimated_tax?: number
-          id?: string
-          potential_savings?: number
-          recommendations?: Json | null
-          total_deductions?: number
-          total_income?: number
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "automatic_tax_calculations_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       balance_sheet_items: {
         Row: {
           amount: number
