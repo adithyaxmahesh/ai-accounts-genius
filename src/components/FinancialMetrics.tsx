@@ -4,17 +4,7 @@ import { HeartPulse, Target, DollarSign } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
-import type { Tables } from "@/integrations/supabase/types";
-
-type FinancialGoal = Tables<"financial_goals">;
-type RevenueRecord = Tables<"revenue_records">;
-
-interface MetricsData {
-  revenue: number;
-  cashFlowHealth: number;
-  goalProgress: number;
-  goalName: string;
-}
+import type { FinancialGoal, RevenueRecord, MetricsData } from "@/integrations/supabase/types/financial";
 
 export const FinancialMetrics = () => {
   const navigate = useNavigate();
@@ -34,7 +24,7 @@ export const FinancialMetrics = () => {
         .eq('user_id', session?.user.id)
         .gte('date', `${lastYear}-01-01`)
         .lte('date', `${currentYear}-12-31`)
-        .order('date', { ascending: false }) as { data: RevenueRecord[] | null };
+        .order('date', { ascending: false });
 
       // Fetch financial goals
       const { data: goals } = await supabase
@@ -42,16 +32,19 @@ export const FinancialMetrics = () => {
         .select('*')
         .eq('user_id', session?.user.id)
         .order('end_date', { ascending: true })
-        .limit(1) as { data: FinancialGoal[] | null };
+        .limit(1);
 
-      if (!revenueData) return { revenue: 0, cashFlowHealth: 0, goalProgress: 0, goalName: "No active goal" };
+      const typedRevenueData = revenueData as RevenueRecord[] | null;
+      const typedGoals = goals as FinancialGoal[] | null;
+
+      if (!typedRevenueData) return { revenue: 0, cashFlowHealth: 0, goalProgress: 0, goalName: "No active goal" };
 
       // Calculate current month's revenue for cash flow health
       const currentMonth = now.getMonth();
       const currentMonthStart = new Date(currentYear, currentMonth, 1);
       const currentMonthEnd = new Date(currentYear, currentMonth + 1, 0);
 
-      const currentMonthRevenue = revenueData
+      const currentMonthRevenue = typedRevenueData
         .filter(record => {
           const recordDate = new Date(record.date);
           return recordDate >= currentMonthStart && recordDate <= currentMonthEnd;
@@ -62,7 +55,7 @@ export const FinancialMetrics = () => {
       const lastMonthStart = new Date(currentYear, currentMonth - 1, 1);
       const lastMonthEnd = new Date(currentYear, currentMonth, 0);
 
-      const lastMonthRevenue = revenueData
+      const lastMonthRevenue = typedRevenueData
         .filter(record => {
           const recordDate = new Date(record.date);
           return recordDate >= lastMonthStart && recordDate <= lastMonthEnd;
@@ -75,7 +68,7 @@ export const FinancialMetrics = () => {
         50;
 
       // Calculate goal progress if there's an active goal
-      const activeGoal = goals?.[0];
+      const activeGoal = typedGoals?.[0];
       const goalProgress = activeGoal ? 
         Math.min(100, (activeGoal.current_amount / activeGoal.target_amount) * 100) : 
         0;
