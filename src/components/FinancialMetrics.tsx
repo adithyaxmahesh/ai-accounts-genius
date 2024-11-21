@@ -107,7 +107,7 @@ export const FinancialMetrics = () => {
       </Card>
       <Card 
         className="glass-card p-6 hover-scale cursor-pointer"
-        onClick={() => navigate('/forecast')}
+        onClick={() => navigate('/financial-goals')}
       >
         <Target className="h-8 w-8 mb-2 text-purple-500" />
         <h3 className="text-lg font-semibold mb-1">Financial Goals</h3>

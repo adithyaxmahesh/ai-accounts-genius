@@ -15,6 +15,7 @@ import Audit from "@/pages/Audit";
 import AuditDetail from "@/pages/AuditDetail";
 import Forecast from "@/pages/Forecast";
 import BalanceSheet from "@/pages/BalanceSheet";
+import FinancialGoals from "@/pages/FinancialGoals";
 
 const queryClient = new QueryClient();
 
@@ -113,6 +114,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <BalanceSheet />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/financial-goals"
+              element={
+                <ProtectedRoute>
+                  <FinancialGoals />
                 </ProtectedRoute>
               }
             />
