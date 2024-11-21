@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft } from "lucide-react";
 import { TaxSummary } from "@/components/tax-analysis/TaxSummary";
@@ -11,12 +10,44 @@ import { TaxDeadlines } from "@/components/tax-analysis/TaxDeadlines";
 import { TaxChat } from "@/components/tax-analysis/TaxChat";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
+import { Database } from "@/integrations/supabase/types";
+
+type TaxAnalysis = Database['public']['Tables']['tax_analysis']['Row'] & {
+  recommendations?: {
+    items?: Array<{
+      description: string;
+      amount: number;
+      status?: 'approved' | 'rejected' | 'pending';
+      rule?: string;
+    }>;
+    total_revenue?: number;
+    total_deductions?: number;
+    taxable_income?: number;
+    effective_rate?: number;
+  };
+};
+
+const defaultAnalysis: TaxAnalysis = {
+  id: '',
+  user_id: '',
+  analysis_type: '',
+  recommendations: {
+    items: [],
+    total_revenue: 0,
+    total_deductions: 0,
+    taxable_income: 0,
+    effective_rate: 0
+  },
+  tax_impact: 0,
+  jurisdiction: '',
+  created_at: new Date().toISOString()
+};
 
 const Tax = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
 
-  const { data: analysis } = useQuery({
+  const { data: analysis } = useQuery<TaxAnalysis>({
     queryKey: ['tax-analysis', session?.user.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -26,7 +57,7 @@ const Tax = () => {
         .single();
       
       if (error) throw error;
-      return data;
+      return data as TaxAnalysis;
     }
   });
 
@@ -55,11 +86,11 @@ const Tax = () => {
         </TabsList>
 
         <TabsContent value="summary" className="space-y-6">
-          <TaxSummary analysis={analysis || {}} />
+          <TaxSummary analysis={analysis || defaultAnalysis} />
         </TabsContent>
 
         <TabsContent value="breakdown" className="space-y-6">
-          <TaxBreakdown analysis={analysis || {}} />
+          <TaxBreakdown analysis={analysis || defaultAnalysis} />
         </TabsContent>
 
         <TabsContent value="planner" className="space-y-6">
