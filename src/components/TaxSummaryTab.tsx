@@ -4,15 +4,13 @@ import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
+import { Database } from "@/integrations/supabase/types";
 
 interface TaxSummaryProps {
   audit: any;
 }
 
-interface TaxAnalysis {
-  id: string;
-  user_id: string | null;
-  analysis_type: string;
+type TaxAnalysisResponse = Database['public']['Tables']['tax_analysis']['Row'] & {
   recommendations: {
     total_revenue: number;
     total_deductions: number;
@@ -20,17 +18,14 @@ interface TaxAnalysis {
     effective_rate: number;
     items: any[];
   } | null;
-  tax_impact: number | null;
-  jurisdiction: string | null;
-  created_at: string;
-}
+};
 
 const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
   const { toast } = useToast();
   const { session } = useAuth();
 
   // Fetch the latest tax analysis
-  const { data: taxAnalysis } = useQuery<TaxAnalysis>({
+  const { data: taxAnalysis } = useQuery<TaxAnalysisResponse>({
     queryKey: ['tax-analysis', session?.user.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -46,7 +41,7 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
         return null;
       }
 
-      return data;
+      return data as TaxAnalysisResponse;
     },
     enabled: !!session?.user.id
   });
