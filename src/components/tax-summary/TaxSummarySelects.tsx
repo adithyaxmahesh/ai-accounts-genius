@@ -6,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Card } from "@/components/ui/card";
 
 interface TaxSummarySelectsProps {
   selectedBusinessType: string;
@@ -36,13 +37,12 @@ export const TaxSummarySelects = ({
 }: TaxSummarySelectsProps) => {
   return (
     <>
-      <div className="glass-card p-4 hover-scale">
+      <Card className="p-6">
+        <Building className="h-8 w-8 mb-4 text-primary" />
+        <h3 className="text-lg font-semibold mb-4">Business Type</h3>
         <Select value={selectedBusinessType} onValueChange={onBusinessTypeChange}>
           <SelectTrigger className="w-full">
-            <div className="flex items-center gap-2">
-              <Building className="h-4 w-4" />
-              <SelectValue placeholder="Select business type" />
-            </div>
+            <SelectValue placeholder="Select business type" />
           </SelectTrigger>
           <SelectContent>
             {businessTypes.map((type) => (
@@ -52,15 +52,14 @@ export const TaxSummarySelects = ({
             ))}
           </SelectContent>
         </Select>
-      </div>
+      </Card>
 
-      <div className="glass-card p-4 hover-scale">
+      <Card className="p-6">
+        <MapPin className="h-8 w-8 mb-4 text-primary" />
+        <h3 className="text-lg font-semibold mb-4">State</h3>
         <Select value={selectedState} onValueChange={onStateChange}>
           <SelectTrigger className="w-full">
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              <SelectValue placeholder="Select state" />
-            </div>
+            <SelectValue placeholder="Select state" />
           </SelectTrigger>
           <SelectContent>
             {states.map((state) => (
@@ -70,7 +69,7 @@ export const TaxSummarySelects = ({
             ))}
           </SelectContent>
         </Select>
-      </div>
+      </Card>
     </>
   );
 };
