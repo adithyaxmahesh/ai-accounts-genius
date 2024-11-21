@@ -3,16 +3,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { TaxSummaryCard } from "./tax-summary/TaxSummaryCard";
+import { TaxSummarySelects } from "./tax-summary/TaxSummarySelects";
 import { calculateTaxes } from "./tax-summary/TaxCalculationUtils";
-import { DollarSign, MapPin, Building, Calculator } from "lucide-react";
+import { DollarSign, Calculator } from "lucide-react";
 import { useState } from "react";
-import { Select } from "@/components/ui/select";
-import {
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface TaxSummaryProps {
   audit?: any;
@@ -82,29 +76,15 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
     }
   });
 
-  const handleBusinessTypeChange = async (value: string) => {
+  const handleBusinessTypeChange = (value: string) => {
     setSelectedBusinessType(value);
     updateTaxAnalysis.mutate({ businessType: value, state: selectedState });
   };
 
-  const handleStateChange = async (value: string) => {
+  const handleStateChange = (value: string) => {
     setSelectedState(value);
     updateTaxAnalysis.mutate({ businessType: selectedBusinessType, state: value });
   };
-
-  const businessTypes = [
-    { value: 'sole_proprietorship', label: 'Sole Proprietorship' },
-    { value: 'partnership', label: 'Partnership' },
-    { value: 'llc', label: 'LLC' },
-    { value: 'corporation', label: 'Corporation' }
-  ];
-
-  const states = [
-    { value: 'California', label: 'California' },
-    { value: 'New York', label: 'New York' },
-    { value: 'Texas', label: 'Texas' },
-    { value: 'Florida', label: 'Florida' }
-  ];
 
   const {
     totalAmount = 0,
@@ -122,20 +102,12 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="col-span-1">
-          <Select value={selectedBusinessType} onValueChange={handleBusinessTypeChange}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select business type" />
-            </SelectTrigger>
-            <SelectContent>
-              {businessTypes.map((type) => (
-                <SelectItem key={type.value} value={type.value}>
-                  {type.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <TaxSummarySelects
+          selectedBusinessType={selectedBusinessType}
+          selectedState={selectedState}
+          onBusinessTypeChange={handleBusinessTypeChange}
+          onStateChange={handleStateChange}
+        />
 
         <TaxSummaryCard
           icon={DollarSign}
@@ -150,21 +122,6 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
           value={`$${deductions.toLocaleString()}`}
           className="text-green-500"
         />
-
-        <div className="col-span-1">
-          <Select value={selectedState} onValueChange={handleStateChange}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select state" />
-            </SelectTrigger>
-            <SelectContent>
-              {states.map((state) => (
-                <SelectItem key={state.value} value={state.value}>
-                  {state.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
 
         <TaxSummaryCard
           icon={DollarSign}
