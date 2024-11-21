@@ -6,11 +6,23 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 
+interface AutomaticTaxCalculation {
+  id: string;
+  user_id: string | null;
+  total_income: number;
+  total_deductions: number;
+  estimated_tax: number;
+  potential_savings: number;
+  recommendations: Record<string, string>;
+  created_at: string;
+  updated_at: string;
+}
+
 export const TaxInsightsCard = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
 
-  const { data: taxCalculations } = useQuery({
+  const { data: taxCalculations } = useQuery<AutomaticTaxCalculation>({
     queryKey: ['automatic-tax-calculations', session?.user.id],
     queryFn: async () => {
       const { data, error } = await supabase
