@@ -9,6 +9,53 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      financial_goals: {
+        Row: {
+          id: string
+          user_id: string | null
+          name: string
+          target_amount: number
+          current_amount: number | null
+          start_date: string
+          end_date: string
+          category: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          name: string
+          target_amount: number
+          current_amount?: number | null
+          start_date?: string
+          end_date: string
+          category: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          name?: string
+          target_amount?: number
+          current_amount?: number | null
+          start_date?: string
+          end_date?: string
+          category?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_goals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       tax_deadlines: {
         Row: {
           id: string
@@ -720,18 +767,18 @@ export interface Database {
           created_at?: string;
         };
       };
-    };
+    }
     Views: {
       [_ in never]: never
-    };
+    }
     Functions: {
       [_ in never]: never
-    };
+    }
     Enums: {
       [_ in never]: never
-    };
+    }
     CompositeTypes: {
       [_ in never]: never
-    };
+    }
   }
 }

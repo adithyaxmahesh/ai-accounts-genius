@@ -1,4 +1,4 @@
 export * from './database.types'
-export * from './tables'
+export * from './financial'
 export * from './tax'
 export * from './expense-patterns'
