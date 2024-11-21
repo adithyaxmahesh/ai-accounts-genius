@@ -9,12 +9,28 @@ interface TaxSummaryProps {
   audit: any;
 }
 
+interface TaxAnalysis {
+  id: string;
+  user_id: string | null;
+  analysis_type: string;
+  recommendations: {
+    total_revenue: number;
+    total_deductions: number;
+    taxable_income: number;
+    effective_rate: number;
+    items: any[];
+  } | null;
+  tax_impact: number | null;
+  jurisdiction: string | null;
+  created_at: string;
+}
+
 const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
   const { toast } = useToast();
   const { session } = useAuth();
 
   // Fetch the latest tax analysis
-  const { data: taxAnalysis } = useQuery({
+  const { data: taxAnalysis } = useQuery<TaxAnalysis>({
     queryKey: ['tax-analysis', session?.user.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -46,14 +62,14 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
     };
 
     // Use the values from taxAnalysis if available
-    if (taxAnalysis) {
+    if (taxAnalysis?.recommendations) {
       return {
-        totalAmount: taxAnalysis.recommendations?.total_revenue || 0,
-        deductions: taxAnalysis.recommendations?.total_deductions || 0,
+        totalAmount: taxAnalysis.recommendations.total_revenue || 0,
+        deductions: taxAnalysis.recommendations.total_deductions || 0,
         estimatedTax: taxAnalysis.tax_impact || 0,
         state: taxAnalysis.jurisdiction || 'California',
-        effectiveRate: taxAnalysis.recommendations?.effective_rate || 0,
-        taxableIncome: taxAnalysis.recommendations?.taxable_income || 0
+        effectiveRate: taxAnalysis.recommendations.effective_rate || 0,
+        taxableIncome: taxAnalysis.recommendations.taxable_income || 0
       };
     }
 
