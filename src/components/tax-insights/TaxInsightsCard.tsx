@@ -7,12 +7,17 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 
+interface TaxAnalysis {
+  tax_impact: number | null;
+  recommendations: Record<string, string> | null;
+}
+
 export const TaxInsightsCard = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const { data: taxAnalysis } = useQuery({
+  const { data: taxAnalysis } = useQuery<TaxAnalysis>({
     queryKey: ['tax-analysis', session?.user.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -20,10 +25,11 @@ export const TaxInsightsCard = () => {
         .select('*')
         .eq('user_id', session?.user.id)
         .order('created_at', { ascending: false })
-        .limit(1);
+        .limit(1)
+        .single();
       
       if (error) throw error;
-      return data?.[0];
+      return data;
     }
   });
 

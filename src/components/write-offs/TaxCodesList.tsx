@@ -6,8 +6,17 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+interface TaxCode {
+  id: string;
+  code: string;
+  description: string;
+  category: string;
+  deduction_type: string;
+  expense_category: string | null;
+}
+
 const TaxCodesList = () => {
-  const { data: taxCodes } = useQuery({
+  const { data: taxCodes } = useQuery<TaxCode[]>({
     queryKey: ['taxCodes', 'California'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -17,7 +26,7 @@ const TaxCodesList = () => {
         .order('expense_category');
       
       if (error) throw error;
-      return data;
+      return data || [];
     }
   });
 

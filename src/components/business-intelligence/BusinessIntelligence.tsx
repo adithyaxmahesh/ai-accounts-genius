@@ -11,6 +11,22 @@ import { categorizeTransaction } from "@/utils/expenseCategories";
 import { useState } from "react";
 import { startOfYear, endOfYear, startOfQuarter, endOfQuarter, subYears } from "date-fns";
 
+interface MonthlyData {
+  revenue: number;
+  expenses: number;
+  profit: number;
+  month: string;
+}
+
+interface BusinessInsight {
+  id: string;
+  category: string;
+  metrics: Record<string, any> | null;
+  recommendations: string[] | null;
+  priority: string | null;
+  created_at: string;
+}
+
 export const BusinessIntelligence = () => {
   const { session } = useAuth();
   const { toast } = useToast();
@@ -52,7 +68,7 @@ export const BusinessIntelligence = () => {
     }
   };
 
-  const { data: financialData } = useQuery({
+  const { data: financialData } = useQuery<MonthlyData[]>({
     queryKey: ['financial-metrics', session?.user.id, timeRange],
     queryFn: async () => {
       const dateRange = getDateRange();
@@ -116,7 +132,7 @@ export const BusinessIntelligence = () => {
     }
   });
 
-  const { data: insights, refetch } = useQuery({
+  const { data: insights, refetch } = useQuery<BusinessInsight[]>({
     queryKey: ['business-insights', session?.user.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -127,7 +143,7 @@ export const BusinessIntelligence = () => {
         .limit(1);
       
       if (error) throw error;
-      return data;
+      return data || [];
     }
   });
 
