@@ -30,9 +30,9 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
       return sum;
     }, 0) || 0;
     
-    const taxableIncome = totalAmount - deductions;
+    const taxableIncome = Math.max(0, totalAmount - deductions);
     const estimatedTax = audit.tax_impact || 0;
-    const effectiveRate = totalAmount > 0 ? (estimatedTax / totalAmount) * 100 : 0;
+    const effectiveRate = totalAmount > 0 ? ((estimatedTax / totalAmount) * 100) : 0;
     
     return {
       totalAmount,

@@ -13,6 +13,7 @@ serve(async (req) => {
 
   try {
     const { userId } = await req.json()
+    console.log('Calculating taxes for user:', userId)
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -27,6 +28,7 @@ serve(async (req) => {
       .single()
 
     const userState = profile?.state || 'California'
+    console.log('User state:', userState)
 
     // Get state tax rates
     const { data: taxRates } = await supabase
@@ -36,16 +38,19 @@ serve(async (req) => {
       .eq('tax_year', new Date().getFullYear())
       .order('min_income', { ascending: true })
 
-    // Fetch audit items and their status
-    const { data: auditItems } = await supabase
-      .from('audit_items')
-      .select('*')
+    console.log('Tax rates found:', taxRates?.length)
+
+    // Fetch revenue records for total income
+    const { data: revenueRecords } = await supabase
+      .from('revenue_records')
+      .select('amount')
       .eq('user_id', userId)
 
-    // Calculate total revenue from audit items
-    const totalRevenue = auditItems?.reduce((sum, item) => {
-      return sum + (item.amount || 0)
+    const totalRevenue = revenueRecords?.reduce((sum, record) => {
+      return sum + (record.amount || 0)
     }, 0) || 0
+
+    console.log('Total revenue:', totalRevenue)
 
     // Get write-offs with valid tax codes
     const { data: writeOffs } = await supabase
@@ -65,16 +70,19 @@ serve(async (req) => {
     // Calculate total deductions from approved write-offs
     const totalDeductions = writeOffs?.reduce((sum, writeOff) => {
       if (writeOff.tax_codes && writeOff.status === 'approved') {
-        return sum + writeOff.amount
+        return sum + (writeOff.amount || 0)
       }
       return sum
     }, 0) || 0
 
+    console.log('Total deductions:', totalDeductions)
+
     const taxableIncome = Math.max(0, totalRevenue - totalDeductions)
+    console.log('Taxable income:', taxableIncome)
 
     // Calculate progressive tax using tax brackets
     let estimatedTax = 0
-    if (taxRates) {
+    if (taxRates && taxRates.length > 0) {
       for (const bracket of taxRates) {
         const min = bracket.min_income
         const max = bracket.max_income || Infinity
@@ -85,7 +93,12 @@ serve(async (req) => {
           estimatedTax += taxableAmount * (rate / 100)
         }
       }
+    } else {
+      // Fallback tax calculation if no tax rates found (simplified)
+      estimatedTax = taxableIncome * 0.15 // 15% flat rate as fallback
     }
+
+    console.log('Estimated tax:', estimatedTax)
 
     // Store analysis results
     const { error: analysisError } = await supabase
@@ -104,7 +117,10 @@ serve(async (req) => {
         }
       })
 
-    if (analysisError) throw analysisError
+    if (analysisError) {
+      console.error('Error storing tax analysis:', analysisError)
+      throw analysisError
+    }
 
     return new Response(
       JSON.stringify({ 
