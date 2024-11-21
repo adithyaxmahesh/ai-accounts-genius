@@ -20,7 +20,7 @@ export const FinancialMetrics = () => {
       // Fetch revenue data for cash flow calculation
       const { data: revenueData } = await supabase
         .from('revenue_records')
-        .select('amount, date')
+        .select('*')
         .eq('user_id', session?.user.id)
         .gte('date', `${lastYear}-01-01`)
         .lte('date', `${currentYear}-12-31`)
@@ -70,7 +70,7 @@ export const FinancialMetrics = () => {
       // Calculate goal progress if there's an active goal
       const activeGoal = typedGoals?.[0];
       const goalProgress = activeGoal ? 
-        Math.min(100, (activeGoal.current_amount / activeGoal.target_amount) * 100) : 
+        Math.min(100, ((activeGoal.current_amount || 0) / activeGoal.target_amount) * 100) : 
         0;
 
       return {
