@@ -65,6 +65,36 @@ export const TaxPlanner = () => {
     }
   });
 
+  const calculateImpact = useMutation({
+    mutationFn: async (scenarioId: string) => {
+      // Simple mock calculation - in a real app, this would be more complex
+      const estimatedImpact = Math.floor(Math.random() * 50000);
+      
+      const { data, error } = await supabase
+        .from('tax_planning_scenarios')
+        .update({ estimated_tax_impact: estimatedImpact })
+        .eq('id', scenarioId)
+        .select();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Impact Calculated",
+        description: "The tax impact has been calculated for this scenario.",
+      });
+      refetch();
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to calculate tax impact. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
   return (
     <div className="space-y-6">
       <Card className="p-6">
@@ -106,7 +136,12 @@ export const TaxPlanner = () => {
                 <h4 className="font-semibold">{scenario.name}</h4>
                 <p className="text-sm text-muted-foreground">{scenario.description}</p>
               </div>
-              <Button variant="outline" size="sm">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => calculateImpact.mutate(scenario.id)}
+                disabled={calculateImpact.isPending}
+              >
                 <Calculator className="h-4 w-4 mr-2" />
                 Calculate Impact
               </Button>
