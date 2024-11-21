@@ -409,53 +409,6 @@ export type Database = {
           },
         ]
       }
-      financial_goals: {
-        Row: {
-          category: string
-          created_at: string
-          current_amount: number | null
-          end_date: string
-          id: string
-          name: string
-          start_date: string
-          target_amount: number
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          category: string
-          created_at?: string
-          current_amount?: number | null
-          end_date: string
-          id?: string
-          name: string
-          start_date?: string
-          target_amount: number
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          category?: string
-          created_at?: string
-          current_amount?: number | null
-          end_date?: string
-          id?: string
-          name?: string
-          start_date?: string
-          target_amount?: number
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "financial_goals_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       forecasts: {
         Row: {
           confidence_level: number | null
