@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
-import { DollarSign, TrendingUp, AlertTriangle } from "lucide-react";
+import { DollarSign, Target, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
@@ -84,6 +84,10 @@ export const FinancialMetrics = () => {
     }
   });
 
+  // Calculate progress towards revenue goal (example: $100,000 monthly goal)
+  const monthlyGoal = 100000;
+  const progressPercentage = ((metrics?.revenue || 0) / monthlyGoal) * 100;
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <Card 
@@ -103,17 +107,23 @@ export const FinancialMetrics = () => {
       </Card>
       <Card 
         className="glass-card p-6 hover-scale cursor-pointer"
-        onClick={() => navigate('/write-offs')}
+        onClick={() => navigate('/forecast')}
       >
-        <TrendingUp className="h-8 w-8 mb-2 text-red-500" />
-        <h3 className="text-lg font-semibold mb-1">Total Expenses</h3>
+        <Target className="h-8 w-8 mb-2 text-purple-500" />
+        <h3 className="text-lg font-semibold mb-1">Financial Goals</h3>
         <p className="text-2xl font-bold truncate min-h-[2.5rem] flex items-center justify-start">
-          <span className="text-red-500">
-            ${(metrics?.revenue * 0.2).toLocaleString() || '0'}
+          <span className="text-purple-500">
+            {progressPercentage.toFixed(1)}%
           </span>
         </p>
-        <p className="text-sm text-muted-foreground mt-1">
-          20% of revenue
+        <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+          <div 
+            className="bg-purple-500 h-2.5 rounded-full transition-all duration-500" 
+            style={{ width: `${Math.min(progressPercentage, 100)}%` }}
+          />
+        </div>
+        <p className="text-sm text-muted-foreground mt-2">
+          ${metrics?.revenue.toLocaleString()} of ${monthlyGoal.toLocaleString()} goal
         </p>
       </Card>
       <Card 
