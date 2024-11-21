@@ -7,7 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
-import { FinancialGoalInsert } from "@/integrations/supabase/types";
+import { FinancialGoalInsert } from "@/integrations/supabase/types/financial";
 
 export const FinancialGoalDialog = () => {
   const { session } = useAuth();
