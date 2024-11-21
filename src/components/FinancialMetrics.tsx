@@ -107,7 +107,7 @@ export const FinancialMetrics = () => {
       </Card>
       <Card 
         className="glass-card p-6 hover-scale cursor-pointer"
-        onClick={() => navigate('/forecast')}
+        onClick={() => navigate('/balance-sheet')} // Updated to route to balance sheet
       >
         <Target className="h-8 w-8 mb-2 text-purple-500" />
         <h3 className="text-lg font-semibold mb-1">Financial Goals</h3>
@@ -128,7 +128,7 @@ export const FinancialMetrics = () => {
       </Card>
       <Card 
         className="glass-card p-6 hover-scale cursor-pointer"
-        onClick={() => navigate('/forecast')}
+        onClick={() => navigate('/tax')} // Updated to route to tax page for net profit
       >
         <AlertTriangle className="h-8 w-8 mb-2 text-blue-500" />
         <h3 className="text-lg font-semibold mb-1">Net Profit</h3>
