@@ -21,6 +21,10 @@ export const DocumentList = ({ documents, processing, onAnalyze, onDelete }: Doc
     );
   }
 
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString();
+  };
+
   return (
     <ScrollArea className="h-[300px]">
       <div className="space-y-4">
@@ -33,25 +37,33 @@ export const DocumentList = ({ documents, processing, onAnalyze, onDelete }: Doc
                   <p className="font-medium">{doc.name}</p>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Uploaded on {new Date(doc.uploadedAt).toLocaleDateString()}
+                  Uploaded on {formatDate(doc.uploadedAt)}
                 </p>
                 
                 {/* Display detected write-offs if available */}
                 {doc.extracted_data?.writeOffs && doc.extracted_data.writeOffs.length > 0 && (
                   <div className="mt-4 space-y-2">
-                    <p className="text-sm font-medium">Detected Write-offs:</p>
+                    <p className="text-sm font-medium">Recent Write-offs:</p>
                     {doc.extracted_data.writeOffs.map((writeOff: any, index: number) => (
                       <div 
                         key={index}
-                        className="text-sm p-2 bg-muted rounded-md flex justify-between items-center"
+                        className="text-sm p-3 bg-muted/50 rounded-md flex justify-between items-start"
                       >
-                        <div>
-                          <p className="font-medium">{writeOff.description}</p>
-                          <p className="text-xs text-muted-foreground">
-                            Category: {writeOff.category}
-                          </p>
+                        <div className="space-y-1">
+                          <div className="font-medium">{writeOff.description}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {writeOff.category} - {writeOff.taxCodeId || "Pending Tax Code"}
+                          </div>
                         </div>
-                        <p className="font-medium">${writeOff.amount.toLocaleString()}</p>
+                        <div className="flex flex-col items-end">
+                          <span className="font-medium">${writeOff.amount.toLocaleString()}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDate(doc.uploadedAt)}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {writeOff.status || "Pending"}
+                          </span>
+                        </div>
                       </div>
                     ))}
                   </div>
