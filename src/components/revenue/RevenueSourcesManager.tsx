@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { Building2, CreditCard, Bank } from "lucide-react";
+import { Building2, CreditCard, Landmark } from "lucide-react";
 import { ShopifyConnect } from "@/components/shopify/ShopifyConnect";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -21,12 +21,14 @@ export const RevenueSourcesManager = () => {
 
   const handleBankConnect = async () => {
     try {
-      const { error } = await supabase.from('bank_connections').insert({
-        user_id: session?.user.id,
-        bank_name: bankDetails.bankName,
-        account_number: bankDetails.accountNumber,
-        routing_number: bankDetails.routingNumber,
-      });
+      const { error } = await supabase
+        .from('bank_connections')
+        .insert({
+          user_id: session?.user.id,
+          bank_name: bankDetails.bankName,
+          account_number: bankDetails.accountNumber,
+          routing_number: bankDetails.routingNumber,
+        });
 
       if (error) throw error;
 
@@ -73,7 +75,7 @@ export const RevenueSourcesManager = () => {
         </Card>
 
         <Card className="p-6">
-          <Bank className="h-8 w-8 mb-4 text-primary" />
+          <Landmark className="h-8 w-8 mb-4 text-primary" />
           <h3 className="text-lg font-semibold mb-2">Bank Account</h3>
           <p className="text-sm text-muted-foreground mb-4">
             Connect your business bank account to track revenue and expenses.
