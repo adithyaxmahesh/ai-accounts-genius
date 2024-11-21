@@ -47,16 +47,7 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
   });
 
   const calculateTaxes = () => {
-    if (!audit?.audit_items) return { 
-      totalAmount: 0, 
-      estimatedTax: 0, 
-      deductions: 0,
-      state: taxAnalysis?.jurisdiction || 'California',
-      effectiveRate: 0,
-      taxableIncome: 0
-    };
-
-    // Use the values from taxAnalysis if available
+    // If we have tax analysis data, use that
     if (taxAnalysis?.recommendations) {
       return {
         totalAmount: taxAnalysis.recommendations.total_revenue || 0,
@@ -69,6 +60,17 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
     }
 
     // Fallback calculations if no analysis is available
+    if (!audit?.audit_items) {
+      return {
+        totalAmount: 0,
+        estimatedTax: 0,
+        deductions: 0,
+        state: 'California',
+        effectiveRate: 0,
+        taxableIncome: 0
+      };
+    }
+
     const totalAmount = audit.audit_items.reduce((sum: number, item: any) => {
       if (item.status === 'approved' && !item.category.toLowerCase().includes('deduction')) {
         return sum + (Number(item.amount) || 0);
