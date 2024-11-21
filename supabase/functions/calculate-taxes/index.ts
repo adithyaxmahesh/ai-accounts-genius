@@ -6,6 +6,19 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// California tax brackets for 2023 (single filer)
+const CA_TAX_BRACKETS = [
+  { min: 0, max: 10099, rate: 0.01 },
+  { min: 10100, max: 23942, rate: 0.02 },
+  { min: 23943, max: 37788, rate: 0.04 },
+  { min: 37789, max: 52455, rate: 0.06 },
+  { min: 52456, max: 66295, rate: 0.08 },
+  { min: 66296, max: 338639, rate: 0.093 },
+  { min: 338640, max: 406364, rate: 0.103 },
+  { min: 406365, max: 677275, rate: 0.113 },
+  { min: 677276, max: Infinity, rate: 0.123 }
+]
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -19,26 +32,6 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
-
-    // Get user's state from profile
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('state')
-      .eq('id', userId)
-      .single()
-
-    const userState = profile?.state || 'California'
-    console.log('User state:', userState)
-
-    // Get state tax rates
-    const { data: taxRates } = await supabase
-      .from('state_tax_rates')
-      .select('*')
-      .eq('state', userState)
-      .eq('tax_year', new Date().getFullYear())
-      .order('min_income', { ascending: true })
-
-    console.log('Tax rates found:', taxRates?.length)
 
     // Fetch revenue records for total income
     const { data: revenueRecords } = await supabase
@@ -80,40 +73,44 @@ serve(async (req) => {
     const taxableIncome = Math.max(0, totalRevenue - totalDeductions)
     console.log('Taxable income:', taxableIncome)
 
-    // Calculate progressive tax using tax brackets
+    // Calculate California progressive tax
     let estimatedTax = 0
-    if (taxRates && taxRates.length > 0) {
-      for (const bracket of taxRates) {
-        const min = bracket.min_income
-        const max = bracket.max_income || Infinity
-        const rate = bracket.rate
-
-        if (taxableIncome > min) {
-          const taxableAmount = Math.min(taxableIncome - min, max - min)
-          estimatedTax += taxableAmount * (rate / 100)
-        }
+    for (const bracket of CA_TAX_BRACKETS) {
+      if (taxableIncome > bracket.min) {
+        const taxableAmount = Math.min(
+          taxableIncome - bracket.min,
+          (bracket.max - bracket.min) || (taxableIncome - bracket.min)
+        )
+        estimatedTax += taxableAmount * bracket.rate
       }
-    } else {
-      // Fallback tax calculation if no tax rates found (simplified)
-      estimatedTax = taxableIncome * 0.15 // 15% flat rate as fallback
     }
 
-    console.log('Estimated tax:', estimatedTax)
+    // Add Mental Health Services Tax (1% for income over $1 million)
+    if (taxableIncome > 1000000) {
+      estimatedTax += (taxableIncome - 1000000) * 0.01
+    }
+
+    console.log('Estimated California tax:', estimatedTax)
+
+    // Calculate potential savings (difference between max rate and actual effective rate)
+    const maxRate = 0.123 // California's highest marginal rate
+    const potentialSavings = totalDeductions * maxRate
 
     // Store analysis results
     const { error: analysisError } = await supabase
       .from('tax_analysis')
       .insert({
         user_id: userId,
-        analysis_type: 'annual',
+        analysis_type: 'california_annual',
         tax_impact: estimatedTax,
-        jurisdiction: userState,
+        jurisdiction: 'California',
         recommendations: {
           total_revenue: totalRevenue,
           total_deductions: totalDeductions,
           taxable_income: taxableIncome,
+          potential_savings: potentialSavings,
           write_offs: writeOffs,
-          state_tax_rates: taxRates
+          effective_rate: taxableIncome > 0 ? (estimatedTax / taxableIncome) * 100 : 0
         }
       })
 
@@ -127,9 +124,10 @@ serve(async (req) => {
         success: true,
         taxDue: estimatedTax,
         deductions: totalDeductions,
-        state: userState,
+        state: 'California',
         taxableIncome,
-        totalRevenue
+        totalRevenue,
+        potentialSavings
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
