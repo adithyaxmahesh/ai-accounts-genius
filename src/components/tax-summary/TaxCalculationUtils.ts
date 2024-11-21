@@ -1,17 +1,17 @@
 import { Database } from "@/integrations/supabase/types";
 
 type TaxAnalysisResponse = Database['public']['Tables']['tax_analysis']['Row'] & {
-  recommendations: {
-    total_revenue: number;
-    total_deductions: number;
-    taxable_income: number;
-    effective_rate: number;
+  recommendations?: {
+    total_revenue?: number;
+    total_deductions?: number;
+    taxable_income?: number;
+    effective_rate?: number;
     business_type?: 'sole_proprietorship' | 'partnership' | 'llc' | 'corporation';
-    items: any[];
+    items?: any[];
   } | null;
 };
 
-export const calculateTaxes = (taxAnalysis: TaxAnalysisResponse | undefined, audit: any) => {
+export const calculateTaxes = (taxAnalysis: TaxAnalysisResponse | undefined | null, audit: any) => {
   if (taxAnalysis?.recommendations) {
     const totalRevenue = taxAnalysis.recommendations.total_revenue || 0;
     const totalDeductions = taxAnalysis.recommendations.total_deductions || 0;
@@ -98,6 +98,8 @@ export const calculateTaxes = (taxAnalysis: TaxAnalysisResponse | undefined, aud
     estimatedTax,
     state: taxAnalysis?.jurisdiction || 'California',
     effectiveRate,
-    taxableIncome
+    taxableIncome,
+    businessType: 'corporation',
+    minimumTax: 800
   };
 };
