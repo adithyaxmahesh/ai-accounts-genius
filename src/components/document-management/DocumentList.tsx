@@ -1,11 +1,9 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Image, FileSpreadsheet, Brain, Download, Trash2 } from "lucide-react";
-import { ProcessedDocument } from "./types";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
-import { useState } from "react";
-import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Brain, Trash2, FileText } from "lucide-react";
+import { ProcessedDocument } from "@/components/types";
+import { cn } from "@/lib/utils";
 
 interface DocumentListProps {
   documents: ProcessedDocument[];
@@ -15,143 +13,78 @@ interface DocumentListProps {
 }
 
 export const DocumentList = ({ documents, processing, onAnalyze, onDelete }: DocumentListProps) => {
-  const { toast } = useToast();
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [documentToDelete, setDocumentToDelete] = useState<string | null>(null);
-
-  const getFileIcon = (fileName: string) => {
-    const ext = fileName.split('.').pop()?.toLowerCase();
-    switch (ext) {
-      case 'csv':
-      case 'xls':
-      case 'xlsx':
-        return <FileSpreadsheet className="h-4 w-4 text-green-500" />;
-      case 'jpg':
-      case 'jpeg':
-      case 'png':
-      case 'gif':
-        return <Image className="h-4 w-4 text-blue-500" />;
-      default:
-        return <FileText className="h-4 w-4 text-muted-foreground" />;
-    }
-  };
-
-  const handleDownload = async (doc: ProcessedDocument) => {
-    try {
-      const { data, error } = await supabase.storage
-        .from('documents')
-        .download(doc.storage_path);
-
-      if (error) throw error;
-
-      const url = URL.createObjectURL(data);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = doc.name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Download error:", error);
-      toast({
-        title: "Download Failed",
-        description: "Failed to download the document",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteClick = (documentId: string) => {
-    setDocumentToDelete(documentId);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (documentToDelete) {
-      await onDelete(documentToDelete);
-      setDeleteDialogOpen(false);
-      setDocumentToDelete(null);
-    }
-  };
+  if (!documents.length) {
+    return (
+      <div className="text-center text-muted-foreground">
+        No documents uploaded yet
+      </div>
+    );
+  }
 
   return (
-    <>
-      <div className="overflow-auto max-h-[300px]">
-        <Table>
-          <TableHeader className="sticky top-0 bg-background z-10">
-            <TableRow>
-              <TableHead>Document</TableHead>
-              <TableHead className="w-[100px]">Status</TableHead>
-              <TableHead className="w-[150px] text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {documents.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={3} className="text-center text-muted-foreground">
-                  No documents uploaded yet
-                </TableCell>
-              </TableRow>
-            ) : (
-              documents.map((doc) => (
-                <TableRow key={doc.id}>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      {getFileIcon(doc.name)}
-                      <span className="truncate max-w-[200px]">{doc.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${
-                      doc.status === 'Analyzed' ? 'bg-green-100 text-green-800' :
-                      doc.status === 'Processing' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-blue-100 text-blue-800'
-                    }`}>
-                      {doc.status}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onAnalyze(doc.id)}
-                        disabled={processing || doc.status === 'Analyzed'}
+    <ScrollArea className="h-[300px]">
+      <div className="space-y-4">
+        {documents.map((doc) => (
+          <Card key={doc.id} className="p-4">
+            <div className="flex justify-between items-start">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <p className="font-medium">{doc.name}</p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Uploaded on {new Date(doc.uploadedAt).toLocaleDateString()}
+                </p>
+                
+                {/* Display detected write-offs if available */}
+                {doc.extracted_data?.writeOffs && doc.extracted_data.writeOffs.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-sm font-medium">Detected Write-offs:</p>
+                    {doc.extracted_data.writeOffs.map((writeOff: any, index: number) => (
+                      <div 
+                        key={index}
+                        className="text-sm p-2 bg-muted rounded-md flex justify-between items-center"
                       >
-                        <Brain className={`h-4 w-4 ${processing ? 'animate-pulse' : ''}`} />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDownload(doc)}
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteClick(doc.id)}
-                        className="hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+                        <div>
+                          <p className="font-medium">{writeOff.description}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Category: {writeOff.category}
+                          </p>
+                        </div>
+                        <p className="font-medium">${writeOff.amount.toLocaleString()}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onAnalyze(doc.id)}
+                  disabled={processing || doc.status === 'analyzed'}
+                  className={cn(
+                    "hover-scale",
+                    doc.status === 'analyzed' && "bg-green-50 text-green-600 hover:bg-green-50"
+                  )}
+                >
+                  <Brain className="h-4 w-4 mr-1" />
+                  {doc.status === 'analyzed' ? 'Analyzed' : 'Analyze'}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onDelete(doc.id)}
+                  className="hover-scale text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </Card>
+        ))}
       </div>
-
-      <DeleteConfirmDialog
-        isOpen={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-        onConfirm={handleConfirmDelete}
-        title="Delete Document"
-        description="Are you sure you want to delete this document? This action cannot be undone."
-      />
-    </>
+    </ScrollArea>
   );
 };

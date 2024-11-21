@@ -6,7 +6,16 @@ export interface ProcessedDocument {
   uploadedAt: string;
   type: string;
   storage_path?: string;
-  extracted_data?: any;
+  extracted_data?: {
+    writeOffs?: Array<{
+      amount: number;
+      description: string;
+      category: string;
+      taxCodeId?: string;
+    }>;
+    transactions?: any[];
+    findings?: string[];
+  };
 }
 
 export interface TaxSummaryProps {
