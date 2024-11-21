@@ -31,22 +31,22 @@ export const TaxDeadlines = () => {
         .order('due_date', { ascending: true });
       
       if (error) throw error;
-      return data as TaxDeadline[];
+      return data;
     }
   });
 
   const addDeadline = useMutation({
     mutationFn: async () => {
+      if (!date || !title || !session?.user.id) return null;
+      
       const { data, error } = await supabase
         .from('tax_deadlines')
-        .insert([
-          {
-            title,
-            due_date: date?.toISOString(),
-            description,
-            user_id: session?.user.id
-          }
-        ]);
+        .insert({
+          title,
+          due_date: date.toISOString(),
+          description,
+          user_id: session.user.id,
+        });
 
       if (error) throw error;
       return data;
