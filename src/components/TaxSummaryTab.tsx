@@ -46,10 +46,12 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
 
   const updateTaxAnalysis = useMutation({
     mutationFn: async (values: { businessType: string; state: string }) => {
+      if (!session?.user?.id) return;
+      
       const { error } = await supabase
         .from('tax_analysis')
         .upsert({
-          user_id: session?.user.id,
+          user_id: session.user.id,
           analysis_type: 'summary',
           jurisdiction: values.state,
           recommendations: {
