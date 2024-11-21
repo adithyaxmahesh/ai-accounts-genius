@@ -1,4 +1,3 @@
 project_id = "nmrjqfntvxflkabdigfl"
-
-[functions.shopify-integration]
+[process-csv]
 verify_jwt = true
