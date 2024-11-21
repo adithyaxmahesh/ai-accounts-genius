@@ -10,6 +10,7 @@ import { AddBalanceSheetItem } from "@/components/AddBalanceSheetItem";
 import { BalanceSheetSection } from "@/components/BalanceSheetSection";
 import { useAuth } from "@/components/AuthProvider";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
+import { FinancialGoalDialog } from "@/components/financial-goals/FinancialGoalDialog";
 
 const BalanceSheet = () => {
   const { session } = useAuth();
@@ -64,10 +65,13 @@ const BalanceSheet = () => {
           <h1 className="text-3xl font-bold">Balance Sheet</h1>
           <p className="text-muted-foreground">Track your financial position</p>
         </div>
-        <Button onClick={() => setShowAddForm(true)} className="hover-scale">
-          <DollarSign className="mr-2 h-4 w-4" />
-          Add Item
-        </Button>
+        <div className="space-x-4">
+          <FinancialGoalDialog />
+          <Button onClick={() => setShowAddForm(true)} className="hover-scale">
+            <DollarSign className="mr-2 h-4 w-4" />
+            Add Item
+          </Button>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
