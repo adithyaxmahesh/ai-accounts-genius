@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { format } from "date-fns";
 import { FinancialGoal } from "@/integrations/supabase/types/financial";
+import { Database } from "@/integrations/supabase/types/database.types";
 
 export const FinancialGoalsList = () => {
   const { session } = useAuth();
@@ -19,7 +20,7 @@ export const FinancialGoalsList = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data;
+      return data as FinancialGoal[];
     }
   });
 

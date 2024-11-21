@@ -9,62 +9,42 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
-      tax_deadlines: {
-        Row: {
-          id: string
-          user_id: string | null
-          title: string
-          description: string | null
-          due_date: string
-          status: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id?: string | null
-          title: string
-          description?: string | null
-          due_date: string
-          status?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string | null
-          title?: string
-          description?: string | null
-          due_date?: string
-          status?: string | null
-          created_at?: string
-        }
-      }
-      tax_planning_scenarios: {
+      financial_goals: {
         Row: {
           id: string
           user_id: string | null
           name: string
-          description: string | null
-          scenario_data: Json | null
-          estimated_tax_impact: number | null
+          target_amount: number
+          current_amount: number | null
+          start_date: string
+          end_date: string
+          category: string
           created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
           user_id?: string | null
           name: string
-          description?: string | null
-          scenario_data?: Json | null
-          estimated_tax_impact?: number | null
+          target_amount: number
+          current_amount?: number | null
+          start_date?: string
+          end_date: string
+          category: string
           created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
           user_id?: string | null
           name?: string
-          description?: string | null
-          scenario_data?: Json | null
-          estimated_tax_impact?: number | null
+          target_amount?: number
+          current_amount?: number | null
+          start_date?: string
+          end_date?: string
+          category?: string
           created_at?: string
+          updated_at?: string
         }
       }
       ai_insights: {
@@ -92,6 +72,15 @@ export interface Database {
           insight?: string
           user_id?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "ai_insights_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       audit_items: {
         Row: {
@@ -121,6 +110,15 @@ export interface Database {
           id?: string
           status?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "audit_items_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "audit_reports"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       audit_reports: {
         Row: {
@@ -142,8 +140,8 @@ export interface Database {
           findings?: Json | null
           id?: string
           recommendations?: string[] | null
-          risk_level?: string
-          status: string
+          risk_level?: string | null
+          status?: string
           title: string
           user_id?: string | null
         }
@@ -154,11 +152,27 @@ export interface Database {
           findings?: Json | null
           id?: string
           recommendations?: string[] | null
-          risk_level?: string
+          risk_level?: string | null
           status?: string
           title?: string
           user_id?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "audit_reports_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "processed_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_reports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       balance_sheet_items: {
         Row: {
@@ -191,6 +205,15 @@ export interface Database {
           updated_at?: string
           user_id?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "balance_sheet_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       business_insights: {
         Row: {
@@ -220,6 +243,15 @@ export interface Database {
           recommendations?: string[] | null
           user_id?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "business_insights_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       compliance_checks: {
         Row: {
@@ -249,6 +281,54 @@ export interface Database {
           risk_level?: string | null
           user_id?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_checks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_comments: {
+        Row: {
+          comment: string
+          created_at: string
+          document_id: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_comments_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "processed_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       expense_patterns: {
         Row: {
@@ -280,6 +360,53 @@ export interface Database {
           pattern?: string
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_patterns_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_goals: {
+        Row: {
+          id: string
+          user_id: string | null
+          name: string
+          target_amount: number
+          current_amount: number | null
+          start_date: string
+          end_date: string
+          category: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          name: string
+          target_amount: number
+          current_amount?: number | null
+          start_date?: string
+          end_date: string
+          category: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          name?: string
+          target_amount?: number
+          current_amount?: number | null
+          start_date?: string
+          end_date?: string
+          category?: string
+          created_at?: string
+          updated_at?: string
         }
       }
       forecasts: {
@@ -313,6 +440,15 @@ export interface Database {
           predicted_revenue?: number
           user_id?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "forecasts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fraud_alerts: {
         Row: {
@@ -342,6 +478,15 @@ export interface Database {
           status?: string | null
           user_id?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "fraud_alerts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inventory_analytics: {
         Row: {
@@ -371,38 +516,15 @@ export interface Database {
           reorder_points?: Json | null
           user_id?: string | null
         }
-      }
-      irs_publications: {
-        Row: {
-          content: string
-          created_at: string
-          effective_date: string
-          expiration_date: string | null
-          id: string
-          publication_number: string
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          effective_date: string
-          expiration_date?: string | null
-          id: string
-          publication_number: string
-          title: string
-          updated_at: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          effective_date?: string
-          expiration_date?: string | null
-          id?: string
-          publication_number?: string
-          title?: string
-          updated_at?: string
-        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_analytics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       processed_documents: {
         Row: {
@@ -441,6 +563,15 @@ export interface Database {
           updated_at?: string
           user_id?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "processed_documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -461,6 +592,7 @@ export interface Database {
           id?: string
           role?: string | null
         }
+        Relationships: []
       }
       receipt_analysis: {
         Row: {
@@ -493,6 +625,15 @@ export interface Database {
           suggested_tax_codes?: Json | null
           user_id?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "receipt_analysis_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       revenue_records: {
         Row: {
@@ -522,6 +663,15 @@ export interface Database {
           id?: string
           user_id?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_records_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       state_operations: {
         Row: {
@@ -551,6 +701,45 @@ export interface Database {
           tax_implications?: Json | null
           user_id?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "state_operations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      state_tax_rates: {
+        Row: {
+          created_at: string
+          id: string
+          max_income: number | null
+          min_income: number
+          rate: number
+          state: string
+          tax_year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_income?: number | null
+          min_income: number
+          rate: number
+          state: string
+          tax_year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_income?: number | null
+          min_income?: number
+          rate?: number
+          state?: string
+          tax_year?: number
+        }
+        Relationships: []
       }
       tax_analysis: {
         Row: {
@@ -580,29 +769,15 @@ export interface Database {
           tax_impact?: number | null
           user_id?: string | null
         }
-      }
-      tax_code_rules: {
-        Row: {
-          created_at: string
-          id: string
-          priority: number
-          tax_code_id: string | null
-          tax_rule_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          priority?: number
-          tax_code_id?: string | null
-          tax_rule_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          priority?: number
-          tax_code_id?: string | null
-          tax_rule_id?: string | null
-        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_analysis_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tax_codes: {
         Row: {
@@ -635,6 +810,45 @@ export interface Database {
           id?: string
           state?: string | null
         }
+        Relationships: []
+      }
+      tax_deadlines: {
+        Row: {
+          created_at: string
+          description: string | null
+          due_date: string
+          id: string
+          status: string | null
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          due_date: string
+          id: string
+          status?: string | null
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          due_date?: string
+          id?: string
+          status?: string | null
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_deadlines_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tax_planning_chats: {
         Row: {
@@ -661,6 +875,166 @@ export interface Database {
           question?: string | null
           user_id?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "tax_planning_chats_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_planning_scenarios: {
+        Row: {
+          created_at: string
+          description: string | null
+          estimated_tax_impact: number | null
+          id: string
+          name: string
+          scenario_data: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          estimated_tax_impact?: number | null
+          id?: string
+          name: string
+          scenario_data?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          estimated_tax_impact?: number | null
+          id?: string
+          name?: string
+          scenario_data?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_planning_scenarios_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_rules: {
+        Row: {
+          calculation_formula: string | null
+          created_at: string
+          description: string
+          effective_date: string
+          expiration_date: string | null
+          id: string
+          publication_id: string | null
+          rule_code: string
+          updated_at: string
+        }
+        Insert: {
+          calculation_formula?: string | null
+          created_at?: string
+          description: string
+          effective_date: string
+          expiration_date?: string | null
+          id?: string
+          publication_id?: string | null
+          rule_code: string
+          updated_at: string
+        }
+        Update: {
+          calculation_formula?: string | null
+          created_at?: string
+          description?: string
+          effective_date?: string
+          expiration_date?: string | null
+          id?: string
+          publication_id?: string | null
+          rule_code?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_rules_publication_id_fkey"
+            columns: ["publication_id"]
+            isOneToOne: false
+            referencedRelation: "irs_publications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_tasks: {
+        Row: {
+          assignee_id: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          status: string | null
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          assignee_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          status?: string | null
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          assignee_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          status?: string | null
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_tasks_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tax_tasks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_settings: {
+        Row: {
+          created_at: string
+          id: string
+          notifications: boolean | null
+          theme: string | null
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          notifications?: boolean | null
+          theme?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notifications?: boolean | null
+          theme?: string | null
+        }
+        Relationships: []
       }
       write_offs: {
         Row: {
@@ -693,45 +1067,35 @@ export interface Database {
           tax_code_id?: string | null
           user_id?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "write_offs_tax_code_id_fkey"
+            columns: ["tax_code_id"]
+            isOneToOne: false
+            referencedRelation: "tax_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "write_offs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
-      bank_connections: {
-        Row: {
-          id: string;
-          user_id: string | null;
-          bank_name: string;
-          account_number: string;
-          routing_number: string;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id?: string | null;
-          bank_name: string;
-          account_number: string;
-          routing_number: string;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string | null;
-          bank_name?: string;
-          account_number?: string;
-          routing_number?: string;
-          created_at?: string;
-        };
-      };
-    };
+    }
     Views: {
       [_ in never]: never
-    };
+    }
     Functions: {
       [_ in never]: never
-    };
+    }
     Enums: {
       [_ in never]: never
-    };
+    }
     CompositeTypes: {
       [_ in never]: never
-    };
+    }
   }
 }

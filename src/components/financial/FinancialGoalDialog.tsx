@@ -14,6 +14,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { FinancialGoalInsert } from "@/integrations/supabase/types/financial";
+import { Database } from "@/integrations/supabase/types/database.types";
 
 export const FinancialGoalDialog = () => {
   const { session } = useAuth();
