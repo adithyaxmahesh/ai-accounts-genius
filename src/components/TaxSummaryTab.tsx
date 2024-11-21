@@ -1,8 +1,7 @@
 import { useToast } from "@/components/ui/use-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
-import { Database } from "@/integrations/supabase/types";
 import { TaxSummaryCard } from "./tax-summary/TaxSummaryCard";
 import { calculateTaxes } from "./tax-summary/TaxCalculationUtils";
 import { DollarSign, MapPin, Building, Calculator } from "lucide-react";
@@ -19,40 +18,27 @@ interface TaxSummaryProps {
   audit?: any;
 }
 
-type TaxAnalysisResponse = Database['public']['Tables']['tax_analysis']['Row'] & {
-  recommendations?: {
-    total_revenue?: number;
-    total_deductions?: number;
-    taxable_income?: number;
-    effective_rate?: number;
-    business_type?: 'sole_proprietorship' | 'partnership' | 'llc' | 'corporation';
-    items?: any[];
-  } | null;
-};
-
 const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
   const { session } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedBusinessType, setSelectedBusinessType] = useState<string>('corporation');
   const [selectedState, setSelectedState] = useState<string>('California');
 
-  const { data: taxAnalysis, isError } = useQuery<TaxAnalysisResponse>({
+  const { data: taxAnalysis, isError } = useQuery({
     queryKey: ['tax-analysis', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
-      try {
-        const { data, error } = await supabase
-          .from('tax_analysis')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle(); // Using maybeSingle instead of single to handle no rows case
+      const { data, error } = await supabase
+        .from('tax_analysis')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .eq('analysis_type', 'summary')
+        .order('created_at', { ascending: false })
+        .maybeSingle();
 
-        if (error) throw error;
-        return data as TaxAnalysisResponse;
-      } catch (error: any) {
+      if (error) {
         toast({
           variant: "destructive",
           title: "Error fetching tax analysis",
@@ -60,22 +46,51 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
         });
         return null;
       }
-    },
-    enabled: !!session?.user?.id
+      return data;
+    }
   });
 
-  const {
-    totalAmount = 0,
-    deductions = 0,
-    estimatedTax = 0,
-    effectiveRate = 0,
-    taxableIncome = 0,
-    minimumTax = 800
-  } = calculateTaxes(taxAnalysis, audit) || {};
+  const updateTaxAnalysis = useMutation({
+    mutationFn: async (values: { businessType: string; state: string }) => {
+      const { error } = await supabase
+        .from('tax_analysis')
+        .upsert({
+          user_id: session?.user.id,
+          analysis_type: 'summary',
+          jurisdiction: values.state,
+          recommendations: {
+            business_type: values.businessType,
+            state: values.state
+          }
+        });
 
-  if (isError) {
-    return <div>Error loading tax summary</div>;
-  }
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tax-analysis'] });
+      toast({
+        title: "Settings Updated",
+        description: "Your tax analysis settings have been saved."
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update settings. Please try again."
+      });
+    }
+  });
+
+  const handleBusinessTypeChange = async (value: string) => {
+    setSelectedBusinessType(value);
+    updateTaxAnalysis.mutate({ businessType: value, state: selectedState });
+  };
+
+  const handleStateChange = async (value: string) => {
+    setSelectedState(value);
+    updateTaxAnalysis.mutate({ businessType: selectedBusinessType, state: value });
+  };
 
   const businessTypes = [
     { value: 'sole_proprietorship', label: 'Sole Proprietorship' },
@@ -91,15 +106,18 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
     { value: 'Florida', label: 'Florida' }
   ];
 
-  const handleBusinessTypeChange = async (value: string) => {
-    setSelectedBusinessType(value);
-    // You can add logic here to update the tax analysis in the database
-  };
+  const {
+    totalAmount = 0,
+    deductions = 0,
+    estimatedTax = 0,
+    effectiveRate = 0,
+    taxableIncome = 0,
+    minimumTax = 800
+  } = calculateTaxes(taxAnalysis, audit) || {};
 
-  const handleStateChange = async (value: string) => {
-    setSelectedState(value);
-    // You can add logic here to update the tax analysis in the database
-  };
+  if (isError) {
+    return <div>Error loading tax summary</div>;
+  }
 
   return (
     <div className="space-y-6">
