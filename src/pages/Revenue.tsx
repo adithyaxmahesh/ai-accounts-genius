@@ -8,8 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/components/AuthProvider";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
-import { ShopifyConnect } from "@/components/shopify/ShopifyConnect";
-import { RevenueSourcesHelp } from "@/components/revenue/RevenueSourcesHelp";
+import { RevenueSourcesManager } from "@/components/revenue/RevenueSourcesManager";
 import {
   BarChart,
   Bar,
@@ -70,17 +69,14 @@ const Revenue = () => {
       </div>
 
       <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <h1 className="text-3xl font-bold">Revenue Analysis</h1>
-          <RevenueSourcesHelp />
-        </div>
+        <h1 className="text-3xl font-bold">Revenue Analysis</h1>
         <Button onClick={() => {}} className="hover-scale">
           <Download className="mr-2 h-4 w-4" />
           Export Data
         </Button>
       </div>
 
-      <ShopifyConnect />
+      <RevenueSourcesManager />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="p-6 glass-card">
