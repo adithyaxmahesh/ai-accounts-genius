@@ -388,7 +388,7 @@ export interface Database {
           created_at?: string
           effective_date: string
           expiration_date?: string | null
-          id?: string
+          id: string
           publication_number: string
           title: string
           updated_at: string
@@ -694,18 +694,44 @@ export interface Database {
           user_id?: string | null
         }
       }
-    }
+      bank_connections: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          bank_name: string;
+          account_number: string;
+          routing_number: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          bank_name: string;
+          account_number: string;
+          routing_number: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          bank_name?: string;
+          account_number?: string;
+          routing_number?: string;
+          created_at?: string;
+        };
+      };
+    };
     Views: {
       [_ in never]: never
-    }
+    };
     Functions: {
       [_ in never]: never
-    }
+    };
     Enums: {
       [_ in never]: never
-    }
+    };
     CompositeTypes: {
       [_ in never]: never
-    }
+    };
   }
 }
