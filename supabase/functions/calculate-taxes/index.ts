@@ -19,6 +19,8 @@ const CA_TAX_BRACKETS = [
   { min: 677276, max: Infinity, rate: 0.123 }
 ]
 
+const STANDARD_DEDUCTION = 5202; // California standard deduction for 2023
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -40,7 +42,7 @@ serve(async (req) => {
       .eq('user_id', userId)
 
     const totalRevenue = revenueRecords?.reduce((sum, record) => {
-      return sum + (record.amount || 0)
+      return sum + (Number(record.amount) || 0)
     }, 0) || 0
 
     console.log('Total revenue:', totalRevenue)
@@ -63,26 +65,32 @@ serve(async (req) => {
     // Calculate total deductions from approved write-offs
     const totalDeductions = writeOffs?.reduce((sum, writeOff) => {
       if (writeOff.tax_codes && writeOff.status === 'approved') {
-        return sum + (writeOff.amount || 0)
+        return sum + (Number(writeOff.amount) || 0)
       }
       return sum
     }, 0) || 0
 
-    console.log('Total deductions:', totalDeductions)
+    // Add standard deduction if it's greater than itemized deductions
+    const finalDeductions = Math.max(totalDeductions, STANDARD_DEDUCTION)
+    console.log('Total deductions:', finalDeductions)
 
-    const taxableIncome = Math.max(0, totalRevenue - totalDeductions)
+    const taxableIncome = Math.max(0, totalRevenue - finalDeductions)
     console.log('Taxable income:', taxableIncome)
 
     // Calculate California progressive tax
     let estimatedTax = 0
+    let remainingIncome = taxableIncome
+
     for (const bracket of CA_TAX_BRACKETS) {
-      if (taxableIncome > bracket.min) {
-        const taxableAmount = Math.min(
-          taxableIncome - bracket.min,
-          (bracket.max - bracket.min) || (taxableIncome - bracket.min)
-        )
-        estimatedTax += taxableAmount * bracket.rate
-      }
+      if (remainingIncome <= 0) break;
+      
+      const taxableInBracket = Math.min(
+        remainingIncome,
+        (bracket.max - bracket.min)
+      )
+      
+      estimatedTax += taxableInBracket * bracket.rate
+      remainingIncome -= taxableInBracket
     }
 
     // Add Mental Health Services Tax (1% for income over $1 million)
@@ -95,6 +103,10 @@ serve(async (req) => {
     // Calculate potential savings (difference between max rate and actual effective rate)
     const maxRate = 0.123 // California's highest marginal rate
     const potentialSavings = totalDeductions * maxRate
+    const effectiveRate = taxableIncome > 0 ? (estimatedTax / taxableIncome) * 100 : 0
+
+    // Find missing documentation
+    const missingDocs = writeOffs?.filter(wo => !wo.tax_codes || wo.status === 'pending') || []
 
     // Store analysis results
     const { error: analysisError } = await supabase
@@ -106,11 +118,12 @@ serve(async (req) => {
         jurisdiction: 'California',
         recommendations: {
           total_revenue: totalRevenue,
-          total_deductions: totalDeductions,
+          total_deductions: finalDeductions,
           taxable_income: taxableIncome,
           potential_savings: potentialSavings,
           write_offs: writeOffs,
-          effective_rate: taxableIncome > 0 ? (estimatedTax / taxableIncome) * 100 : 0
+          effective_rate: effectiveRate,
+          missing_docs: missingDocs
         }
       })
 
@@ -123,11 +136,12 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true,
         taxDue: estimatedTax,
-        deductions: totalDeductions,
+        deductions: finalDeductions,
         state: 'California',
         taxableIncome,
         totalRevenue,
-        potentialSavings
+        potentialSavings,
+        missingDocs: missingDocs.length
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
