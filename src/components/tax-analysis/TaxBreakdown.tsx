@@ -1,18 +1,41 @@
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Check, X, AlertTriangle } from "lucide-react";
+import { Database } from "@/integrations/supabase/types";
+
+type TaxAnalysis = Database['public']['Tables']['tax_analysis']['Row'] & {
+  recommendations?: {
+    items?: Array<{
+      description: string;
+      amount: number;
+      status?: 'approved' | 'rejected' | 'pending';
+      rule?: string;
+    }>;
+  };
+};
 
 interface TaxBreakdownProps {
-  analysis: any;
+  analysis: TaxAnalysis;
 }
 
 export const TaxBreakdown = ({ analysis }: TaxBreakdownProps) => {
+  if (!analysis?.recommendations?.items?.length) {
+    return (
+      <Card className="p-4">
+        <h3 className="text-lg font-semibold mb-4">Tax Analysis Breakdown</h3>
+        <div className="text-center text-muted-foreground py-8">
+          No tax analysis data available. Please calculate your taxes first.
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card className="p-4">
       <h3 className="text-lg font-semibold mb-4">Tax Analysis Breakdown</h3>
       <ScrollArea className="h-[400px] pr-4">
         <div className="space-y-4">
-          {analysis.recommendations?.items?.map((item: any, index: number) => (
+          {analysis.recommendations.items.map((item, index) => (
             <div key={index} className="p-4 bg-muted rounded-lg">
               <div className="flex items-start gap-2">
                 {item.status === 'approved' ? (
