@@ -4,12 +4,23 @@ import { HeartPulse, Target, DollarSign } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
+import type { Tables } from "@/integrations/supabase/types";
+
+type FinancialGoal = Tables<"financial_goals">;
+type RevenueRecord = Tables<"revenue_records">;
+
+interface MetricsData {
+  revenue: number;
+  cashFlowHealth: number;
+  goalProgress: number;
+  goalName: string;
+}
 
 export const FinancialMetrics = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
 
-  const { data: metrics } = useQuery({
+  const { data: metrics } = useQuery<MetricsData>({
     queryKey: ['financial-metrics', session?.user.id],
     queryFn: async () => {
       const now = new Date();
@@ -23,7 +34,7 @@ export const FinancialMetrics = () => {
         .eq('user_id', session?.user.id)
         .gte('date', `${lastYear}-01-01`)
         .lte('date', `${currentYear}-12-31`)
-        .order('date', { ascending: false });
+        .order('date', { ascending: false }) as { data: RevenueRecord[] | null };
 
       // Fetch financial goals
       const { data: goals } = await supabase
@@ -31,9 +42,9 @@ export const FinancialMetrics = () => {
         .select('*')
         .eq('user_id', session?.user.id)
         .order('end_date', { ascending: true })
-        .limit(1);
+        .limit(1) as { data: FinancialGoal[] | null };
 
-      if (!revenueData) return { revenue: 0, cashFlowHealth: 0, goalProgress: 0 };
+      if (!revenueData) return { revenue: 0, cashFlowHealth: 0, goalProgress: 0, goalName: "No active goal" };
 
       // Calculate current month's revenue for cash flow health
       const currentMonth = now.getMonth();
