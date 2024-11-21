@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
-import { DollarSign, TrendingUp, AlertTriangle } from "lucide-react";
+import { PiggyBank, TrendingUp, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
@@ -12,74 +12,34 @@ export const FinancialMetrics = () => {
   const { data: metrics } = useQuery({
     queryKey: ['financial-metrics', session?.user.id],
     queryFn: async () => {
-      const now = new Date();
-      const currentYear = now.getFullYear();
-      const lastYear = currentYear - 1;
-      
-      // Fetch all revenue data for current and previous year
-      const { data: revenueData } = await supabase
+      // Fetch write-offs for tax savings calculation
+      const { data: writeOffs } = await supabase
+        .from('write_offs')
+        .select('amount')
+        .eq('user_id', session?.user.id)
+        .eq('status', 'approved');
+
+      // Fetch revenue records for cash flow
+      const { data: revenueRecords } = await supabase
         .from('revenue_records')
         .select('amount, date')
         .eq('user_id', session?.user.id)
-        .gte('date', `${lastYear}-01-01`)
-        .lte('date', `${currentYear}-12-31`)
-        .order('date', { ascending: false });
+        .order('date', { ascending: false })
+        .limit(30); // Last 30 records
 
-      // Fetch active fraud alerts
-      const { data: fraudAlerts } = await supabase
-        .from('fraud_alerts')
-        .select('*')
-        .eq('user_id', session?.user.id)
-        .eq('status', 'pending');
+      const totalWriteOffs = writeOffs?.reduce((sum, record) => sum + Number(record.amount), 0) || 0;
+      const estimatedTaxSavings = totalWriteOffs * 0.25; // Estimated 25% tax rate
 
-      if (!revenueData) return { revenue: 0, growthRate: 0, alertCount: 0 };
-
-      // Calculate current month's revenue
-      const currentMonth = now.getMonth();
-      const currentMonthStart = new Date(currentYear, currentMonth, 1);
-      const currentMonthEnd = new Date(currentYear, currentMonth + 1, 0);
-
-      const currentMonthRevenue = revenueData
-        .filter(record => {
-          const recordDate = new Date(record.date);
-          return recordDate >= currentMonthStart && recordDate <= currentMonthEnd;
-        })
-        .reduce((sum, record) => sum + Number(record.amount), 0);
-
-      // Calculate last month's revenue
-      const lastMonthStart = new Date(currentYear, currentMonth - 1, 1);
-      const lastMonthEnd = new Date(currentYear, currentMonth, 0);
-
-      const lastMonthRevenue = revenueData
-        .filter(record => {
-          const recordDate = new Date(record.date);
-          return recordDate >= lastMonthStart && recordDate <= lastMonthEnd;
-        })
-        .reduce((sum, record) => sum + Number(record.amount), 0);
-
-      // Calculate year-over-year growth
-      const sameMonthLastYearStart = new Date(lastYear, currentMonth, 1);
-      const sameMonthLastYearEnd = new Date(lastYear, currentMonth + 1, 0);
-
-      const lastYearRevenue = revenueData
-        .filter(record => {
-          const recordDate = new Date(record.date);
-          return recordDate >= sameMonthLastYearStart && recordDate <= sameMonthLastYearEnd;
-        })
-        .reduce((sum, record) => sum + Number(record.amount), 0);
-
-      // Calculate growth rates
-      const monthOverMonthGrowth = lastMonthRevenue ? 
-        ((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 : 0;
-
-      const yearOverYearGrowth = lastYearRevenue ? 
-        ((currentMonthRevenue - lastYearRevenue) / lastYearRevenue) * 100 : 0;
+      // Calculate cash flow health
+      const recentRevenue = revenueRecords?.reduce((sum, record) => sum + Number(record.amount), 0) || 0;
+      const averageMonthlyRevenue = recentRevenue / (revenueRecords?.length || 1);
+      const cashFlowHealth = averageMonthlyRevenue > 10000 ? 'Healthy' : 'Needs Attention';
 
       return {
-        revenue: currentMonthRevenue,
-        monthOverMonthGrowth,
-        yearOverYearGrowth,
-        alertCount: fraudAlerts?.length || 0
+        taxSavings: estimatedTaxSavings,
+        totalWriteOffs,
+        cashFlowHealth,
+        averageMonthlyRevenue
       };
     }
   });
@@ -88,47 +48,57 @@ export const FinancialMetrics = () => {
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <Card 
         className="glass-card p-6 hover-scale cursor-pointer"
-        onClick={() => navigate('/revenue')}
-      >
-        <DollarSign className="h-8 w-8 mb-2 text-green-500" />
-        <h3 className="text-lg font-semibold mb-1">Total Revenue</h3>
-        <p className="text-2xl font-bold truncate min-h-[2.5rem] flex items-center justify-start">
-          <span className="text-green-500">
-            ${metrics?.revenue.toLocaleString() || '0'}
-          </span>
-        </p>
-        <p className="text-sm text-muted-foreground mt-1">
-          {metrics?.monthOverMonthGrowth > 0 ? '+' : ''}{metrics?.monthOverMonthGrowth.toFixed(1)}% from last month
-        </p>
-      </Card>
-      <Card 
-        className="glass-card p-6 hover-scale cursor-pointer"
         onClick={() => navigate('/write-offs')}
       >
-        <TrendingUp className="h-8 w-8 mb-2 text-red-500" />
-        <h3 className="text-lg font-semibold mb-1">Total Expenses</h3>
+        <PiggyBank className="h-8 w-8 mb-2 text-green-500" />
+        <h3 className="text-lg font-semibold mb-1">Tax Savings</h3>
         <p className="text-2xl font-bold truncate min-h-[2.5rem] flex items-center justify-start">
-          <span className="text-red-500">
-            ${(metrics?.revenue * 0.2).toLocaleString() || '0'}
+          <span className="text-green-500">
+            ${metrics?.taxSavings.toLocaleString() || '0'}
           </span>
         </p>
         <p className="text-sm text-muted-foreground mt-1">
-          20% of revenue
+          From ${metrics?.totalWriteOffs.toLocaleString() || '0'} in write-offs
         </p>
       </Card>
+
       <Card 
         className="glass-card p-6 hover-scale cursor-pointer"
+        onClick={() => navigate('/revenue')}
+      >
+        <TrendingUp className="h-8 w-8 mb-2 text-blue-500" />
+        <h3 className="text-lg font-semibold mb-1">Cash Flow Health</h3>
+        <div className="flex items-center gap-2">
+          <p className="text-2xl font-bold truncate min-h-[2.5rem] flex items-center justify-start">
+            {metrics?.cashFlowHealth === 'Healthy' ? (
+              <ArrowUpRight className="h-6 w-6 text-green-500" />
+            ) : (
+              <ArrowDownRight className="h-6 w-6 text-red-500" />
+            )}
+            <span className={metrics?.cashFlowHealth === 'Healthy' ? 'text-green-500' : 'text-red-500'}>
+              {metrics?.cashFlowHealth}
+            </span>
+          </p>
+        </div>
+        <p className="text-sm text-muted-foreground mt-1">
+          Avg. Monthly Revenue: ${metrics?.averageMonthlyRevenue.toLocaleString() || '0'}
+        </p>
+      </Card>
+
+      {/* Keep the third card slot available for future metrics */}
+      <Card 
+        className="glass-card p-6 hover-scale cursor-pointer opacity-50"
         onClick={() => navigate('/forecast')}
       >
-        <AlertTriangle className="h-8 w-8 mb-2 text-blue-500" />
-        <h3 className="text-lg font-semibold mb-1">Net Profit</h3>
+        <TrendingUp className="h-8 w-8 mb-2 text-purple-500" />
+        <h3 className="text-lg font-semibold mb-1">Coming Soon</h3>
         <p className="text-2xl font-bold truncate min-h-[2.5rem] flex items-center justify-start">
-          <span className="text-blue-500">
-            ${((metrics?.revenue || 0) * 0.8).toLocaleString()}
+          <span className="text-purple-500">
+            Financial Goals
           </span>
         </p>
         <p className="text-sm text-muted-foreground mt-1">
-          80% profit margin
+          Track your business targets
         </p>
       </Card>
     </div>
