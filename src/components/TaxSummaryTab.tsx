@@ -24,15 +24,30 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
-      const { data, error } = await supabase
-        .from('tax_analysis')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .eq('analysis_type', 'summary')
-        .order('created_at', { ascending: false })
-        .maybeSingle();
+      try {
+        const { data, error } = await supabase
+          .from('tax_analysis')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .eq('analysis_type', 'summary')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
 
-      if (error) {
+        if (error) {
+          if (error.code === 'PGRST116') {
+            // No data found, return null instead of throwing
+            return null;
+          }
+          toast({
+            variant: "destructive",
+            title: "Error fetching tax analysis",
+            description: error.message
+          });
+          return null;
+        }
+        return data;
+      } catch (error: any) {
         toast({
           variant: "destructive",
           title: "Error fetching tax analysis",
@@ -40,40 +55,42 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
         });
         return null;
       }
-      return data;
-    }
+    },
+    initialData: null
   });
 
   const updateTaxAnalysis = useMutation({
     mutationFn: async (values: { businessType: string; state: string }) => {
       if (!session?.user?.id) return;
       
-      const { error } = await supabase
-        .from('tax_analysis')
-        .upsert({
-          user_id: session.user.id,
-          analysis_type: 'summary',
-          jurisdiction: values.state,
-          recommendations: {
-            business_type: values.businessType,
-            state: values.state
-          }
-        });
+      try {
+        const { error } = await supabase
+          .from('tax_analysis')
+          .upsert({
+            user_id: session.user.id,
+            analysis_type: 'summary',
+            jurisdiction: values.state,
+            recommendations: {
+              business_type: values.businessType,
+              state: values.state
+            }
+          });
 
-      if (error) throw error;
+        if (error) throw error;
+      } catch (error: any) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to update settings. Please try again."
+        });
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tax-analysis'] });
       toast({
         title: "Settings Updated",
         description: "Your tax analysis settings have been saved."
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update settings. Please try again."
       });
     }
   });
