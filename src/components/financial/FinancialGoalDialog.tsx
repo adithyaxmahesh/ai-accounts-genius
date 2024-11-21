@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { FinancialGoalInsert } from "@/integrations/supabase/types/financial";
 
 export const FinancialGoalDialog = () => {
   const { session } = useAuth();
@@ -26,17 +27,18 @@ export const FinancialGoalDialog = () => {
 
   const createGoal = useMutation({
     mutationFn: async () => {
+      const goalData: FinancialGoalInsert = {
+        name,
+        target_amount: Number(targetAmount),
+        category,
+        end_date: endDate?.toISOString() ?? '',
+        user_id: session?.user.id,
+        start_date: new Date().toISOString(),
+      };
+
       const { data, error } = await supabase
         .from('financial_goals')
-        .insert([
-          {
-            name,
-            target_amount: Number(targetAmount),
-            category,
-            end_date: endDate,
-            user_id: session?.user.id,
-          }
-        ]);
+        .insert([goalData]);
 
       if (error) throw error;
       return data;

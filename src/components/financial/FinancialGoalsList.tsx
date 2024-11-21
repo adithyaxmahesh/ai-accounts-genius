@@ -4,11 +4,12 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { format } from "date-fns";
+import { FinancialGoal } from "@/integrations/supabase/types/financial";
 
 export const FinancialGoalsList = () => {
   const { session } = useAuth();
 
-  const { data: goals } = useQuery({
+  const { data: goals } = useQuery<FinancialGoal[]>({
     queryKey: ['financial-goals', session?.user.id],
     queryFn: async () => {
       const { data, error } = await supabase
