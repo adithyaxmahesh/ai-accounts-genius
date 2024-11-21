@@ -21,7 +21,7 @@ serve(async (req) => {
     )
 
     // Get relevant tax context
-    const { data: taxContext } = await supabase
+    const { data: taxContext, error: contextError } = await supabase
       .from('tax_analysis')
       .select('*')
       .eq('user_id', userId)
@@ -29,7 +29,11 @@ serve(async (req) => {
       .limit(1)
       .single()
 
-    // Process with OpenAI
+    if (contextError) {
+      console.error('Error fetching tax context:', contextError)
+    }
+
+    // Process with OpenAI using a faster model
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -37,7 +41,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-3.5-turbo', // Using a faster model
         messages: [
           {
             role: 'system',
@@ -48,8 +52,15 @@ serve(async (req) => {
             content: `Context: ${JSON.stringify(taxContext)}\n\nQuestion: ${message}`
           }
         ],
+        max_tokens: 500, // Limiting response length for faster replies
+        temperature: 0.7,
       }),
     })
+
+    if (!openAIResponse.ok) {
+      const errorData = await openAIResponse.json()
+      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`)
+    }
 
     const aiData = await openAIResponse.json()
     const answer = aiData.choices[0].message.content
@@ -72,8 +83,16 @@ serve(async (req) => {
     )
   } catch (error) {
     console.error('Error in tax-chat function:', error)
+    let errorMessage = 'Failed to process your question.'
+    
+    if (error.message?.includes('Rate limit')) {
+      errorMessage = 'You have reached the rate limit for chat requests. Please try again later.'
+    } else if (error.message?.includes('insufficient_quota')) {
+      errorMessage = 'The monthly API quota has been reached. Please try again next month.'
+    }
+
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
   }
