@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider, useAuth } from "@/components/AuthProvider";
+import { ProfileWidget } from "@/components/ProfileWidget";
 
 // Import your pages
 import Auth from "@/pages/Auth";
@@ -28,7 +29,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/auth" />;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <ProfileWidget />
+      {children}
+    </>
+  );
 };
 
 function App() {
