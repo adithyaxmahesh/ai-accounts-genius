@@ -1,6 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { DollarSign, MapPin } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TaxSummaryProps {
   audit: any;
@@ -9,12 +11,38 @@ interface TaxSummaryProps {
 const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
   const { toast } = useToast();
 
+  // Fetch the latest tax analysis for this audit
+  const { data: taxAnalysis } = useQuery({
+    queryKey: ['tax-analysis', audit?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tax_analysis')
+        .select('*')
+        .eq('user_id', audit?.user_id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) {
+        toast({
+          title: "Error fetching tax analysis",
+          description: error.message,
+          variant: "destructive",
+        });
+        throw error;
+      }
+
+      return data;
+    },
+    enabled: !!audit?.user_id,
+  });
+
   const calculateTaxes = () => {
     if (!audit?.audit_items) return { 
       totalAmount: 0, 
       estimatedTax: 0, 
       deductions: 0,
-      state: 'California',
+      state: taxAnalysis?.jurisdiction || 'California',
       effectiveRate: 0,
       taxableIncome: 0
     };
@@ -31,14 +59,14 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
     }, 0) || 0;
     
     const taxableIncome = Math.max(0, totalAmount - deductions);
-    const estimatedTax = audit.tax_impact || 0;
+    const estimatedTax = taxAnalysis?.tax_impact || 0;
     const effectiveRate = totalAmount > 0 ? ((estimatedTax / totalAmount) * 100) : 0;
     
     return {
       totalAmount,
       deductions,
       estimatedTax,
-      state: audit.jurisdiction || 'California',
+      state: taxAnalysis?.jurisdiction || 'California',
       effectiveRate,
       taxableIncome
     };
