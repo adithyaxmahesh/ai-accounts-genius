@@ -5,18 +5,9 @@ import { TrendingDown, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
+import { Database } from "@/integrations/supabase/types";
 
-interface AutomaticTaxCalculation {
-  id: string;
-  user_id: string | null;
-  total_income: number;
-  total_deductions: number;
-  estimated_tax: number;
-  potential_savings: number;
-  recommendations: Record<string, string>;
-  created_at: string;
-  updated_at: string;
-}
+type AutomaticTaxCalculation = Database['public']['Tables']['automatic_tax_calculations']['Row'];
 
 export const TaxInsightsCard = () => {
   const { session } = useAuth();
@@ -71,7 +62,7 @@ export const TaxInsightsCard = () => {
           <div className="mt-4">
             <p className="text-sm font-medium mb-2">Recommendations</p>
             <ul className="space-y-2">
-              {Object.entries(taxCalculations.recommendations).map(([key, value]) => (
+              {Object.entries(taxCalculations.recommendations as Record<string, string>).map(([key, value]) => (
                 <li key={key} className="text-sm text-muted-foreground flex items-start gap-2">
                   <span className="mt-1">•</span>
                   <span>{value}</span>
