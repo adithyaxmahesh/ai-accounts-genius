@@ -6,7 +6,7 @@ import { TaxSummaryCard } from "./tax-summary/TaxSummaryCard";
 import { TaxSummarySelects } from "./tax-summary/TaxSummarySelects";
 import { calculateTaxes } from "./tax-summary/TaxCalculationUtils";
 import { DollarSign, Calculator } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface TaxSummaryProps {
   audit?: any;
@@ -20,7 +20,7 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
   const [selectedState, setSelectedState] = useState<string>('California');
 
   const { data: taxAnalysis, isError } = useQuery({
-    queryKey: ['tax-analysis', session?.user?.id],
+    queryKey: ['tax-analysis', session?.user?.id, selectedBusinessType, selectedState],
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
@@ -36,7 +36,6 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
 
         if (error) {
           if (error.code === 'PGRST116') {
-            // No data found, return null instead of throwing
             return null;
           }
           toast({
@@ -87,7 +86,9 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tax-analysis'] });
+      queryClient.invalidateQueries({ 
+        queryKey: ['tax-analysis', session?.user?.id, selectedBusinessType, selectedState] 
+      });
       toast({
         title: "Settings Updated",
         description: "Your tax analysis settings have been saved."
@@ -95,14 +96,22 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
     }
   });
 
+  useEffect(() => {
+    // Recalculate taxes whenever business type or state changes
+    if (session?.user?.id) {
+      updateTaxAnalysis.mutate({ 
+        businessType: selectedBusinessType, 
+        state: selectedState 
+      });
+    }
+  }, [selectedBusinessType, selectedState]);
+
   const handleBusinessTypeChange = (value: string) => {
     setSelectedBusinessType(value);
-    updateTaxAnalysis.mutate({ businessType: value, state: selectedState });
   };
 
   const handleStateChange = (value: string) => {
     setSelectedState(value);
-    updateTaxAnalysis.mutate({ businessType: selectedBusinessType, state: value });
   };
 
   const {
@@ -112,7 +121,7 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
     effectiveRate = 0,
     taxableIncome = 0,
     minimumTax = 800
-  } = calculateTaxes(taxAnalysis, audit) || {};
+  } = calculateTaxes(taxAnalysis, audit, selectedBusinessType, selectedState) || {};
 
   if (isError) {
     return <div>Error loading tax summary</div>;
