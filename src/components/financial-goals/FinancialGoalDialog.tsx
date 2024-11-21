@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
+import { FinancialGoalInsert } from "@/integrations/supabase/types";
 
 export const FinancialGoalDialog = () => {
   const { session } = useAuth();
@@ -22,15 +23,17 @@ export const FinancialGoalDialog = () => {
     e.preventDefault();
     
     try {
+      const newGoal: FinancialGoalInsert = {
+        user_id: session?.user.id,
+        name,
+        target_amount: Number(targetAmount),
+        category,
+        end_date: endDate,
+      };
+
       const { error } = await supabase
         .from("financial_goals")
-        .insert({
-          user_id: session?.user.id,
-          name,
-          target_amount: Number(targetAmount),
-          category,
-          end_date: endDate,
-        });
+        .insert(newGoal);
 
       if (error) throw error;
 
