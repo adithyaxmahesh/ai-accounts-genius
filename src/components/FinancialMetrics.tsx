@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
-import { DollarSign, TrendingUp, AlertTriangle } from "lucide-react";
+import { HeartPulse, Target, DollarSign } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
@@ -16,7 +16,7 @@ export const FinancialMetrics = () => {
       const currentYear = now.getFullYear();
       const lastYear = currentYear - 1;
       
-      // Fetch all revenue data for current and previous year
+      // Fetch revenue data for cash flow calculation
       const { data: revenueData } = await supabase
         .from('revenue_records')
         .select('amount, date')
@@ -25,16 +25,17 @@ export const FinancialMetrics = () => {
         .lte('date', `${currentYear}-12-31`)
         .order('date', { ascending: false });
 
-      // Fetch active fraud alerts
-      const { data: fraudAlerts } = await supabase
-        .from('fraud_alerts')
+      // Fetch financial goals
+      const { data: goals } = await supabase
+        .from('financial_goals')
         .select('*')
         .eq('user_id', session?.user.id)
-        .eq('status', 'pending');
+        .order('end_date', { ascending: true })
+        .limit(1);
 
-      if (!revenueData) return { revenue: 0, growthRate: 0, alertCount: 0 };
+      if (!revenueData) return { revenue: 0, cashFlowHealth: 0, goalProgress: 0 };
 
-      // Calculate current month's revenue
+      // Calculate current month's revenue for cash flow health
       const currentMonth = now.getMonth();
       const currentMonthStart = new Date(currentYear, currentMonth, 1);
       const currentMonthEnd = new Date(currentYear, currentMonth + 1, 0);
@@ -46,7 +47,7 @@ export const FinancialMetrics = () => {
         })
         .reduce((sum, record) => sum + Number(record.amount), 0);
 
-      // Calculate last month's revenue
+      // Calculate last month's revenue for trend
       const lastMonthStart = new Date(currentYear, currentMonth - 1, 1);
       const lastMonthEnd = new Date(currentYear, currentMonth, 0);
 
@@ -57,29 +58,22 @@ export const FinancialMetrics = () => {
         })
         .reduce((sum, record) => sum + Number(record.amount), 0);
 
-      // Calculate year-over-year growth
-      const sameMonthLastYearStart = new Date(lastYear, currentMonth, 1);
-      const sameMonthLastYearEnd = new Date(lastYear, currentMonth + 1, 0);
+      // Calculate cash flow health score (0-100)
+      const cashFlowHealth = lastMonthRevenue ? 
+        Math.min(100, Math.max(0, (currentMonthRevenue / lastMonthRevenue) * 100)) : 
+        50;
 
-      const lastYearRevenue = revenueData
-        .filter(record => {
-          const recordDate = new Date(record.date);
-          return recordDate >= sameMonthLastYearStart && recordDate <= sameMonthLastYearEnd;
-        })
-        .reduce((sum, record) => sum + Number(record.amount), 0);
-
-      // Calculate growth rates
-      const monthOverMonthGrowth = lastMonthRevenue ? 
-        ((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 : 0;
-
-      const yearOverYearGrowth = lastYearRevenue ? 
-        ((currentMonthRevenue - lastYearRevenue) / lastYearRevenue) * 100 : 0;
+      // Calculate goal progress if there's an active goal
+      const activeGoal = goals?.[0];
+      const goalProgress = activeGoal ? 
+        Math.min(100, (activeGoal.current_amount / activeGoal.target_amount) * 100) : 
+        0;
 
       return {
         revenue: currentMonthRevenue,
-        monthOverMonthGrowth,
-        yearOverYearGrowth,
-        alertCount: fraudAlerts?.length || 0
+        cashFlowHealth,
+        goalProgress,
+        goalName: activeGoal?.name || "No active goal"
       };
     }
   });
@@ -98,37 +92,39 @@ export const FinancialMetrics = () => {
           </span>
         </p>
         <p className="text-sm text-muted-foreground mt-1">
-          {metrics?.monthOverMonthGrowth > 0 ? '+' : ''}{metrics?.monthOverMonthGrowth.toFixed(1)}% from last month
+          Current month
         </p>
       </Card>
       <Card 
         className="glass-card p-6 hover-scale cursor-pointer"
-        onClick={() => navigate('/write-offs')}
+        onClick={() => navigate('/cash-flow')}
       >
-        <TrendingUp className="h-8 w-8 mb-2 text-red-500" />
-        <h3 className="text-lg font-semibold mb-1">Total Expenses</h3>
+        <HeartPulse className="h-8 w-8 mb-2 text-blue-500" />
+        <h3 className="text-lg font-semibold mb-1">Cash Flow Health</h3>
         <p className="text-2xl font-bold truncate min-h-[2.5rem] flex items-center justify-start">
-          <span className="text-red-500">
-            ${(metrics?.revenue * 0.2).toLocaleString() || '0'}
+          <span className={metrics?.cashFlowHealth >= 70 ? "text-green-500" : 
+                         metrics?.cashFlowHealth >= 40 ? "text-yellow-500" : 
+                         "text-red-500"}>
+            {metrics?.cashFlowHealth.toFixed(1) || '0'}%
           </span>
         </p>
         <p className="text-sm text-muted-foreground mt-1">
-          20% of revenue
+          Month-over-month health score
         </p>
       </Card>
       <Card 
         className="glass-card p-6 hover-scale cursor-pointer"
-        onClick={() => navigate('/forecast')}
+        onClick={() => navigate('/goals')}
       >
-        <AlertTriangle className="h-8 w-8 mb-2 text-blue-500" />
-        <h3 className="text-lg font-semibold mb-1">Net Profit</h3>
+        <Target className="h-8 w-8 mb-2 text-purple-500" />
+        <h3 className="text-lg font-semibold mb-1">Financial Goals</h3>
         <p className="text-2xl font-bold truncate min-h-[2.5rem] flex items-center justify-start">
-          <span className="text-blue-500">
-            ${((metrics?.revenue || 0) * 0.8).toLocaleString()}
+          <span className="text-purple-500">
+            {metrics?.goalProgress.toFixed(1) || '0'}%
           </span>
         </p>
         <p className="text-sm text-muted-foreground mt-1">
-          80% profit margin
+          {metrics?.goalName}
         </p>
       </Card>
     </div>
