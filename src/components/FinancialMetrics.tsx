@@ -97,7 +97,7 @@ export const FinancialMetrics = () => {
         <DollarSign className="h-8 w-8 mb-2 text-green-500" />
         <h3 className="text-lg font-semibold mb-1">Total Revenue</h3>
         <p className="text-xl font-bold truncate min-h-[2rem] flex items-center justify-start">
-          <span className="text-green-500">
+          <span className="text-green-500 text-3xl font-bold">
             ${metrics?.revenue.toLocaleString()}
           </span>
         </p>
@@ -112,7 +112,7 @@ export const FinancialMetrics = () => {
         <Target className="h-8 w-8 mb-2 text-purple-500" />
         <h3 className="text-lg font-semibold mb-1">Financial Goals</h3>
         <p className="text-xl font-bold truncate min-h-[2rem] flex items-center justify-start">
-          <span className="text-purple-500">
+          <span className="text-purple-500 text-3xl font-bold">
             {progressPercentage.toFixed(1)}%
           </span>
         </p>
@@ -133,7 +133,7 @@ export const FinancialMetrics = () => {
         <AlertTriangle className="h-8 w-8 mb-2 text-blue-500" />
         <h3 className="text-lg font-semibold mb-1">Net Profit</h3>
         <p className="text-xl font-bold truncate min-h-[2rem] flex items-center justify-start">
-          <span className="text-blue-500">
+          <span className="text-blue-500 text-3xl font-bold">
             ${((metrics?.revenue || 0) * 0.8).toLocaleString()}
           </span>
         </p>
