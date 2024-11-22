@@ -1,136 +1,95 @@
-import { Link } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/AuthProvider";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { FinancialMetrics } from "@/components/FinancialMetrics";
+import { TransactionList } from "@/components/TransactionList";
+import { BusinessIntelligence } from "@/components/business-intelligence/BusinessIntelligence";
+import { FraudDetection } from "@/components/fraud-detection/FraudDetection";
+import { DocumentUpload } from "@/components/DocumentUpload";
+import { ExpenseCategoriesCard } from "@/components/ExpenseCategoriesCard";
+import { TaxInsightsCard } from "@/components/tax-insights/TaxInsightsCard";
+import { FinancialHealthCard } from "@/components/financial-health/FinancialHealthCard";
+import { FinancialPlanningCard } from "@/components/financial-planning/FinancialPlanningCard";
+import { InventoryAnalytics } from "@/components/inventory/InventoryAnalytics";
+import { CollaboratorsList } from "@/components/collaborators/CollaboratorsList";
+import { NotificationsCard } from "@/components/notifications/NotificationsCard";
+import { AutomationRules } from "@/components/automation/AutomationRules";
+import { StateOperations } from "@/components/state-operations/StateOperations";
+import { useNavigate } from "react-router-dom";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   BarChart, 
   FileText, 
-  DollarSign, 
+  Calculator, 
+  TrendingUp, 
   Receipt, 
-  ScrollText,
-  TrendingUp,
-  Shield
+  FileSpreadsheet 
 } from "lucide-react";
 
 const Index = () => {
   const { session } = useAuth();
+  const navigate = useNavigate();
 
-  const { data: writeOffs } = useQuery({
-    queryKey: ['write-offs-count'],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from('write_offs')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', session?.user.id);
-      
-      if (error) throw error;
-      return count;
-    }
-  });
+  if (!session) {
+    return null;
+  }
 
-  const { data: documents } = useQuery({
-    queryKey: ['documents-count'],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from('processed_documents')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', session?.user.id);
-      
-      if (error) throw error;
-      return count;
-    }
-  });
+  const navigationItems = [
+    { title: "Revenue", icon: BarChart, path: "/revenue" },
+    { title: "Audit", icon: Calculator, path: "/audit" },
+    { title: "Forecast", icon: TrendingUp, path: "/forecast" },
+    { title: "Write-Offs", icon: Receipt, path: "/write-offs" },
+    { title: "Documents", icon: FileText, path: "/documents" },
+    { title: "Balance Sheet", icon: FileSpreadsheet, path: "/balance-sheet" }
+  ];
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="hover:bg-muted/50 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tax Analysis</CardTitle>
-            <BarChart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <Link to="/tax">
-              <Button className="w-full">View Tax Analysis</Button>
-            </Link>
-          </CardContent>
-        </Card>
+    <div className="min-h-screen">
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <div className="container mx-auto py-2">
+          <Tabs defaultValue="dashboard">
+            <TabsList className="w-full justify-start h-16 bg-primary/5">
+              <TabsTrigger 
+                value="dashboard" 
+                className="gap-2 text-lg px-8 py-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <BarChart className="h-6 w-6" />
+                Dashboard
+              </TabsTrigger>
+              {navigationItems.map((item) => (
+                <TabsTrigger
+                  key={item.path}
+                  value={item.path}
+                  className="gap-2 text-lg px-8 py-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  onClick={() => navigate(item.path)}
+                >
+                  <item.icon className="h-6 w-6" />
+                  {item.title}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
+      </div>
 
-        <Card className="hover:bg-muted/50 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Documents</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold mb-2">{documents || 0}</div>
-            <Link to="/documents">
-              <Button className="w-full">Manage Documents</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:bg-muted/50 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <Link to="/revenue">
-              <Button className="w-full">Track Revenue</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:bg-muted/50 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Write-offs</CardTitle>
-            <Receipt className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold mb-2">{writeOffs || 0}</div>
-            <Link to="/write-offs">
-              <Button className="w-full">Manage Write-offs</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:bg-muted/50 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Balance Sheet</CardTitle>
-            <ScrollText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <Link to="/balance-sheet">
-              <Button className="w-full">View Balance Sheet</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:bg-muted/50 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Forecast</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <Link to="/forecast">
-              <Button className="w-full">View Forecast</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:bg-muted/50 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Assurance</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <Link to="/assurance">
-              <Button className="w-full">View Assurance Reports</Button>
-            </Link>
-          </CardContent>
-        </Card>
+      <div className="container mx-auto p-6 space-y-6">
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        
+        <FinancialMetrics />
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <BusinessIntelligence />
+          <TaxInsightsCard />
+          <FraudDetection />
+          <TransactionList />
+          <FinancialHealthCard />
+          <FinancialPlanningCard />
+          <DocumentUpload className="h-full" />
+          <ExpenseCategoriesCard />
+          <InventoryAnalytics />
+          <CollaboratorsList />
+          <NotificationsCard />
+          <AutomationRules />
+          <StateOperations />
+        </div>
       </div>
     </div>
   );
