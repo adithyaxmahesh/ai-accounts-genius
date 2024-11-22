@@ -5,7 +5,8 @@ import { useAuth } from "@/components/AuthProvider";
 import { TaxSummaryCard } from "./tax-summary/TaxSummaryCard";
 import { TaxSummarySelects } from "./tax-summary/TaxSummarySelects";
 import { calculateTaxes } from "./tax-summary/TaxCalculationUtils";
-import { DollarSign, Calculator } from "lucide-react";
+import { DollarSign, Calculator, Building, MapPin } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 
 interface TaxSummaryProps {
@@ -123,12 +124,25 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
     minimumTax = 800
   } = calculateTaxes(taxAnalysis, audit, selectedBusinessType, selectedState) || {};
 
-  if (isError) {
-    return <div>Error loading tax summary</div>;
-  }
-
   return (
     <div className="space-y-6">
+      {/* Current Tax Configuration */}
+      <Card className="p-4 bg-muted/50">
+        <h3 className="text-lg font-semibold mb-4">Current Tax Configuration</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">State:</span>
+            <span className="font-medium">{selectedState}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Building className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Business Type:</span>
+            <span className="font-medium">{selectedBusinessType.replace('_', ' ')}</span>
+          </div>
+        </div>
+      </Card>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <TaxSummarySelects
           selectedBusinessType={selectedBusinessType}
