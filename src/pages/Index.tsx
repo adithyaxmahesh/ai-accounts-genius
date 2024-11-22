@@ -2,12 +2,17 @@ import { useAuth } from "@/components/AuthProvider";
 import { FinancialMetrics } from "@/components/FinancialMetrics";
 import { TransactionList } from "@/components/TransactionList";
 import { BusinessIntelligence } from "@/components/business-intelligence/BusinessIntelligence";
-import { FraudDetection } from "@/components/FraudDetection";
+import { FraudDetection } from "@/components/fraud-detection/FraudDetection";
 import { DocumentUpload } from "@/components/DocumentUpload";
 import { ExpenseCategoriesCard } from "@/components/ExpenseCategoriesCard";
 import { TaxInsightsCard } from "@/components/tax-insights/TaxInsightsCard";
 import { FinancialHealthCard } from "@/components/financial-health/FinancialHealthCard";
 import { FinancialPlanningCard } from "@/components/financial-planning/FinancialPlanningCard";
+import { InventoryAnalytics } from "@/components/inventory/InventoryAnalytics";
+import { CollaboratorsList } from "@/components/collaborators/CollaboratorsList";
+import { NotificationsCard } from "@/components/notifications/NotificationsCard";
+import { AutomationRules } from "@/components/automation/AutomationRules";
+import { StateOperations } from "@/components/state-operations/StateOperations";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -77,10 +82,13 @@ const Index = () => {
           <TransactionList />
           <FinancialHealthCard />
           <FinancialPlanningCard />
-          <div className="scale-100 transform-none">
-            <DocumentUpload className="h-full" />
-          </div>
+          <DocumentUpload className="h-full" />
           <ExpenseCategoriesCard />
+          <InventoryAnalytics />
+          <CollaboratorsList />
+          <NotificationsCard />
+          <AutomationRules />
+          <StateOperations />
         </div>
       </div>
     </div>
