@@ -1,3 +1,5 @@
+import type { FinancialHealthMetrics } from './financial';
+
 export type Json =
   | string
   | number
@@ -9,6 +11,11 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      financial_health_metrics: {
+        Row: FinancialHealthMetrics;
+        Insert: Omit<FinancialHealthMetrics, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<FinancialHealthMetrics, 'id' | 'created_at' | 'updated_at'>>;
+      };
       financial_goals: {
         Row: {
           id: string
@@ -767,18 +774,18 @@ export interface Database {
           created_at?: string;
         };
       };
-    }
+    };
     Views: {
       [_ in never]: never
-    }
+    };
     Functions: {
       [_ in never]: never
-    }
+    };
     Enums: {
       [_ in never]: never
-    }
+    };
     CompositeTypes: {
       [_ in never]: never
-    }
+    };
   }
 }

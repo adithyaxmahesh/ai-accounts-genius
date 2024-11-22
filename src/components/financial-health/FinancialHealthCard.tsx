@@ -3,11 +3,12 @@ import { Card } from "@/components/ui/card";
 import { Activity, TrendingUp, DollarSign, Scale } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
+import type { FinancialHealthMetrics } from "@/integrations/supabase/types/financial";
 
 export const FinancialHealthCard = () => {
   const { session } = useAuth();
 
-  const { data: healthMetrics } = useQuery({
+  const { data: healthMetrics } = useQuery<FinancialHealthMetrics>({
     queryKey: ['financial-health', session?.user.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -20,7 +21,8 @@ export const FinancialHealthCard = () => {
       
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: !!session?.user.id
   });
 
   return (
