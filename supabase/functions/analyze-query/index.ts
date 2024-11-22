@@ -21,9 +21,13 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Get tax codes for better context
+    // Get tax codes and rules for better context
     const { data: taxCodes } = await supabase
       .from('tax_codes')
+      .select('*')
+
+    const { data: taxRules } = await supabase
+      .from('tax_rules')
       .select('*')
 
     // Process with OpenAI
@@ -39,17 +43,18 @@ serve(async (req) => {
           {
             role: 'system',
             content: `You are an AI tax assistant with expertise in financial analysis and tax optimization.
-            You have access to the user's financial data and tax codes.
-            Provide specific, actionable advice based on the available data.
-            When discussing write-offs or deductions, reference specific tax codes when applicable.
+            Analyze the user's query and financial data to provide specific, actionable advice.
+            When discussing write-offs or deductions, reference specific tax codes.
             If discussing expenses, use actual numbers from the provided data.
-            Always aim to provide practical, compliant tax optimization strategies.`
+            Categorize your responses into: TAX_PLANNING, DEDUCTIONS, COMPLIANCE, or ANALYSIS.
+            If the query requires updating tax calculations, set requiresUpdate to true.`
           },
           {
             role: 'user',
             content: `Context:
             Financial Data: ${JSON.stringify(context)}
             Tax Codes: ${JSON.stringify(taxCodes)}
+            Tax Rules: ${JSON.stringify(taxRules)}
             
             Question: ${query}`
           }
@@ -59,11 +64,48 @@ serve(async (req) => {
       }),
     })
 
-    const analysis = await response.json()
-    console.log('Generated response:', analysis.choices[0].message.content)
+    const aiResponse = await response.json()
+    const answer = aiResponse.choices[0].message.content
+
+    // Determine if we need to update tax calculations
+    const requiresUpdate = answer.toLowerCase().includes('recalculate') || 
+                         answer.toLowerCase().includes('update needed')
+
+    // Determine the category of the response
+    const category = answer.includes('TAX_PLANNING') ? 'Tax Planning' :
+                    answer.includes('DEDUCTIONS') ? 'Deductions' :
+                    answer.includes('COMPLIANCE') ? 'Compliance' :
+                    'Analysis'
+
+    // If update is required, trigger tax calculation
+    if (requiresUpdate) {
+      await supabase.functions.invoke('calculate-taxes', {
+        body: { userId }
+      })
+    }
+
+    // Store the interaction for future context
+    await supabase
+      .from('tax_planning_chats')
+      .insert({
+        user_id: userId,
+        question: query,
+        answer,
+        context: {
+          requiresUpdate,
+          category,
+          timestamp: new Date().toISOString()
+        }
+      })
+
+    console.log('Generated response:', answer)
 
     return new Response(
-      JSON.stringify({ answer: analysis.choices[0].message.content }),
+      JSON.stringify({ 
+        answer: answer.replace(/TAX_PLANNING:|DEDUCTIONS:|COMPLIANCE:|ANALYSIS:/g, ''),
+        category,
+        requiresUpdate
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {

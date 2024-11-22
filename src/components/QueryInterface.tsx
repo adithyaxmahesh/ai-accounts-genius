@@ -2,16 +2,18 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Brain, Send, Loader2 } from "lucide-react";
+import { Brain, Send, Loader2, Calculator } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { useQuery } from "@tanstack/react-query";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 
 interface ChatMessage {
   type: 'user' | 'assistant';
   content: string;
+  category?: string;
 }
 
 export const QueryInterface = () => {
@@ -27,7 +29,7 @@ export const QueryInterface = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('write_offs')
-        .select('*')
+        .select('*, tax_codes(*)')
         .eq('user_id', session?.user.id);
       
       if (error) throw error;
@@ -48,44 +50,61 @@ export const QueryInterface = () => {
     }
   });
 
+  const { data: taxAnalysis } = useQuery({
+    queryKey: ['tax-analysis', session?.user.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tax_analysis')
+        .select('*')
+        .eq('user_id', session?.user.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      
+      if (error) throw error;
+      return data?.[0];
+    }
+  });
+
   const handleQuery = async () => {
     if (!query.trim()) return;
 
-    // Add user's question to chat history immediately
     const userMessage = { type: 'user' as const, content: query };
     setChatHistory(prev => [...prev, userMessage]);
     
     setLoading(true);
     try {
-      console.log("Sending query to analyze-query function:", {
-        query,
-        userId: session?.user.id,
-        context: { writeOffs, revenueRecords }
-      });
-
       const { data, error } = await supabase.functions.invoke('analyze-query', {
         body: { 
           query,
           userId: session?.user.id,
           context: {
             writeOffs,
-            revenueRecords
+            revenueRecords,
+            taxAnalysis
           }
         }
       });
 
-      console.log("Received response from analyze-query:", data);
-
       if (error) throw error;
 
-      // Add AI's response to chat history
-      const assistantMessage = { type: 'assistant' as const, content: data.answer };
+      const assistantMessage = { 
+        type: 'assistant' as const, 
+        content: data.answer,
+        category: data.category 
+      };
       setChatHistory(prev => [...prev, assistantMessage]);
       
-      toast({
-        title: "Analysis Complete",
-        description: "Your query has been processed",
-      });
+      if (data.requiresUpdate) {
+        toast({
+          title: "Updating Tax Analysis",
+          description: "Recalculating based on new information...",
+        });
+      } else {
+        toast({
+          title: "Analysis Complete",
+          description: "Your query has been processed",
+        });
+      }
     } catch (error) {
       console.error("Error processing query:", error);
       toast({
@@ -95,15 +114,23 @@ export const QueryInterface = () => {
       });
     } finally {
       setLoading(false);
-      setQuery(""); // Clear input after sending
+      setQuery("");
     }
   };
 
   return (
     <Card className="p-6 glass-card">
-      <div className="flex items-center gap-2 mb-4">
-        <Brain className="h-6 w-6 text-primary" />
-        <h2 className="text-xl font-semibold">AI Tax Assistant</h2>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Brain className="h-6 w-6 text-primary" />
+          <h2 className="text-xl font-semibold">AI Tax Assistant</h2>
+        </div>
+        {taxAnalysis && (
+          <Badge variant="outline" className="flex items-center gap-1">
+            <Calculator className="h-4 w-4" />
+            Last Analysis: {new Date(taxAnalysis.created_at).toLocaleDateString()}
+          </Badge>
+        )}
       </div>
 
       <div className="space-y-4">
@@ -119,6 +146,11 @@ export const QueryInterface = () => {
                       : 'bg-muted mr-12'
                   }`}
                 >
+                  {message.category && (
+                    <Badge className="mb-2" variant="secondary">
+                      {message.category}
+                    </Badge>
+                  )}
                   <p className="whitespace-pre-wrap">{message.content}</p>
                 </div>
               ))}
@@ -131,6 +163,8 @@ export const QueryInterface = () => {
                 <li>"How can I optimize my tax deductions?"</li>
                 <li>"What vehicle expenses can I write off?"</li>
                 <li>"Show me my tax savings opportunities"</li>
+                <li>"Calculate my estimated quarterly taxes"</li>
+                <li>"Analyze my business expense patterns"</li>
               </ul>
             </div>
           )}
