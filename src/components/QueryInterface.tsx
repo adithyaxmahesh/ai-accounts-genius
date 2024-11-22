@@ -51,11 +51,18 @@ export const QueryInterface = () => {
   const handleQuery = async () => {
     if (!query.trim()) return;
 
-    // Add user's question to chat history
-    setChatHistory(prev => [...prev, { type: 'user', content: query }]);
+    // Add user's question to chat history immediately
+    const userMessage = { type: 'user' as const, content: query };
+    setChatHistory(prev => [...prev, userMessage]);
     
     setLoading(true);
     try {
+      console.log("Sending query to analyze-query function:", {
+        query,
+        userId: session?.user.id,
+        context: { writeOffs, revenueRecords }
+      });
+
       const { data, error } = await supabase.functions.invoke('analyze-query', {
         body: { 
           query,
@@ -67,10 +74,13 @@ export const QueryInterface = () => {
         }
       });
 
+      console.log("Received response from analyze-query:", data);
+
       if (error) throw error;
 
       // Add AI's response to chat history
-      setChatHistory(prev => [...prev, { type: 'assistant', content: data.answer }]);
+      const assistantMessage = { type: 'assistant' as const, content: data.answer };
+      setChatHistory(prev => [...prev, assistantMessage]);
       
       toast({
         title: "Analysis Complete",
@@ -97,9 +107,9 @@ export const QueryInterface = () => {
       </div>
 
       <div className="space-y-4">
-        <ScrollArea className="h-[400px] pr-4">
+        <ScrollArea className="h-[400px] pr-4 border rounded-lg">
           {chatHistory.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-4 p-4">
               {chatHistory.map((message, index) => (
                 <div
                   key={index}
@@ -114,7 +124,7 @@ export const QueryInterface = () => {
               ))}
             </div>
           ) : (
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground p-4">
               <p>You can ask questions like:</p>
               <ul className="list-disc list-inside mt-2 space-y-1">
                 <li>"What was my largest expense last month?"</li>
