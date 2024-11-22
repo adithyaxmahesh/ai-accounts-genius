@@ -19,18 +19,53 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface AddBalanceSheetItemProps {
   onClose: () => void;
   onSuccess: () => void;
 }
 
+const ASSET_SUBCATEGORIES = [
+  { value: "cash", label: "Cash & Bank" },
+  { value: "investments", label: "Investments" },
+  { value: "receivables", label: "Accounts Receivable" },
+  { value: "inventory", label: "Inventory" },
+  { value: "equipment", label: "Equipment & Property" },
+];
+
+const LIABILITY_SUBCATEGORIES = [
+  { value: "loans", label: "Loans & Mortgages" },
+  { value: "payables", label: "Accounts Payable" },
+  { value: "taxes", label: "Tax Liabilities" },
+];
+
+const EQUITY_SUBCATEGORIES = [
+  { value: "retained", label: "Retained Earnings" },
+  { value: "capital", label: "Owner's Capital" },
+];
+
 export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemProps) => {
   const { session } = useAuth();
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
+  const [subcategory, setSubcategory] = useState("");
   const [description, setDescription] = useState("");
+  const [selectedTab, setSelectedTab] = useState("asset");
+
+  const getSubcategories = () => {
+    switch (selectedTab) {
+      case "asset":
+        return ASSET_SUBCATEGORIES;
+      case "liability":
+        return LIABILITY_SUBCATEGORIES;
+      case "equity":
+        return EQUITY_SUBCATEGORIES;
+      default:
+        return [];
+    }
+  };
 
   const addItem = useMutation({
     mutationFn: async () => {
@@ -40,7 +75,8 @@ export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemP
           {
             name,
             amount: Number(amount),
-            category,
+            category: selectedTab,
+            subcategory,
             description,
             user_id: session?.user.id,
           },
@@ -61,10 +97,17 @@ export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemP
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Add Balance Sheet Item</DialogTitle>
         </DialogHeader>
+        <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+          <TabsList className="grid grid-cols-3 mb-4">
+            <TabsTrigger value="asset">Asset</TabsTrigger>
+            <TabsTrigger value="liability">Liability</TabsTrigger>
+            <TabsTrigger value="equity">Equity</TabsTrigger>
+          </TabsList>
+        </Tabs>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="name">Name</Label>
@@ -87,15 +130,17 @@ export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemP
             />
           </div>
           <div>
-            <Label htmlFor="category">Category</Label>
-            <Select value={category} onValueChange={setCategory} required>
+            <Label htmlFor="subcategory">Subcategory</Label>
+            <Select value={subcategory} onValueChange={setSubcategory} required>
               <SelectTrigger>
-                <SelectValue placeholder="Select category" />
+                <SelectValue placeholder="Select subcategory" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="asset">Asset</SelectItem>
-                <SelectItem value="liability">Liability</SelectItem>
-                <SelectItem value="equity">Equity</SelectItem>
+                {getSubcategories().map((sub) => (
+                  <SelectItem key={sub.value} value={sub.value}>
+                    {sub.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -105,6 +150,7 @@ export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemP
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              placeholder="Add any relevant details or notes"
             />
           </div>
           <div className="flex justify-end space-x-2">
