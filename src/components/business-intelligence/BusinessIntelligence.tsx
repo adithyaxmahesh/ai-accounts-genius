@@ -11,6 +11,13 @@ import { categorizeTransaction } from "@/utils/expenseCategories";
 import { useState } from "react";
 import { startOfYear, endOfYear, startOfQuarter, endOfQuarter, subYears } from "date-fns";
 
+interface FinancialMetrics {
+  revenue: number;
+  expenses: number;
+  profit: number;
+  month: string;
+}
+
 export const BusinessIntelligence = () => {
   const { session } = useAuth();
   const { toast } = useToast();
@@ -52,7 +59,7 @@ export const BusinessIntelligence = () => {
     }
   };
 
-  const { data: financialData } = useQuery({
+  const { data: financialData } = useQuery<FinancialMetrics[]>({
     queryKey: ['financial-metrics', session?.user.id, timeRange],
     queryFn: async () => {
       const dateRange = getDateRange();
@@ -139,7 +146,9 @@ export const BusinessIntelligence = () => {
       });
 
       const { error } = await supabase.functions.invoke('generate-insights', {
-        body: { userId: session?.user.id }
+        body: { 
+          userId: session?.user.id 
+        }
       });
 
       if (error) throw error;

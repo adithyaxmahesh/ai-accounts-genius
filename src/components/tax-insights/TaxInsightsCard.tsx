@@ -7,12 +7,21 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 
+interface TaxAnalysis {
+  tax_impact: number;
+  recommendations: Record<string, string>;
+}
+
+interface WriteOff {
+  amount: number;
+}
+
 export const TaxInsightsCard = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const { data: taxAnalysis } = useQuery({
+  const { data: taxAnalysis } = useQuery<TaxAnalysis>({
     queryKey: ['tax-analysis', session?.user.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -24,10 +33,11 @@ export const TaxInsightsCard = () => {
       
       if (error) throw error;
       return data?.[0];
-    }
+    },
+    enabled: !!session?.user.id
   });
 
-  const { data: writeOffs } = useQuery({
+  const { data: writeOffs } = useQuery<WriteOff[]>({
     queryKey: ['write-offs', session?.user.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -38,7 +48,8 @@ export const TaxInsightsCard = () => {
       
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: !!session?.user.id
   });
 
   const potentialSavings = writeOffs?.reduce((sum, writeOff) => {

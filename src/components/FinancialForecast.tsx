@@ -6,11 +6,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
 
+interface Forecast {
+  predicted_revenue: number;
+  confidence_level: number;
+  factors: Record<string, string>;
+}
+
 export const FinancialForecast = () => {
   const { session } = useAuth();
   const { toast } = useToast();
 
-  const { data: forecasts, refetch } = useQuery({
+  const { data: forecasts, refetch } = useQuery<Forecast[]>({
     queryKey: ['forecasts', session?.user.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -22,7 +28,8 @@ export const FinancialForecast = () => {
       
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: !!session?.user.id
   });
 
   const generateNewForecast = async () => {
