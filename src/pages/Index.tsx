@@ -2,7 +2,6 @@ import { useAuth } from "@/components/AuthProvider";
 import { FinancialMetrics } from "@/components/FinancialMetrics";
 import { TransactionList } from "@/components/TransactionList";
 import { BusinessIntelligence } from "@/components/business-intelligence/BusinessIntelligence";
-import { AiInsights } from "@/components/AiInsights";
 import { FraudDetection } from "@/components/FraudDetection";
 import { DocumentUpload } from "@/components/DocumentUpload";
 import { ExpenseCategoriesCard } from "@/components/ExpenseCategoriesCard";
@@ -73,7 +72,6 @@ const Index = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <BusinessIntelligence />
           <TaxInsightsCard />
-          <AiInsights />
           <FraudDetection />
           <TransactionList />
           <FinancialHealthCard />
