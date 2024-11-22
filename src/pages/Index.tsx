@@ -3,9 +3,25 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
-import { BarChart, FileText, DollarSign, Calculator, Shield, BookOpen, PieChart, FileSpreadsheet, TrendingUp } from "lucide-react";
+import { 
+  BarChart, 
+  FileText, 
+  DollarSign, 
+  Calculator, 
+  Shield, 
+  BookOpen, 
+  PieChart, 
+  FileSpreadsheet, 
+  TrendingUp 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { FinancialMetrics } from "@/components/FinancialMetrics";
+import { FinancialPlanningCard } from "@/components/financial-planning/FinancialPlanningCard";
+import { FinancialHealthCard } from "@/components/financial-health/FinancialHealthCard";
+import { CollaboratorsList } from "@/components/collaborators/CollaboratorsList";
+import { AutomationRules } from "@/components/automation/AutomationRules";
+import { StateOperations } from "@/components/state-operations/StateOperations";
 
 const Index = () => {
   const { session } = useAuth();
@@ -39,7 +55,11 @@ const Index = () => {
   }
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-6 space-y-8">
+      {/* Financial Metrics */}
+      <FinancialMetrics />
+
+      {/* Main Navigation Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Link to="/documents" className="group">
           <Card className="hover:shadow-lg transition-shadow">
@@ -170,16 +190,17 @@ const Index = () => {
         </Link>
       </div>
 
-      <div className="mt-12">
-        <h2 className="text-2xl font-bold mb-4">Recent Activity</h2>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center text-muted-foreground">
-              <BarChart className="h-12 w-12 mx-auto mb-4" />
-              <p>Your recent activity will appear here</p>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Additional Dashboard Features */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="space-y-6">
+          <FinancialPlanningCard />
+          <FinancialHealthCard />
+          <StateOperations />
+        </div>
+        <div className="space-y-6">
+          <CollaboratorsList />
+          <AutomationRules />
+        </div>
       </div>
     </div>
   );
