@@ -44,6 +44,59 @@ export type Database = {
           },
         ]
       }
+      assurance_reports: {
+        Row: {
+          confidence_score: number | null
+          created_at: string | null
+          description: string | null
+          findings: Json | null
+          id: string
+          recommendations: Json | null
+          status: string | null
+          title: string
+          updated_at: string | null
+          user_id: string | null
+          verification_date: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string | null
+          description?: string | null
+          findings?: Json | null
+          id?: string
+          recommendations?: Json | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          user_id?: string | null
+          verification_date?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string | null
+          description?: string | null
+          findings?: Json | null
+          id?: string
+          recommendations?: Json | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string | null
+          verification_date?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assurance_reports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_items: {
         Row: {
           amount: number | null
