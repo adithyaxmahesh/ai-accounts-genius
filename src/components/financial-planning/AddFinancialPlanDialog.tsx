@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { Plus } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 export const AddFinancialPlanDialog = ({ onSuccess }: { onSuccess: () => void }) => {
   const [open, setOpen] = useState(false);
@@ -78,12 +78,11 @@ export const AddFinancialPlanDialog = ({ onSuccess }: { onSuccess: () => void })
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Plan Details (JSON)</label>
-            <Input
-              as="textarea"
+            <Textarea
               value={planData}
               onChange={(e) => setPlanData(e.target.value)}
               placeholder='{"goal": "Save for retirement", "targetAmount": 500000}'
-              className="h-32"
+              className="h-32 resize-none"
             />
           </div>
           <Button type="submit" className="w-full">Create Plan</Button>
