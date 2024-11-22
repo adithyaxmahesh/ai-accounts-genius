@@ -7,6 +7,7 @@ import { DocumentUpload } from "@/components/DocumentUpload";
 import { ExpenseCategoriesCard } from "@/components/ExpenseCategoriesCard";
 import { TaxInsightsCard } from "@/components/tax-insights/TaxInsightsCard";
 import { FinancialHealthCard } from "@/components/financial-health/FinancialHealthCard";
+import { FinancialPlanningCard } from "@/components/financial-planning/FinancialPlanningCard";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -75,6 +76,7 @@ const Index = () => {
           <FraudDetection />
           <TransactionList />
           <FinancialHealthCard />
+          <FinancialPlanningCard />
           <div className="scale-100 transform-none">
             <DocumentUpload className="h-full" />
           </div>
