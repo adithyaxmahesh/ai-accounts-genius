@@ -2,11 +2,12 @@ import { useAuth } from "@/components/AuthProvider";
 import { FinancialMetrics } from "@/components/FinancialMetrics";
 import { TransactionList } from "@/components/TransactionList";
 import { BusinessIntelligence } from "@/components/business-intelligence/BusinessIntelligence";
-import { AiInsights } from "@/components/ai-insights/AiInsights";
-import { FraudDetection } from "@/components/fraud-detection/FraudDetection";
-import { DocumentUpload } from "@/components/document-management/DocumentUpload";
+import { AiInsights } from "@/components/AiInsights";
+import { FraudDetection } from "@/components/FraudDetection";
+import { DocumentUpload } from "@/components/DocumentUpload";
 import { ExpenseCategoriesCard } from "@/components/ExpenseCategoriesCard";
 import { TaxInsightsCard } from "@/components/tax-insights/TaxInsightsCard";
+import { FinancialHealthCard } from "@/components/financial-health/FinancialHealthCard";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -75,6 +76,7 @@ const Index = () => {
           <AiInsights />
           <FraudDetection />
           <TransactionList />
+          <FinancialHealthCard />
           <div className="scale-100 transform-none">
             <DocumentUpload className="h-full" />
           </div>
