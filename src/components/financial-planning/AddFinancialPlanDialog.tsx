@@ -8,21 +8,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { Plus } from "lucide-react";
 
+const BUSINESS_EXPENSE_CATEGORIES = [
+  { category: "Payroll", defaultAmount: "" },
+  { category: "Rent & Utilities", defaultAmount: "" },
+  { category: "Equipment & Supplies", defaultAmount: "" },
+  { category: "Marketing & Advertising", defaultAmount: "" },
+  { category: "Insurance", defaultAmount: "" },
+  { category: "Professional Services", defaultAmount: "" },
+  { category: "Software & Subscriptions", defaultAmount: "" },
+  { category: "Travel & Entertainment", defaultAmount: "" },
+  { category: "Inventory", defaultAmount: "" },
+  { category: "Taxes", defaultAmount: "" },
+  { category: "Maintenance & Repairs", defaultAmount: "" },
+  { category: "Other Operating Expenses", defaultAmount: "" },
+];
+
 export const AddFinancialPlanDialog = ({ onSuccess }: { onSuccess: () => void }) => {
   const [open, setOpen] = useState(false);
   const [planType, setPlanType] = useState("");
-  const [income, setIncome] = useState("");
-  const [expenses, setExpenses] = useState<{ category: string; amount: string }[]>([
-    { category: "Housing", amount: "" },
-    { category: "Transportation", amount: "" },
-    { category: "Food", amount: "" },
-    { category: "Utilities", amount: "" },
-    { category: "Insurance", amount: "" },
-    { category: "Healthcare", amount: "" },
-    { category: "Savings", amount: "" },
-    { category: "Entertainment", amount: "" },
-    { category: "Other", amount: "" },
-  ]);
+  const [projectedRevenue, setProjectedRevenue] = useState("");
+  const [expenses, setExpenses] = useState(BUSINESS_EXPENSE_CATEGORIES);
   const { session } = useAuth();
   const { toast } = useToast();
 
@@ -30,18 +35,30 @@ export const AddFinancialPlanDialog = ({ onSuccess }: { onSuccess: () => void })
     e.preventDefault();
     
     try {
-      const totalExpenses = expenses.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
-      const monthlyIncome = Number(income) || 0;
-      const surplus = monthlyIncome - totalExpenses;
+      const totalExpenses = expenses.reduce((sum, exp) => sum + (Number(exp.defaultAmount) || 0), 0);
+      const monthlyRevenue = Number(projectedRevenue) || 0;
+      const netProfit = monthlyRevenue - totalExpenses;
+      const profitMargin = monthlyRevenue ? (netProfit / monthlyRevenue) * 100 : 0;
 
       const planData = {
-        monthly_income: monthlyIncome,
+        projected_revenue: monthlyRevenue,
         expenses: expenses.map(exp => ({
           category: exp.category,
-          amount: Number(exp.amount) || 0,
+          amount: Number(exp.defaultAmount) || 0,
         })),
         total_expenses: totalExpenses,
-        monthly_surplus: surplus,
+        net_profit: netProfit,
+        profit_margin: profitMargin,
+        metrics: {
+          expense_breakdown: expenses.reduce((acc, exp) => {
+            acc[exp.category] = Number(exp.defaultAmount) || 0;
+            return acc;
+          }, {} as Record<string, number>),
+          key_ratios: {
+            profit_margin: profitMargin,
+            expense_to_revenue: totalExpenses / monthlyRevenue * 100,
+          }
+        }
       };
 
       const { error } = await supabase
@@ -57,12 +74,12 @@ export const AddFinancialPlanDialog = ({ onSuccess }: { onSuccess: () => void })
 
       toast({
         title: "Success",
-        description: "Budget plan created successfully",
+        description: "Business budget plan created successfully",
       });
 
       setOpen(false);
-      setIncome("");
-      setExpenses(expenses.map(exp => ({ ...exp, amount: "" })));
+      setProjectedRevenue("");
+      setExpenses(BUSINESS_EXPENSE_CATEGORIES);
       setPlanType("");
       onSuccess();
     } catch (error) {
@@ -76,7 +93,7 @@ export const AddFinancialPlanDialog = ({ onSuccess }: { onSuccess: () => void })
 
   const handleExpenseChange = (index: number, amount: string) => {
     const newExpenses = [...expenses];
-    newExpenses[index] = { ...newExpenses[index], amount };
+    newExpenses[index] = { ...newExpenses[index], defaultAmount: amount };
     setExpenses(newExpenses);
   };
 
@@ -85,19 +102,19 @@ export const AddFinancialPlanDialog = ({ onSuccess }: { onSuccess: () => void })
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full">
           <Plus className="h-4 w-4 mr-2" />
-          Create Budget Plan
+          Create Business Budget
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Create New Budget Plan</DialogTitle>
+          <DialogTitle>Create New Business Budget</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Plan Type</label>
+            <label className="text-sm font-medium">Budget Period</label>
             <Select value={planType} onValueChange={setPlanType}>
               <SelectTrigger>
-                <SelectValue placeholder="Select plan type" />
+                <SelectValue placeholder="Select budget period" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="monthly">Monthly Budget</SelectItem>
@@ -108,27 +125,27 @@ export const AddFinancialPlanDialog = ({ onSuccess }: { onSuccess: () => void })
           </div>
           
           <div className="space-y-2">
-            <label className="text-sm font-medium">Monthly Income ($)</label>
+            <label className="text-sm font-medium">Projected Revenue ($)</label>
             <Input
               type="number"
-              value={income}
-              onChange={(e) => setIncome(e.target.value)}
-              placeholder="Enter your monthly income"
+              value={projectedRevenue}
+              onChange={(e) => setProjectedRevenue(e.target.value)}
+              placeholder="Enter projected revenue"
               min="0"
               step="0.01"
             />
           </div>
 
           <div className="space-y-3">
-            <label className="text-sm font-medium">Monthly Expenses ($)</label>
+            <label className="text-sm font-medium">Business Expenses ($)</label>
             {expenses.map((expense, index) => (
               <div key={expense.category} className="flex items-center gap-2">
-                <span className="w-32 text-sm">{expense.category}</span>
+                <span className="w-48 text-sm">{expense.category}</span>
                 <Input
                   type="number"
-                  value={expense.amount}
+                  value={expense.defaultAmount}
                   onChange={(e) => handleExpenseChange(index, e.target.value)}
-                  placeholder={`${expense.category} expense`}
+                  placeholder={`${expense.category} budget`}
                   min="0"
                   step="0.01"
                 />
@@ -137,7 +154,7 @@ export const AddFinancialPlanDialog = ({ onSuccess }: { onSuccess: () => void })
           </div>
 
           <div className="pt-4">
-            <Button type="submit" className="w-full">Create Budget Plan</Button>
+            <Button type="submit" className="w-full">Create Business Budget</Button>
           </div>
         </form>
       </DialogContent>
