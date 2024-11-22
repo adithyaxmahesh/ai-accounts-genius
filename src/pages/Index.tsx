@@ -22,6 +22,7 @@ import { FinancialHealthCard } from "@/components/financial-health/FinancialHeal
 import { CollaboratorsList } from "@/components/collaborators/CollaboratorsList";
 import { AutomationRules } from "@/components/automation/AutomationRules";
 import { StateOperations } from "@/components/state-operations/StateOperations";
+import { ProfileWidget } from "@/components/ProfileWidget";
 
 const Index = () => {
   const { session } = useAuth();
@@ -56,6 +57,8 @@ const Index = () => {
 
   return (
     <div className="container mx-auto p-6 space-y-8">
+      <ProfileWidget />
+      
       {/* Financial Metrics */}
       <FinancialMetrics />
 
