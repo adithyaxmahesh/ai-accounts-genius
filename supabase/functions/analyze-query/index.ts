@@ -13,20 +13,20 @@ serve(async (req) => {
   }
 
   try {
-    const { query, userId } = await req.json()
+    const { query, userId, context } = await req.json()
+    console.log('Processing query:', query)
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Get user's financial data
-    const { data: financialData } = await supabase
-      .from('balance_sheet_items')
+    // Get tax codes for better context
+    const { data: taxCodes } = await supabase
+      .from('tax_codes')
       .select('*')
-      .eq('user_id', userId)
 
-    // Analyze with OpenAI
+    // Process with OpenAI
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -38,21 +38,32 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are an AI accountant assistant. Analyze financial data and answer questions.'
+            content: `You are an AI tax assistant with expertise in financial analysis and tax optimization.
+            You have access to the user's financial data and tax codes.
+            Provide specific, actionable advice based on the available data.
+            When discussing write-offs or deductions, reference specific tax codes when applicable.
+            If discussing expenses, use actual numbers from the provided data.
+            Always aim to provide practical, compliant tax optimization strategies.`
           },
           {
             role: 'user',
-            content: `Financial data: ${JSON.stringify(financialData)}\n\nQuery: ${query}`
+            content: `Context:
+            Financial Data: ${JSON.stringify(context)}
+            Tax Codes: ${JSON.stringify(taxCodes)}
+            
+            Question: ${query}`
           }
         ],
+        temperature: 0.7,
+        max_tokens: 1000,
       }),
     })
 
     const analysis = await response.json()
-    const answer = analysis.choices[0].message.content
+    console.log('Generated response:', analysis.choices[0].message.content)
 
     return new Response(
-      JSON.stringify({ answer }),
+      JSON.stringify({ answer: analysis.choices[0].message.content }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
