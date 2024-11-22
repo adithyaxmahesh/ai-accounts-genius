@@ -2,21 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { LineChart, TrendingUp, ArrowUpRight, ArrowDownRight, RefreshCw, DollarSign } from "lucide-react";
+import { LineChart, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { categorizeTransaction } from "@/utils/expenseCategories";
 import { useState } from "react";
-import { startOfYear, endOfYear, startOfQuarter, endOfQuarter, subYears } from "date-fns";
-
-interface FinancialMetrics {
-  revenue: number;
-  expenses: number;
-  profit: number;
-  month: string;
-}
+import { MetricsDisplay } from "./MetricsDisplay";
+import { InsightsDisplay } from "./InsightsDisplay";
 
 export const BusinessIntelligence = () => {
   const { session } = useAuth();
@@ -59,7 +52,7 @@ export const BusinessIntelligence = () => {
     }
   };
 
-  const { data: financialData } = useQuery<FinancialMetrics[]>({
+  const { data: financialData } = useQuery({
     queryKey: ['financial-metrics', session?.user.id, timeRange],
     queryFn: async () => {
       const dateRange = getDateRange();
@@ -173,11 +166,11 @@ export const BusinessIntelligence = () => {
   const totalProfit = totalRevenue - totalExpenses;
 
   return (
-    <Card className="p-6">
-      <div className="flex items-center justify-between mb-6">
+    <Card className="p-4">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <LineChart className="h-6 w-6 text-primary" />
-          <h2 className="text-xl font-semibold">Business Intelligence</h2>
+          <LineChart className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold">Business Intelligence</h2>
         </div>
         <Button onClick={generateInsights} className="hover-scale">
           <RefreshCw className="mr-2 h-4 w-4" />
@@ -187,58 +180,46 @@ export const BusinessIntelligence = () => {
 
       <div className="mb-4">
         <ToggleGroup type="single" value={timeRange} onValueChange={(value) => value && setTimeRange(value)}>
-          <ToggleGroupItem value="total" aria-label="View all time data">
+          <ToggleGroupItem value="total" aria-label="View all time data" className="text-xs">
             Total
           </ToggleGroupItem>
-          <ToggleGroupItem value="1year" aria-label="View last year data">
+          <ToggleGroupItem value="1year" aria-label="View last year data" className="text-xs">
             1 Year
           </ToggleGroupItem>
-          <ToggleGroupItem value="q1" aria-label="View Q1 data">
+          <ToggleGroupItem value="q1" aria-label="View Q1 data" className="text-xs">
             Q1
           </ToggleGroupItem>
-          <ToggleGroupItem value="q2" aria-label="View Q2 data">
+          <ToggleGroupItem value="q2" aria-label="View Q2 data" className="text-xs">
             Q2
           </ToggleGroupItem>
-          <ToggleGroupItem value="q3" aria-label="View Q3 data">
+          <ToggleGroupItem value="q3" aria-label="View Q3 data" className="text-xs">
             Q3
           </ToggleGroupItem>
-          <ToggleGroupItem value="q4" aria-label="View Q4 data">
+          <ToggleGroupItem value="q4" aria-label="View Q4 data" className="text-xs">
             Q4
           </ToggleGroupItem>
         </ToggleGroup>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="p-4 bg-muted rounded-lg">
-          <DollarSign className="h-5 w-5 text-green-500 mb-2" />
-          <h3 className="text-sm font-medium">Total Revenue</h3>
-          <p className="text-2xl font-bold text-green-500">${totalRevenue.toLocaleString()}</p>
-        </div>
-        <div className="p-4 bg-muted rounded-lg">
-          <ArrowDownRight className="h-5 w-5 text-red-500 mb-2" />
-          <h3 className="text-sm font-medium">Total Expenses</h3>
-          <p className="text-2xl font-bold text-red-500">${totalExpenses.toLocaleString()}</p>
-        </div>
-        <div className="p-4 bg-muted rounded-lg">
-          <ArrowUpRight className="h-5 w-5 text-blue-500 mb-2" />
-          <h3 className="text-sm font-medium">Net Profit</h3>
-          <p className="text-2xl font-bold text-blue-500">${totalProfit.toLocaleString()}</p>
-        </div>
-      </div>
+      <MetricsDisplay
+        totalRevenue={totalRevenue}
+        totalExpenses={totalExpenses}
+        totalProfit={totalProfit}
+      />
 
-      <div className="h-64 mb-6">
+      <div className="h-48 mb-4">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={financialData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis 
               dataKey="month"
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 10 }}
               interval={0}
               angle={-45}
               textAnchor="end"
-              height={60}
+              height={50}
             />
-            <YAxis />
+            <YAxis tick={{ fontSize: 10 }} />
             <Tooltip />
             <Bar dataKey="revenue" name="Revenue" fill="#22c55e" />
             <Bar dataKey="expenses" name="Expenses" fill="#ef4444" />
@@ -247,38 +228,7 @@ export const BusinessIntelligence = () => {
         </ResponsiveContainer>
       </div>
 
-      <div className="space-y-6">
-        {insights?.map((insight) => (
-          <div key={insight.id} className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                <span className="font-medium">{insight.category}</span>
-              </div>
-              <span className={`text-sm font-medium ${
-                insight.priority === 'high' ? 'text-red-500' : 
-                insight.priority === 'medium' ? 'text-yellow-500' : 
-                'text-green-500'
-              }`}>
-                {insight.priority?.toUpperCase()}
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              {insight.recommendations?.map((rec, index) => (
-                <div key={index} className="flex items-start gap-2 p-3 bg-muted rounded-lg">
-                  {rec.includes('increase') || rec.includes('growth') ? (
-                    <ArrowUpRight className="h-4 w-4 text-green-500 mt-1" />
-                  ) : (
-                    <ArrowDownRight className="h-4 w-4 text-red-500 mt-1" />
-                  )}
-                  <p className="text-sm">{rec}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+      <InsightsDisplay insights={insights} />
     </Card>
   );
 };
