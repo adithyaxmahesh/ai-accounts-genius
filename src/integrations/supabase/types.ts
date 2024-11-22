@@ -941,6 +941,33 @@ export type Database = {
           },
         ]
       }
+      security_logs: {
+        Row: {
+          created_at: string
+          details: Json
+          event_type: string
+          id: string
+          severity: string
+          timestamp: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json
+          event_type: string
+          id?: string
+          severity: string
+          timestamp?: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json
+          event_type?: string
+          id?: string
+          severity?: string
+          timestamp?: string
+        }
+        Relationships: []
+      }
       shopify_connections: {
         Row: {
           access_token: string
