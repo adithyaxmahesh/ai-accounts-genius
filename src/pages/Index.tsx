@@ -8,6 +8,7 @@ import { TaxSummaryCard } from "@/components/tax-summary/TaxSummaryCard";
 import { TaxInsightsCard } from "@/components/tax-insights/TaxInsightsCard";
 import { FinancialHealthCard } from "@/components/financial-health/FinancialHealthCard";
 import { useNavigate } from "react-router-dom";
+import { Calculator } from "lucide-react";
 
 export default function Index() {
   const navigate = useNavigate();
@@ -17,7 +18,11 @@ export default function Index() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <FinancialHealthCard />
         <FinancialMetrics />
-        <TaxSummaryCard />
+        <TaxSummaryCard 
+          icon={Calculator}
+          title="Tax Summary"
+          value="$0.00"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
