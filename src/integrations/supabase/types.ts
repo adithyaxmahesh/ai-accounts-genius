@@ -376,6 +376,51 @@ export type Database = {
           },
         ]
       }
+      discount_codes: {
+        Row: {
+          active: boolean | null
+          amount_off: number | null
+          code: string
+          created_at: string
+          currency: string | null
+          description: string | null
+          duration: string | null
+          expires_at: string | null
+          id: string
+          max_redemptions: number | null
+          percentage_off: number | null
+          times_redeemed: number | null
+        }
+        Insert: {
+          active?: boolean | null
+          amount_off?: number | null
+          code: string
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          duration?: string | null
+          expires_at?: string | null
+          id?: string
+          max_redemptions?: number | null
+          percentage_off?: number | null
+          times_redeemed?: number | null
+        }
+        Update: {
+          active?: boolean | null
+          amount_off?: number | null
+          code?: string
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          duration?: string | null
+          expires_at?: string | null
+          id?: string
+          max_redemptions?: number | null
+          percentage_off?: number | null
+          times_redeemed?: number | null
+        }
+        Relationships: []
+      }
       document_categories: {
         Row: {
           created_at: string
@@ -1108,6 +1153,86 @@ export type Database = {
           tax_year?: number
         }
         Relationships: []
+      }
+      subscription_plans: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string | null
+          description: string | null
+          id: string
+          interval: string | null
+          name: string
+          price_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          interval?: string | null
+          name: string
+          price_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          interval?: string | null
+          name?: string
+          price_id?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          plan_id: string
+          status: string
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_id: string
+          status: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_id?: string
+          status?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tax_analysis: {
         Row: {
