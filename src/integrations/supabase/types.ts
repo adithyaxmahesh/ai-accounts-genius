@@ -568,6 +568,44 @@ export type Database = {
           },
         ]
       }
+      financial_planning: {
+        Row: {
+          created_at: string
+          id: string
+          plan_data: Json | null
+          plan_type: string
+          status: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          plan_data?: Json | null
+          plan_type: string
+          status?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          plan_data?: Json | null
+          plan_type?: string
+          status?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_planning_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forecasts: {
         Row: {
           confidence_level: number | null
