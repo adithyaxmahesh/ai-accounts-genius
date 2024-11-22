@@ -7,12 +7,18 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { useQuery } from "@tanstack/react-query";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+interface ChatMessage {
+  type: 'user' | 'assistant';
+  content: string;
+}
 
 export const QueryInterface = () => {
   const { toast } = useToast();
   const { session } = useAuth();
   const [query, setQuery] = useState("");
-  const [answer, setAnswer] = useState("");
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Fetch financial data for context
@@ -45,6 +51,9 @@ export const QueryInterface = () => {
   const handleQuery = async () => {
     if (!query.trim()) return;
 
+    // Add user's question to chat history
+    setChatHistory(prev => [...prev, { type: 'user', content: query }]);
+    
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('analyze-query', {
@@ -60,7 +69,9 @@ export const QueryInterface = () => {
 
       if (error) throw error;
 
-      setAnswer(data.answer);
+      // Add AI's response to chat history
+      setChatHistory(prev => [...prev, { type: 'assistant', content: data.answer }]);
+      
       toast({
         title: "Analysis Complete",
         description: "Your query has been processed",
@@ -74,6 +85,7 @@ export const QueryInterface = () => {
       });
     } finally {
       setLoading(false);
+      setQuery(""); // Clear input after sending
     }
   };
 
@@ -85,6 +97,35 @@ export const QueryInterface = () => {
       </div>
 
       <div className="space-y-4">
+        <ScrollArea className="h-[400px] pr-4">
+          {chatHistory.length > 0 ? (
+            <div className="space-y-4">
+              {chatHistory.map((message, index) => (
+                <div
+                  key={index}
+                  className={`p-4 rounded-lg ${
+                    message.type === 'user'
+                      ? 'bg-primary text-primary-foreground ml-12'
+                      : 'bg-muted mr-12'
+                  }`}
+                >
+                  <p className="whitespace-pre-wrap">{message.content}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground">
+              <p>You can ask questions like:</p>
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>"What was my largest expense last month?"</li>
+                <li>"How can I optimize my tax deductions?"</li>
+                <li>"What vehicle expenses can I write off?"</li>
+                <li>"Show me my tax savings opportunities"</li>
+              </ul>
+            </div>
+          )}
+        </ScrollArea>
+
         <div className="flex gap-2">
           <Input
             placeholder="Ask about expenses, tax write-offs, or financial optimization..."
@@ -101,24 +142,6 @@ export const QueryInterface = () => {
             )}
           </Button>
         </div>
-
-        {answer && (
-          <div className="p-4 bg-muted rounded-lg">
-            <p className="whitespace-pre-wrap">{answer}</p>
-          </div>
-        )}
-
-        {!answer && (
-          <div className="text-sm text-muted-foreground">
-            <p>You can ask questions like:</p>
-            <ul className="list-disc list-inside mt-2 space-y-1">
-              <li>"What was my largest expense last month?"</li>
-              <li>"How can I optimize my tax deductions?"</li>
-              <li>"What vehicle expenses can I write off?"</li>
-              <li>"Show me my tax savings opportunities"</li>
-            </ul>
-          </div>
-        )}
       </div>
     </Card>
   );
