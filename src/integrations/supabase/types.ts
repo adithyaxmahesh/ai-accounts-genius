@@ -180,6 +180,53 @@ export type Database = {
           },
         ]
       }
+      automation_rules: {
+        Row: {
+          actions: Json | null
+          conditions: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          rule_type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          actions?: Json | null
+          conditions?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          rule_type: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          actions?: Json | null
+          conditions?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          rule_type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_rules_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       balance_sheet_items: {
         Row: {
           amount: number
@@ -329,6 +376,27 @@ export type Database = {
           },
         ]
       }
+      document_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       document_comments: {
         Row: {
           comment: string
@@ -449,6 +517,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "financial_goals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_health_metrics: {
+        Row: {
+          cash_flow_score: number | null
+          created_at: string
+          current_ratio: number | null
+          debt_ratio: number | null
+          health_score: number | null
+          id: string
+          metrics_data: Json | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          cash_flow_score?: number | null
+          created_at?: string
+          current_ratio?: number | null
+          debt_ratio?: number | null
+          health_score?: number | null
+          id?: string
+          metrics_data?: Json | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          cash_flow_score?: number | null
+          created_at?: string
+          current_ratio?: number | null
+          debt_ratio?: number | null
+          health_score?: number | null
+          id?: string
+          metrics_data?: Json | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_health_metrics_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
