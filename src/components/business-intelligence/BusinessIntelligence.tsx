@@ -10,6 +10,27 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useState } from "react";
 import { MetricsDisplay } from "./MetricsDisplay";
 import { InsightsDisplay } from "./InsightsDisplay";
+import { subYears, startOfQuarter, endOfQuarter } from "date-fns";
+
+interface FinancialData {
+  revenue: number;
+  expenses: number;
+  profit: number;
+  month: string;
+}
+
+interface Transaction {
+  date: string;
+  description: string;
+  amount: number;
+  isExpense?: boolean;
+}
+
+const categorizeTransaction = async (description: string, amount: number) => {
+  return {
+    isExpense: amount < 0,
+  };
+};
 
 export const BusinessIntelligence = () => {
   const { session } = useAuth();
@@ -52,7 +73,7 @@ export const BusinessIntelligence = () => {
     }
   };
 
-  const { data: financialData } = useQuery({
+  const { data: financialData } = useQuery<FinancialData[]>({
     queryKey: ['financial-metrics', session?.user.id, timeRange],
     queryFn: async () => {
       const dateRange = getDateRange();
@@ -110,7 +131,7 @@ export const BusinessIntelligence = () => {
         acc[key].profit = acc[key].revenue - acc[key].expenses;
 
         return acc;
-      }, {} as Record<string, any>);
+      }, {} as Record<string, FinancialData>);
 
       return Object.values(monthlyData);
     }
@@ -161,8 +182,8 @@ export const BusinessIntelligence = () => {
     }
   };
 
-  const totalRevenue = financialData?.reduce((sum, month) => sum + month.revenue, 0) || 0;
-  const totalExpenses = financialData?.reduce((sum, month) => sum + month.expenses, 0) || 0;
+  const totalRevenue = (financialData || []).reduce((sum, month) => sum + month.revenue, 0);
+  const totalExpenses = (financialData || []).reduce((sum, month) => sum + month.expenses, 0);
   const totalProfit = totalRevenue - totalExpenses;
 
   return (
