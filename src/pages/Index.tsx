@@ -1,95 +1,185 @@
+import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/components/AuthProvider";
-import { FinancialMetrics } from "@/components/FinancialMetrics";
-import { TransactionList } from "@/components/TransactionList";
-import { BusinessIntelligence } from "@/components/business-intelligence/BusinessIntelligence";
-import { FraudDetection } from "@/components/fraud-detection/FraudDetection";
-import { DocumentUpload } from "@/components/DocumentUpload";
-import { ExpenseCategoriesCard } from "@/components/ExpenseCategoriesCard";
-import { TaxInsightsCard } from "@/components/tax-insights/TaxInsightsCard";
-import { FinancialHealthCard } from "@/components/financial-health/FinancialHealthCard";
-import { FinancialPlanningCard } from "@/components/financial-planning/FinancialPlanningCard";
-import { InventoryAnalytics } from "@/components/inventory/InventoryAnalytics";
-import { CollaboratorsList } from "@/components/collaborators/CollaboratorsList";
-import { NotificationsCard } from "@/components/notifications/NotificationsCard";
-import { AutomationRules } from "@/components/automation/AutomationRules";
-import { StateOperations } from "@/components/state-operations/StateOperations";
+import { supabase } from "@/integrations/supabase/client";
+import { BarChart, FileText, DollarSign, Calculator, Shield, BookOpen, PieChart, FileSpreadsheet, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  BarChart, 
-  FileText, 
-  Calculator, 
-  TrendingUp, 
-  Receipt, 
-  FileSpreadsheet 
-} from "lucide-react";
 
 const Index = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
 
+  const { data: profile } = useQuery({
+    queryKey: ['profile'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session?.user.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!session?.user.id,
+  });
+
   if (!session) {
-    return null;
+    return (
+      <div className="container mx-auto p-6 text-center">
+        <h1 className="text-4xl font-bold mb-4">Welcome to Tax Pro</h1>
+        <p className="text-xl text-muted-foreground mb-8">
+          Please sign in to access your dashboard
+        </p>
+        <Button onClick={() => navigate('/auth')}>Sign In</Button>
+      </div>
+    );
   }
 
-  const navigationItems = [
-    { title: "Revenue", icon: BarChart, path: "/revenue" },
-    { title: "Audit", icon: Calculator, path: "/audit" },
-    { title: "Forecast", icon: TrendingUp, path: "/forecast" },
-    { title: "Write-Offs", icon: Receipt, path: "/write-offs" },
-    { title: "Documents", icon: FileText, path: "/documents" },
-    { title: "Balance Sheet", icon: FileSpreadsheet, path: "/balance-sheet" }
-  ];
-
   return (
-    <div className="min-h-screen">
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-        <div className="container mx-auto py-2">
-          <Tabs defaultValue="dashboard">
-            <TabsList className="w-full justify-start h-16 bg-primary/5">
-              <TabsTrigger 
-                value="dashboard" 
-                className="gap-2 text-lg px-8 py-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-              >
-                <BarChart className="h-6 w-6" />
-                Dashboard
-              </TabsTrigger>
-              {navigationItems.map((item) => (
-                <TabsTrigger
-                  key={item.path}
-                  value={item.path}
-                  className="gap-2 text-lg px-8 py-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                  onClick={() => navigate(item.path)}
-                >
-                  <item.icon className="h-6 w-6" />
-                  {item.title}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        </div>
+    <div className="container mx-auto p-6">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <Link to="/documents" className="group">
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <FileText className="h-5 w-5 text-primary" />
+                <span>Documents</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Upload and manage your tax documents and receipts.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to="/tax" className="group">
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Calculator className="h-5 w-5 text-primary" />
+                <span>Tax Management</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Calculate taxes, track deadlines, and plan your tax strategy.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to="/audit" className="group">
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <BookOpen className="h-5 w-5 text-primary" />
+                <span>Audit Reports</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                View and manage audit reports and findings.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to="/revenue" className="group">
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <DollarSign className="h-5 w-5 text-primary" />
+                <span>Revenue</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Track and analyze your revenue streams.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to="/write-offs" className="group">
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <PieChart className="h-5 w-5 text-primary" />
+                <span>Write-Offs</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Manage your business expenses and deductions.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to="/balance-sheet" className="group">
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <FileSpreadsheet className="h-5 w-5 text-primary" />
+                <span>Balance Sheet</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                View your assets, liabilities, and equity.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to="/forecast" className="group">
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                <span>Forecast</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Predict future revenue and tax obligations.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to="/assurance" className="group">
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Shield className="h-5 w-5 text-primary" />
+                <span>Assurance Services</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Manage assurance engagements and access learning materials for CPA certification.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
-      <div className="container mx-auto p-6 space-y-6">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        
-        <FinancialMetrics />
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <BusinessIntelligence />
-          <TaxInsightsCard />
-          <FraudDetection />
-          <TransactionList />
-          <FinancialHealthCard />
-          <FinancialPlanningCard />
-          <DocumentUpload className="h-full" />
-          <ExpenseCategoriesCard />
-          <InventoryAnalytics />
-          <CollaboratorsList />
-          <NotificationsCard />
-          <AutomationRules />
-          <StateOperations />
-        </div>
+      <div className="mt-12">
+        <h2 className="text-2xl font-bold mb-4">Recent Activity</h2>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center text-muted-foreground">
+              <BarChart className="h-12 w-12 mx-auto mb-4" />
+              <p>Your recent activity will appear here</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

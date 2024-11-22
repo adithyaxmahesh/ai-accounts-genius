@@ -44,6 +44,143 @@ export type Database = {
           },
         ]
       }
+      assurance_engagements: {
+        Row: {
+          client_name: string
+          created_at: string | null
+          end_date: string | null
+          engagement_type: string
+          findings: Json | null
+          id: string
+          recommendations: Json | null
+          risk_assessment: Json | null
+          start_date: string | null
+          status: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          client_name: string
+          created_at?: string | null
+          end_date?: string | null
+          engagement_type: string
+          findings?: Json | null
+          id?: string
+          recommendations?: Json | null
+          risk_assessment?: Json | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          client_name?: string
+          created_at?: string | null
+          end_date?: string | null
+          engagement_type?: string
+          findings?: Json | null
+          id?: string
+          recommendations?: Json | null
+          risk_assessment?: Json | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assurance_engagements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assurance_learning_materials: {
+        Row: {
+          category: string
+          content: string
+          created_at: string | null
+          difficulty_level: string | null
+          id: string
+          title: string
+          topic_area: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string | null
+          difficulty_level?: string | null
+          id?: string
+          title: string
+          topic_area: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string | null
+          difficulty_level?: string | null
+          id?: string
+          title?: string
+          topic_area?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      assurance_procedures: {
+        Row: {
+          created_at: string | null
+          description: string
+          engagement_id: string | null
+          id: string
+          performed_at: string | null
+          performed_by: string | null
+          procedure_type: string
+          results: Json | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          engagement_id?: string | null
+          id?: string
+          performed_at?: string | null
+          performed_by?: string | null
+          procedure_type: string
+          results?: Json | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          engagement_id?: string | null
+          id?: string
+          performed_at?: string | null
+          performed_by?: string | null
+          procedure_type?: string
+          results?: Json | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assurance_procedures_engagement_id_fkey"
+            columns: ["engagement_id"]
+            isOneToOne: false
+            referencedRelation: "assurance_engagements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assurance_procedures_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assurance_reports: {
         Row: {
           confidence_score: number | null
