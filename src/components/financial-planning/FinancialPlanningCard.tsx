@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { ClipboardList } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
+import { AddFinancialPlanDialog } from "./AddFinancialPlanDialog";
 
 interface FinancialPlan {
   id: string;
@@ -15,7 +16,7 @@ interface FinancialPlan {
 export const FinancialPlanningCard = () => {
   const { session } = useAuth();
 
-  const { data: plans } = useQuery({
+  const { data: plans, refetch } = useQuery({
     queryKey: ['financial-plans', session?.user.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -37,9 +38,11 @@ export const FinancialPlanningCard = () => {
         <h2 className="text-xl font-semibold">Financial Planning</h2>
       </div>
 
-      <div className="space-y-4">
-        {plans?.length === 0 && (
-          <p className="text-muted-foreground">No financial plans yet.</p>
+      <AddFinancialPlanDialog onSuccess={refetch} />
+
+      <div className="space-y-4 mt-4">
+        {(!plans || plans.length === 0) && (
+          <p className="text-muted-foreground">No financial plans yet. Create one to get started!</p>
         )}
         
         {plans?.map((plan) => (
@@ -51,9 +54,11 @@ export const FinancialPlanningCard = () => {
               </span>
             </div>
             {plan.plan_data && (
-              <p className="text-sm text-muted-foreground">
-                {JSON.stringify(plan.plan_data)}
-              </p>
+              <div className="text-sm text-muted-foreground">
+                <pre className="whitespace-pre-wrap overflow-auto">
+                  {JSON.stringify(plan.plan_data, null, 2)}
+                </pre>
+              </div>
             )}
             <p className="text-xs text-muted-foreground mt-2">
               Created: {new Date(plan.created_at).toLocaleDateString()}
