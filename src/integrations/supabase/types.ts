@@ -1814,7 +1814,11 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      assurance_procedure_status:
+        | "not_started"
+        | "in_progress"
+        | "completed"
+        | "needs_review"
     }
     CompositeTypes: {
       [_ in never]: never
