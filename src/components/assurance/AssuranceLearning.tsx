@@ -23,7 +23,7 @@ export const AssuranceLearning = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("assurance_engagements")
-        .select("*, assurance_procedures(*))")
+        .select("*, assurance_procedures(*)")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
