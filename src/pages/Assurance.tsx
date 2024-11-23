@@ -26,7 +26,7 @@ const Assurance = () => {
       <Tabs defaultValue="engagements" className="space-y-6">
         <TabsList className="grid grid-cols-2 gap-4 bg-muted p-1">
           <TabsTrigger value="engagements">Engagements</TabsTrigger>
-          <TabsTrigger value="learning">Learning Materials</TabsTrigger>
+          <TabsTrigger value="learning">Analytics</TabsTrigger>
         </TabsList>
 
         <TabsContent value="engagements" className="space-y-6">
