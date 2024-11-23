@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft } from "lucide-react";
 import { AssuranceList } from "@/components/assurance/AssuranceList";
-import { AssuranceLearning } from "@/components/assurance/AssuranceLearning";
+import { AssuranceAnalytics } from "@/components/assurance/AssuranceAnalytics";
 
 const Assurance = () => {
   const navigate = useNavigate();
@@ -26,15 +26,15 @@ const Assurance = () => {
       <Tabs defaultValue="engagements" className="space-y-6">
         <TabsList className="grid grid-cols-2 gap-4 bg-muted p-1">
           <TabsTrigger value="engagements">Engagements</TabsTrigger>
-          <TabsTrigger value="learning">Analytics</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics & Process</TabsTrigger>
         </TabsList>
 
         <TabsContent value="engagements" className="space-y-6">
           <AssuranceList />
         </TabsContent>
 
-        <TabsContent value="learning" className="space-y-6">
-          <AssuranceLearning />
+        <TabsContent value="analytics" className="space-y-6">
+          <AssuranceAnalytics />
         </TabsContent>
       </Tabs>
     </div>
