@@ -16,8 +16,10 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
   const [selectedState, setSelectedState] = useState<string>('California');
   const [taxCalculation, setTaxCalculation] = useState({
     totalAmount: 0,
-    deductions: 0,
+    expenses: 0,
     estimatedTax: 0,
+    federalTax: 0,
+    stateTax: 0,
     effectiveRate: 0,
     taxableIncome: 0,
     minimumTax: 800
@@ -74,8 +76,8 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
                   <span className="font-semibold">${taxCalculation.totalAmount.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Total Deductions:</span>
-                  <span className="font-semibold text-green-600">${taxCalculation.deductions.toLocaleString()}</span>
+                  <span className="text-muted-foreground">Total Expenses:</span>
+                  <span className="font-semibold text-green-600">${taxCalculation.expenses.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Taxable Income:</span>
@@ -89,13 +91,13 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
             <h3 className="text-lg font-semibold mb-4">Tax Breakdown</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card className="p-6 bg-primary/5 border-primary/20">
-                <h4 className="text-sm font-medium text-muted-foreground mb-2">Minimum Tax</h4>
-                <p className="text-2xl font-bold text-primary">${taxCalculation.minimumTax.toLocaleString()}</p>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Federal Tax</h4>
+                <p className="text-2xl font-bold text-primary">${taxCalculation.federalTax.toLocaleString()}</p>
               </Card>
               
               <Card className="p-6 bg-secondary/5 border-secondary/20">
-                <h4 className="text-sm font-medium text-muted-foreground mb-2">Estimated Tax</h4>
-                <p className="text-2xl font-bold text-secondary">${taxCalculation.estimatedTax.toLocaleString()}</p>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">State Tax</h4>
+                <p className="text-2xl font-bold text-secondary">${taxCalculation.stateTax.toLocaleString()}</p>
               </Card>
               
               <Card className="p-6 bg-accent/5 border-accent/20">
