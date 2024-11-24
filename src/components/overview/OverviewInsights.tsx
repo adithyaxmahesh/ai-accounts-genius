@@ -1,53 +1,18 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LineChart, TrendingUp, DollarSign, ArrowUpRight, ArrowDownRight } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/components/AuthProvider";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useRealtimeFinancials } from "@/hooks/useRealtimeFinancials";
 
 export const OverviewInsights = () => {
-  const { session } = useAuth();
-
-  const { data: revenueData } = useQuery({
-    queryKey: ['revenue-trend', session?.user.id],
-    queryFn: async () => {
-      const { data: revenue } = await supabase
-        .from('revenue_records')
-        .select('amount, date')
-        .eq('user_id', session?.user.id)
-        .order('date', { ascending: true })
-        .limit(7);
-
-      const { data: expenses } = await supabase
-        .from('write_offs')
-        .select('amount, date')
-        .eq('user_id', session?.user.id)
-        .order('date', { ascending: true })
-        .limit(7);
-      
-      // Combine and format the data
-      const combinedData = revenue?.map((rev, index) => ({
-        date: new Date(rev.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        revenue: rev.amount,
-        expenses: expenses?.[index]?.amount || 0
-      })) || [];
-
-      return combinedData;
-    }
-  });
-
-  const totalRevenue = revenueData?.reduce((sum, record) => sum + (record.revenue || 0), 0) || 0;
-  const totalExpenses = revenueData?.reduce((sum, record) => sum + (record.expenses || 0), 0) || 0;
-  const netIncome = totalRevenue - totalExpenses;
-  const growthRate = totalRevenue > 0 ? ((netIncome / totalRevenue) * 100).toFixed(1) : 0;
+  const { revenue, expenses, netIncome, growthRate, chartData } = useRealtimeFinancials();
 
   return (
     <Card className="p-6 bg-gradient-to-br from-gray-900 to-gray-800 border-0">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <LineChart className="h-6 w-6 text-primary" />
-          <h2 className="text-xl font-semibold">Financial Overview</h2>
+          <h2 className="text-xl font-semibold">Financial Overview (Last 24h)</h2>
         </div>
         <Button variant="outline" className="bg-gray-800/50 border-gray-700">
           View Details
@@ -58,7 +23,7 @@ export const OverviewInsights = () => {
         <div className="space-y-4">
           <div className="h-[200px] bg-gray-800/50 rounded-lg p-4">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={revenueData}>
+              <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#9b87f5" stopOpacity={0.3}/>
@@ -113,7 +78,7 @@ export const OverviewInsights = () => {
                 <ArrowUpRight className="h-4 w-4 text-green-500" />
               </div>
               <p className="text-sm text-gray-400">Total Revenue</p>
-              <p className="text-xl font-bold">${totalRevenue.toLocaleString()}</p>
+              <p className="text-xl font-bold">${revenue.toLocaleString()}</p>
             </div>
             <div className="bg-gray-800/50 p-4 rounded-lg">
               <div className="flex items-center justify-between mb-2">
@@ -121,7 +86,7 @@ export const OverviewInsights = () => {
                 <ArrowDownRight className="h-4 w-4 text-red-500" />
               </div>
               <p className="text-sm text-gray-400">Total Expenses</p>
-              <p className="text-xl font-bold">${totalExpenses.toLocaleString()}</p>
+              <p className="text-xl font-bold">${expenses.toLocaleString()}</p>
             </div>
           </div>
         </div>
@@ -140,8 +105,8 @@ export const OverviewInsights = () => {
             <div className="p-3 bg-gray-900/50 rounded-lg">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Growth Rate</span>
-                <span className={`text-lg font-bold ${Number(growthRate) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {growthRate}%
+                <span className={`text-lg font-bold ${growthRate >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {growthRate.toFixed(1)}%
                 </span>
               </div>
             </div>
