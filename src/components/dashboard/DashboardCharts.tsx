@@ -1,10 +1,20 @@
 import { Card } from "@/components/ui/card";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 export const DashboardCharts = ({ data }: { data: any[] }) => {
+  const navigate = useNavigate();
+  
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-      <Card className="p-6 bg-gradient-to-br from-card via-card to-muted/20 border-none">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <Card 
+        className={cn(
+          "p-6 bg-gradient-to-br from-card via-card to-muted/20 border-none",
+          "hover:shadow-lg transition-all cursor-pointer"
+        )}
+        onClick={() => navigate('/revenue')}
+      >
         <h3 className="text-lg font-semibold mb-4">Revenue Overview</h3>
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
@@ -45,7 +55,13 @@ export const DashboardCharts = ({ data }: { data: any[] }) => {
         </div>
       </Card>
 
-      <Card className="p-6 bg-gradient-to-br from-card via-card to-muted/20 border-none">
+      <Card 
+        className={cn(
+          "p-6 bg-gradient-to-br from-card via-card to-muted/20 border-none",
+          "hover:shadow-lg transition-all cursor-pointer"
+        )}
+        onClick={() => navigate('/write-offs')}
+      >
         <h3 className="text-lg font-semibold mb-4">Expense Breakdown</h3>
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">

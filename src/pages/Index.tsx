@@ -14,6 +14,8 @@ const Index = () => {
   const { data: metrics } = useQuery({
     queryKey: ['dashboard-metrics', session?.user.id],
     queryFn: async () => {
+      if (!session?.user.id) return null;
+      
       const [revenueResult, expensesResult] = await Promise.all([
         supabase
           .from('revenue_records')
@@ -41,7 +43,6 @@ const Index = () => {
   const { data: chartData } = useQuery({
     queryKey: ['dashboard-chart-data', session?.user.id],
     queryFn: async () => {
-      // Mock data for demonstration
       return [
         { name: 'Jan', revenue: 4000, expenses: 2400 },
         { name: 'Feb', revenue: 3000, expenses: 1398 },
@@ -55,21 +56,31 @@ const Index = () => {
 
   if (!session) {
     return (
-      <div className="container mx-auto p-6 text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Tax Pro</h1>
-        <p className="text-xl text-muted-foreground mb-8">
-          Please sign in to access your dashboard
-        </p>
-        <Button onClick={() => navigate('/auth')}>Sign In</Button>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-6 p-8 max-w-lg mx-auto glass-card">
+          <h1 className="text-4xl font-bold mb-4">Welcome to Tax Pro</h1>
+          <p className="text-xl text-muted-foreground mb-8">
+            Please sign in to access your dashboard
+          </p>
+          <Button 
+            onClick={() => navigate('/auth')}
+            className="w-full"
+            size="lg"
+          >
+            Sign In
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 animate-fade-in">
-      <DashboardHeader />
-      <DashboardMetrics metrics={metrics} />
-      <DashboardCharts data={chartData} />
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto p-6 space-y-6">
+        <DashboardHeader />
+        <DashboardMetrics metrics={metrics} />
+        <DashboardCharts data={chartData} />
+      </div>
     </div>
   );
 };
