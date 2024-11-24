@@ -14,6 +14,7 @@ interface TaxCode {
   description: string;
   expense_category: string;
   deduction_type: string;
+  state: string | null;
 }
 
 const states = [
