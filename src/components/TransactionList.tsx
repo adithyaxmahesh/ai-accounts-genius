@@ -6,14 +6,18 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { cn } from "@/lib/utils";
+import { WriteOff } from "@/components/types";
+import { useToast } from "@/components/ui/use-toast";
 
 export const TransactionList = () => {
   const { session } = useAuth();
   const [showAll, setShowAll] = useState(false);
+  const { toast } = useToast();
 
-  const { data: writeOffs = [] } = useQuery({
+  const { data: writeOffs = [], isError, error } = useQuery({
     queryKey: ['write-offs', session?.user.id],
     queryFn: async () => {
+      console.log("Fetching write-offs for user:", session?.user.id); // Debug log
       const { data, error } = await supabase
         .from('write_offs')
         .select(`
@@ -26,12 +30,27 @@ export const TransactionList = () => {
           )
         `)
         .eq('user_id', session?.user.id)
-        .order('date', { ascending: false });
+        .order('date', { ascending: false })
+        .returns<WriteOff[]>();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching write-offs:", error); // Debug log
+        throw error;
+      }
+      
+      console.log("Fetched write-offs:", data); // Debug log
       return data || [];
-    }
+    },
+    enabled: !!session?.user.id
   });
+
+  if (isError) {
+    toast({
+      variant: "destructive",
+      title: "Error loading write-offs",
+      description: error instanceof Error ? error.message : "Failed to load write-offs"
+    });
+  }
 
   const displayWriteOffs = showAll ? writeOffs : writeOffs.slice(0, 3);
 
@@ -59,7 +78,7 @@ export const TransactionList = () => {
               </div>
             ) : (
               displayWriteOffs.map((writeOff) => (
-                <div key={writeOff.id} className="flex justify-between items-center p-4 bg-muted rounded-lg">
+                <div key={writeOff.id} className="flex justify-between items-center p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
                   <div>
                     <p className="font-semibold">{writeOff.description}</p>
                     {writeOff.tax_codes && (
