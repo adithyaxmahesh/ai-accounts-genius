@@ -11,26 +11,36 @@ interface RevenueCategoriesProps {
 const COLORS = ['#9b87f5', '#87c5f5', '#f587b8', '#87f5e9', '#f5d787'];
 
 export const RevenueCategories = ({ data }: RevenueCategoriesProps) => {
-  const total = data.reduce((sum, item) => sum + item.amount, 0);
+  const formattedData = data.map(item => ({
+    name: item.category,
+    value: item.amount
+  }));
 
   return (
     <Card className="p-6">
-      <h3 className="text-xl font-semibold mb-4">Revenue by Category</h3>
+      <h3 className="text-xl font-semibold mb-6">Revenue by Category</h3>
       <div className="h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
-              data={data}
+              data={formattedData}
               cx="50%"
               cy="50%"
-              labelLine={false}
+              innerRadius={60}
               outerRadius={80}
               fill="#8884d8"
-              dataKey="amount"
-              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+              paddingAngle={5}
+              dataKey="value"
+              label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+              labelLine={{ stroke: '#666', strokeWidth: 1 }}
             >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              {formattedData.map((entry, index) => (
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={COLORS[index % COLORS.length]}
+                  stroke="transparent"
+                  className="transition-all duration-300 hover:opacity-80"
+                />
               ))}
             </Pie>
             <Tooltip 
@@ -38,11 +48,15 @@ export const RevenueCategories = ({ data }: RevenueCategoriesProps) => {
               contentStyle={{ 
                 backgroundColor: '#1A1F2C',
                 border: '1px solid #333',
-                borderRadius: '8px'
+                borderRadius: '8px',
+                padding: '8px'
               }}
-              labelStyle={{ color: '#888' }}
             />
-            <Legend />
+            <Legend 
+              verticalAlign="bottom" 
+              height={36}
+              formatter={(value) => <span className="text-sm">{value}</span>}
+            />
           </PieChart>
         </ResponsiveContainer>
       </div>

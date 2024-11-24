@@ -25,7 +25,7 @@ export const RevenueFilters = ({
   onApplyFilters
 }: RevenueFiltersProps) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-4 bg-card rounded-lg border border-border">
       <div>
         <h4 className="text-sm font-medium mb-2">Date Range</h4>
         <div className="grid grid-cols-2 gap-4">
