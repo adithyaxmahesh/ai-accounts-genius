@@ -1,3 +1,5 @@
+import { corsHeaders } from './utils.ts';
+
 const numberPattern = /\$?\d{1,3}(,\d{3})*(\.\d{2})?/;
 const expenseKeywords = ['expense', 'payment', 'purchase', 'cost', 'fee', 'charge'];
 const revenueKeywords = ['revenue', 'income', 'sale', 'deposit', 'interest'];
@@ -23,6 +25,7 @@ export async function processTransactions(lines: string[]) {
           transactions.push({
             amount: transactionAmount,
             description: line.trim(),
+            type: isExpense ? 'expense' : 'revenue',
             line: lines.indexOf(line) + 1
           });
 

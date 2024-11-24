@@ -4,6 +4,7 @@ interface Transaction {
   amount: number;
   description: string;
   line: number;
+  type: string;
 }
 
 export async function processIncomeStatement(
@@ -15,10 +16,9 @@ export async function processIncomeStatement(
   const categorizedTransactions = transactions.map(transaction => {
     const description = transaction.description.toLowerCase();
     let category = 'other';
-    let type = transaction.amount > 0 ? 'revenue' : 'expense';
 
     // Revenue categories
-    if (description.includes('sale') || description.includes('revenue') || description.includes('income')) {
+    if (description.includes('sale') || description.includes('revenue')) {
       category = 'sales_revenue';
     } else if (description.includes('interest')) {
       category = 'interest_income';
@@ -41,8 +41,7 @@ export async function processIncomeStatement(
       category,
       name: transaction.description,
       amount: Math.abs(transaction.amount),
-      type,
-      date: new Date().toISOString(),
+      type: transaction.type,
       description: `Automatically generated from document analysis - Line ${transaction.line}`
     };
   });
