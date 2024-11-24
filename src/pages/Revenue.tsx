@@ -20,7 +20,7 @@ const Revenue = () => {
         .from('revenue_records')
         .select('*')
         .eq('user_id', session?.user.id)
-        .order('date', { ascending: false });
+        .order('date', { ascending: true });
 
       if (error) throw error;
       return data || [];
@@ -29,7 +29,7 @@ const Revenue = () => {
   });
 
   const chartData = revenueData?.reduce((acc: any[], curr) => {
-    const month = new Date(curr.date).toLocaleDateString('default', { month: 'short' });
+    const month = new Date(curr.date).toLocaleDateString('default', { month: 'short', year: '2-digit' });
     const existingMonth = acc.find(item => item.month === month);
     
     if (existingMonth) {
