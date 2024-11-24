@@ -57,10 +57,10 @@ export const BalanceSheetSection = ({ title, items, className }: BalanceSheetSec
   const total = items.reduce((sum, item) => sum + Number(item.amount), 0);
 
   return (
-    <Card className={`p-6 bg-black/40 backdrop-blur-lg border border-white/10 shadow-lg ${className}`}>
+    <Card className={`p-6 bg-black/60 backdrop-blur-lg border border-white/10 shadow-lg ${className}`}>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-foreground">{title}</h2>
-        <div className="text-2xl font-bold text-foreground bg-black/30 px-4 py-2 rounded-lg">
+        <h2 className="text-xl font-semibold bg-gradient-to-r from-primary/80 to-secondary/80 bg-clip-text text-transparent">{title}</h2>
+        <div className="text-2xl font-bold text-foreground bg-black/50 px-4 py-2 rounded-lg border border-white/5">
           ${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </div>
       </div>
@@ -69,15 +69,15 @@ export const BalanceSheetSection = ({ title, items, className }: BalanceSheetSec
         <div className="space-y-6">
           {Object.entries(groupedItems).map(([term, subcategories]) => (
             <div key={term} className="space-y-4">
-              <h3 className="text-lg font-semibold capitalize text-foreground">
+              <h3 className="text-lg font-semibold capitalize bg-gradient-to-r from-primary/90 to-secondary/90 bg-clip-text text-transparent">
                 {term === 'short' ? 'Current' : term === 'long' ? 'Non-Current' : term}
               </h3>
               
               {Object.entries(subcategories).map(([subcategory, subcategoryItems]) => (
                 <div key={subcategory} className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <h4 className="text-md font-medium text-foreground">{subcategory}</h4>
-                    <Badge variant="secondary" className="bg-primary/20 text-primary-foreground">
+                    <h4 className="text-md font-medium bg-gradient-to-r from-primary/70 to-secondary/70 bg-clip-text text-transparent">{subcategory}</h4>
+                    <Badge variant="secondary" className="bg-primary/20 text-primary-foreground border border-primary/30">
                       ${subcategoryItems.reduce((sum, item) => sum + Number(item.amount), 0).toLocaleString()}
                     </Badge>
                   </div>
@@ -86,15 +86,15 @@ export const BalanceSheetSection = ({ title, items, className }: BalanceSheetSec
                     {subcategoryItems.map((item) => (
                       <div
                         key={item.id}
-                        className="flex justify-between items-start p-4 bg-black/40 backdrop-blur-sm rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 border border-white/5 hover:border-white/10 hover:bg-black/50"
+                        className="flex justify-between items-start p-4 bg-black/70 backdrop-blur-sm rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 border border-white/5 hover:border-white/10 hover:bg-black/80"
                       >
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <p className="font-semibold text-foreground">{item.name}</p>
+                            <p className="font-semibold text-foreground/90">{item.name}</p>
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger>
-                                  <Info className="h-4 w-4 text-muted-foreground" />
+                                  <Info className="h-4 w-4 text-primary/70" />
                                 </TooltipTrigger>
                                 <TooltipContent>
                                   <p>{item.description || 'No description available'}</p>
@@ -116,7 +116,7 @@ export const BalanceSheetSection = ({ title, items, className }: BalanceSheetSec
                           )}
                         </div>
                         <div className="text-right">
-                          <p className="text-lg font-semibold text-foreground">${item.amount.toLocaleString()}</p>
+                          <p className="text-lg font-semibold text-foreground/90">${item.amount.toLocaleString()}</p>
                           <p className="text-xs text-muted-foreground">
                             {formatDate(item.created_at)}
                           </p>
