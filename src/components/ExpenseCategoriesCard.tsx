@@ -5,6 +5,15 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recha
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 
+interface WriteOff {
+  amount: number;
+  description: string;
+  date: string;
+  tax_codes: {
+    expense_category: string;
+  } | null;
+}
+
 export const ExpenseCategoriesCard = () => {
   const { session } = useAuth();
 
@@ -22,7 +31,8 @@ export const ExpenseCategoriesCard = () => {
             expense_category
           )
         `)
-        .eq('user_id', session?.user.id);
+        .eq('user_id', session?.user.id)
+        .returns<WriteOff[]>();
 
       if (error) throw error;
 
