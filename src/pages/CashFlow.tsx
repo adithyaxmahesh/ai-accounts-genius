@@ -1,71 +1,63 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/components/AuthProvider";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const CashFlow = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
 
-  const { data: cashFlowStatements, isLoading } = useQuery({
-    queryKey: ["cashFlowStatements", session?.user.id],
+  const { data: cashFlows, isLoading } = useQuery({
+    queryKey: ['cash-flows'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("cash_flow_statements")
-        .select("*")
-        .eq("user_id", session?.user.id)
-        .order("created_at", { ascending: false });
+        .from('cash_flow_statements')
+        .select('*')
+        .eq('user_id', session?.user.id)
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
       return data;
     },
+    enabled: !!session?.user.id,
   });
 
-  if (isLoading) {
-    return <div>Loading...</div>;
+  if (!session) {
+    return (
+      <div className="container mx-auto p-6">
+        <Button onClick={() => navigate('/auth')}>Sign In</Button>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-background p-6 space-y-6">
-      <div className="flex items-center space-x-4 mb-8">
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate('/')}
-          className="hover:scale-105 transition-transform"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Dashboard
-        </Button>
-      </div>
-
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold">Cash Flow Statement</h1>
-        <p className="text-muted-foreground">Monitor your cash inflows and outflows</p>
-      </header>
-
-      <div className="grid gap-6">
-        {cashFlowStatements?.map((statement) => (
-          <Card key={statement.id} className="p-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="font-semibold">{statement.name}</h3>
-                <p className="text-sm text-muted-foreground">{statement.description}</p>
-              </div>
-              <p className={`text-lg font-semibold ${statement.type === 'inflow' ? 'text-green-600' : 'text-red-600'}`}>
-                ${statement.amount.toLocaleString()}
-              </p>
+    <div className="container mx-auto p-6">
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Cash Flow Statement</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <p>Loading...</p>
+          ) : cashFlows && cashFlows.length > 0 ? (
+            <div className="space-y-4">
+              {cashFlows.map((flow) => (
+                <div key={flow.id} className="p-4 border rounded-lg">
+                  <h3 className="font-semibold">{flow.name}</h3>
+                  <p className="text-sm text-muted-foreground">{flow.description}</p>
+                  <p className="mt-2">Amount: ${flow.amount}</p>
+                  <p className="text-sm">Category: {flow.category}</p>
+                  <p className="text-sm">Type: {flow.type}</p>
+                </div>
+              ))}
             </div>
-          </Card>
-        ))}
-
-        {(!cashFlowStatements || cashFlowStatements.length === 0) && (
-          <p className="text-center text-muted-foreground">No cash flow statements found</p>
-        )}
-      </div>
+          ) : (
+            <p>No cash flow statements found.</p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
