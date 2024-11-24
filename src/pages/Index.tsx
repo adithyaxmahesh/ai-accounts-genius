@@ -20,6 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { FinancialMetrics } from "@/components/FinancialMetrics";
+import { OverviewInsights } from "@/components/overview/OverviewInsights";
 import { FinancialPlanningCard } from "@/components/financial-planning/FinancialPlanningCard";
 import { FinancialHealthCard } from "@/components/financial-health/FinancialHealthCard";
 import { CollaboratorsList } from "@/components/collaborators/CollaboratorsList";
@@ -32,6 +33,8 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+// ... keep existing code (imports and component definition start)
 
 const Index = () => {
   const { session } = useAuth();
@@ -65,7 +68,7 @@ const Index = () => {
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-2">
+    <div className="container mx-auto p-4 space-y-4">
       <div className="flex justify-between items-center mb-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -79,6 +82,8 @@ const Index = () => {
         </DropdownMenu>
         <ProfileWidget />
       </div>
+
+      <OverviewInsights />
       
       <FinancialMetrics />
 
