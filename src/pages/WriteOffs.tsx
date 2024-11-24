@@ -69,8 +69,8 @@ const WriteOffs = () => {
         </Card>
       </div>
 
-      <TaxCodesList />
       <TransactionList />
+      <TaxCodesList />
 
       <WriteOffDialog
         isOpen={isDialogOpen}
