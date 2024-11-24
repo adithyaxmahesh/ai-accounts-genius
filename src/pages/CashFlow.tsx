@@ -2,18 +2,18 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/AuthProvider";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { CashFlowMetrics } from "@/components/cash-flow/CashFlowMetrics";
 import { CashFlowChart } from "@/components/cash-flow/CashFlowChart";
 import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 const CashFlow = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
 
-  const { data: cashFlowData } = useQuery({
-    queryKey: ['cash-flow', session?.user.id],
+  const { data: cashFlowData, isLoading } = useQuery({
+    queryKey: ['cash-flows', session?.user.id],
     queryFn: async () => {
       const { data: statements, error } = await supabase
         .from('cash_flow_statements')
@@ -34,13 +34,14 @@ const CashFlow = () => {
 
       // Calculate current period metrics
       const currentMetrics = {
-        operatingCashFlow: statements?.reduce((sum, stmt) => 
-          stmt.type === 'operating' ? sum + Number(stmt.amount) : sum, 0) || 0,
-        financingCashFlow: statements?.reduce((sum, stmt) => 
-          stmt.type === 'financing' ? sum + Number(stmt.amount) : sum, 0) || 0,
-        freeCashFlow: statements?.reduce((sum, stmt) => 
-          stmt.type === 'free' ? sum + Number(stmt.amount) : sum, 0) || 0,
-        netCashFlow: statements?.reduce((sum, stmt) => sum + Number(stmt.amount), 0) || 0,
+        netIncome: 100000, // Example values - replace with actual calculations
+        depreciation: 20000,
+        workingCapitalChange: 15000,
+        capitalExpenditure: 30000,
+        operatingIncome: 120000,
+        taxes: 25000,
+        financingInflows: 50000,
+        financingOutflows: 40000,
       };
 
       return {
@@ -59,22 +60,28 @@ const CashFlow = () => {
     );
   }
 
-  return (
-    <div className="container mx-auto p-6">
-      <Button
-        variant="outline"
-        onClick={() => navigate('/')}
-        className="flex items-center gap-2 mb-4"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to Dashboard
-      </Button>
+  if (isLoading) {
+    return <div className="container mx-auto p-6">Loading...</div>;
+  }
 
-      <Card>
+  return (
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between mb-6">
+        <Button
+          variant="outline"
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Dashboard
+        </Button>
+      </div>
+
+      <Card className="mb-6">
         <CardHeader>
           <CardTitle>Cash Flow Analysis</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <CashFlowMetrics {...cashFlowData?.metrics} />
           {cashFlowData?.statements && cashFlowData.statements.length > 0 ? (
             <CashFlowChart data={cashFlowData.statements} />

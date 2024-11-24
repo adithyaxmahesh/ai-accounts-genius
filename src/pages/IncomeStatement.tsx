@@ -71,16 +71,18 @@ const IncomeStatement = () => {
 
   return (
     <div className="container mx-auto p-6">
-      <Button
-        variant="outline"
-        onClick={() => navigate('/')}
-        className="flex items-center gap-2 mb-4"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to Dashboard
-      </Button>
+      <div className="flex items-center justify-between mb-6">
+        <Button
+          variant="outline"
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Dashboard
+        </Button>
+      </div>
 
-      <Card>
+      <Card className="mb-6">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Income Statement</CardTitle>
           <AddIncomeStatementEntry />
