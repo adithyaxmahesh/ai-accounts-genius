@@ -23,11 +23,11 @@ export const calculateTaxes = async (
     const { data: writeOffs, error: writeOffsError } = await supabase
       .from('write_offs')
       .select('amount')
-      .eq('status', 'approved');
+      .neq('status', 'rejected'); // Include all non-rejected write-offs
 
     if (writeOffsError) throw writeOffsError;
 
-    const totalExpenses = writeOffs?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0;
+    const totalExpenses = writeOffs?.reduce((sum, item) => sum + (Number(item.amount) || 0), 0) || 0;
 
     // Get revenue total from documents
     const { data: revenueRecords, error: revenueError } = await supabase
@@ -36,7 +36,7 @@ export const calculateTaxes = async (
 
     if (revenueError) throw revenueError;
 
-    const totalRevenue = revenueRecords?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0;
+    const totalRevenue = revenueRecords?.reduce((sum, item) => sum + (Number(item.amount) || 0), 0) || 0;
 
     // Calculate taxable income
     const taxableIncome = Math.max(0, totalRevenue - totalExpenses);
