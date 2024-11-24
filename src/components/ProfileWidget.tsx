@@ -1,48 +1,65 @@
+import { useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { UserRound, LogOut } from "lucide-react";
+import { User, Settings, LogOut } from "lucide-react";
+import { BusinessSettings } from "./settings/BusinessSettings";
 
 export const ProfileWidget = () => {
   const { session } = useAuth();
-  const navigate = useNavigate();
+  const [showSettings, setShowSettings] = useState(false);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    navigate("/auth");
   };
 
-  const email = session?.user?.email;
-  const initials = email ? email[0].toUpperCase() : "U";
+  if (!session) return null;
 
   return (
-    <div className="absolute top-4 right-4 z-[60]">
+    <>
       <DropdownMenu>
-        <DropdownMenuTrigger className="focus:outline-none">
-          <Avatar className="h-8 w-8 hover:ring-2 hover:ring-primary transition-all bg-white">
-            <AvatarFallback className="bg-primary text-primary-foreground">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback>
+                <User className="h-4 w-4" />
+              </AvatarFallback>
+            </Avatar>
+          </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem className="flex items-center gap-2">
-            <UserRound className="h-4 w-4" />
-            <span className="truncate">{email}</span>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setShowSettings(true)}>
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
           </DropdownMenuItem>
-          <DropdownMenuItem className="flex items-center gap-2 text-red-500" onClick={handleSignOut}>
-            <LogOut className="h-4 w-4" />
-            <span>Sign out</span>
+          <DropdownMenuItem onClick={handleSignOut}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Sign out
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    </div>
+
+      <Dialog open={showSettings} onOpenChange={setShowSettings}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Settings</DialogTitle>
+          </DialogHeader>
+          <BusinessSettings />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };

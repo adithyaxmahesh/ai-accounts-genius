@@ -458,6 +458,68 @@ export type Database = {
           },
         ]
       }
+      business_information: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          business_name: string | null
+          business_type: string | null
+          city: string | null
+          created_at: string
+          ein: string | null
+          fiscal_year_end: string | null
+          id: string
+          industry: string | null
+          phone: string | null
+          state: string | null
+          updated_at: string
+          user_id: string | null
+          zip_code: string | null
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          business_name?: string | null
+          business_type?: string | null
+          city?: string | null
+          created_at?: string
+          ein?: string | null
+          fiscal_year_end?: string | null
+          id?: string
+          industry?: string | null
+          phone?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id?: string | null
+          zip_code?: string | null
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          business_name?: string | null
+          business_type?: string | null
+          city?: string | null
+          created_at?: string
+          ein?: string | null
+          fiscal_year_end?: string | null
+          id?: string
+          industry?: string | null
+          phone?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id?: string | null
+          zip_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_information_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_insights: {
         Row: {
           category: string

@@ -20,6 +20,36 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
   const [selectedBusinessType, setSelectedBusinessType] = useState<string>('corporation');
   const [selectedState, setSelectedState] = useState<string>('California');
 
+  const { data: businessInfo } = useQuery({
+    queryKey: ['business-info', session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('business_information')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        toast({
+          variant: "destructive",
+          title: "Error fetching business information",
+          description: error.message
+        });
+        return null;
+      }
+      return data;
+    }
+  });
+
+  useEffect(() => {
+    if (businessInfo) {
+      setSelectedBusinessType(businessInfo.business_type?.toLowerCase()?.replace(' ', '_') || 'corporation');
+      setSelectedState(businessInfo.state || 'California');
+    }
+  }, [businessInfo]);
+
   const { data: taxAnalysis, isError } = useQuery({
     queryKey: ['tax-analysis', session?.user?.id, selectedBusinessType, selectedState],
     queryFn: async () => {
