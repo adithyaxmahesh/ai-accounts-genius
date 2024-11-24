@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { CashFlowMetrics } from "@/components/cash-flow/CashFlowMetrics";
 import { CashFlowChart } from "@/components/cash-flow/CashFlowChart";
+import { ArrowLeft } from "lucide-react";
 
 const CashFlow = () => {
   const { session } = useAuth();
@@ -25,11 +26,11 @@ const CashFlow = () => {
       // Calculate metrics for each period
       const processedData = statements?.map(statement => ({
         date: new Date(statement.date).toLocaleDateString('default', { month: 'short', year: 'numeric' }),
-        operatingCashFlow: statement.amount * (statement.type === 'operating' ? 1 : 0),
-        financingCashFlow: statement.amount * (statement.type === 'financing' ? 1 : 0),
-        freeCashFlow: statement.amount * (statement.type === 'free' ? 1 : 0),
-        netCashFlow: statement.amount,
-      }));
+        operatingCashFlow: statement.type === 'operating' ? Number(statement.amount) : 0,
+        financingCashFlow: statement.type === 'financing' ? Number(statement.amount) : 0,
+        freeCashFlow: statement.type === 'free' ? Number(statement.amount) : 0,
+        netCashFlow: Number(statement.amount),
+      })) || [];
 
       // Calculate current period metrics
       const currentMetrics = {
@@ -44,7 +45,7 @@ const CashFlow = () => {
       };
 
       return {
-        statements: processedData || [],
+        statements: processedData,
         metrics: currentMetrics,
       };
     },
@@ -65,13 +66,30 @@ const CashFlow = () => {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between mb-6">
+        <Button
+          variant="outline"
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Dashboard
+        </Button>
+      </div>
+
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>Cash Flow Analysis</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <CashFlowMetrics {...cashFlowData?.metrics} />
-          <CashFlowChart data={cashFlowData?.statements || []} />
+          {cashFlowData?.statements && cashFlowData.statements.length > 0 ? (
+            <CashFlowChart data={cashFlowData.statements} />
+          ) : (
+            <p className="text-center text-muted-foreground py-8">
+              No cash flow data available. Add some transactions to see the chart.
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>
