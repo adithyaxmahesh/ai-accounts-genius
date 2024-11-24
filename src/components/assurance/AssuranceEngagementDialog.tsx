@@ -31,6 +31,7 @@ export const AssuranceEngagementDialog = ({
         engagement_type: formData.engagementType,
         start_date: formData.startDate,
         user_id: userId,
+        status: "pending", // Explicitly set initial status
       });
 
       if (error) throw error;
@@ -64,13 +65,13 @@ export const AssuranceEngagementDialog = ({
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium">Client Name</label>
+            <label className="text-sm font-medium">Organization/Business Name</label>
             <Input
               value={formData.clientName}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, clientName: e.target.value }))
               }
-              placeholder="Enter client name"
+              placeholder="Enter the name of the organization you're auditing"
             />
           </div>
 
