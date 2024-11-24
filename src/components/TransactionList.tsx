@@ -69,18 +69,8 @@ export const TransactionList = () => {
     };
   };
 
-  const calculateTotalAmount = (writeOff: WriteOff) => {
-    // If there are charges in the description, use those
-    const { charges } = parseDescription(writeOff.description);
-    if (charges.length > 0) {
-      return charges.reduce((sum, n) => sum + n, 0);
-    }
-    
-    // Otherwise use the write-off amount
-    return Number(writeOff.amount) || 0;
-  };
-
-  const totalDeductions = writeOffs.reduce((sum, writeOff) => sum + calculateTotalAmount(writeOff), 0);
+  // Use only the write-off amount for the total
+  const totalDeductions = writeOffs.reduce((sum, writeOff) => sum + Number(writeOff.amount), 0);
 
   const getChargesBreakdown = (description: string) => {
     const { charges } = parseDescription(description);
@@ -143,7 +133,7 @@ export const TransactionList = () => {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">{formatCurrency(calculateTotalAmount(writeOff))}</p>
+                    <p className="font-semibold">{formatCurrency(Number(writeOff.amount))}</p>
                     <p className="text-sm text-muted-foreground">
                       {new Date(writeOff.date).toLocaleDateString()}
                     </p>
