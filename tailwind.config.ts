@@ -37,16 +37,16 @@ export default {
           foreground: "#ffffff",
         },
         muted: {
-          DEFAULT: "#f3f4f6",
-          foreground: "#6b7280",
+          DEFAULT: "#1f2937",
+          foreground: "#9ca3af",
         },
         accent: {
           DEFAULT: "#D6BCFA",
           foreground: "#1A1F2C",
         },
         card: {
-          DEFAULT: "#ffffff",
-          foreground: "#1A1F2C",
+          DEFAULT: "#1A1F2C",
+          foreground: "#ffffff",
         },
       },
       borderRadius: {
