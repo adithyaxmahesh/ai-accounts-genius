@@ -30,6 +30,10 @@ serve(async (req) => {
       .from('tax_rules')
       .select('*')
 
+    // Log OpenAI API key status (not the actual key)
+    const openAiKey = Deno.env.get('OPENAI_API_KEY')
+    console.log('OpenAI API Key status:', openAiKey ? 'Present' : 'Missing')
+
     // Process with OpenAI
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -63,6 +67,12 @@ serve(async (req) => {
         max_tokens: 1000,
       }),
     })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error('OpenAI API Error:', errorData)
+      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`)
+    }
 
     const aiResponse = await response.json()
     const answer = aiResponse.choices[0].message.content
