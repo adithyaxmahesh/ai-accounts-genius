@@ -1,8 +1,6 @@
-import { corsHeaders } from './utils.ts';
+import { categorizeTransaction } from './transactionCategories.ts';
 
 const numberPattern = /\$?\d{1,3}(,\d{3})*(\.\d{2})?/;
-const expenseKeywords = ['expense', 'payment', 'purchase', 'cost', 'fee', 'charge'];
-const revenueKeywords = ['revenue', 'income', 'sale', 'deposit', 'interest'];
 
 export async function processTransactions(lines: string[]) {
   const transactions: any[] = [];
@@ -13,24 +11,21 @@ export async function processTransactions(lines: string[]) {
     if (matches) {
       const amount = parseFloat(matches[0].replace(/[$,]/g, ''));
       if (!isNaN(amount)) {
-        const isExpense = expenseKeywords.some(keyword => 
-          line.toLowerCase().includes(keyword)
-        );
-        const isRevenue = revenueKeywords.some(keyword => 
-          line.toLowerCase().includes(keyword)
-        );
+        const { type, confidence } = categorizeTransaction(line, amount);
+        const transactionAmount = type === 'expense' ? -Math.abs(amount) : Math.abs(amount);
 
-        const transactionAmount = isExpense ? -amount : isRevenue ? amount : 0;
-        if (transactionAmount !== 0) {
-          transactions.push({
-            amount: transactionAmount,
-            description: line.trim(),
-            type: isExpense ? 'expense' : 'revenue',
-            line: lines.indexOf(line) + 1
-          });
+        transactions.push({
+          amount: transactionAmount,
+          description: line.trim(),
+          type,
+          confidence,
+          line: lines.indexOf(line) + 1
+        });
 
-          findings.push(`Detected ${isExpense ? 'expense' : 'revenue'}: $${amount.toLocaleString()} - ${line.trim()}`);
-        }
+        findings.push(
+          `Detected ${type} (${(confidence * 100).toFixed(0)}% confidence): ` +
+          `$${Math.abs(amount).toLocaleString()} - ${line.trim()}`
+        );
       }
     }
   }
