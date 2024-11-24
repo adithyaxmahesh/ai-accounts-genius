@@ -57,10 +57,10 @@ export const BalanceSheetSection = ({ title, items, className }: BalanceSheetSec
   const total = items.reduce((sum, item) => sum + Number(item.amount), 0);
 
   return (
-    <Card className={`p-6 bg-card ${className}`}>
+    <Card className={`p-6 bg-black/40 backdrop-blur-lg border border-white/10 shadow-lg ${className}`}>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-foreground">{title}</h2>
-        <div className="text-2xl font-bold text-foreground">
+        <div className="text-2xl font-bold text-foreground bg-black/30 px-4 py-2 rounded-lg">
           ${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </div>
       </div>
@@ -77,7 +77,7 @@ export const BalanceSheetSection = ({ title, items, className }: BalanceSheetSec
                 <div key={subcategory} className="space-y-3">
                   <div className="flex items-center gap-2">
                     <h4 className="text-md font-medium text-foreground">{subcategory}</h4>
-                    <Badge variant="secondary">
+                    <Badge variant="secondary" className="bg-primary/20 text-primary-foreground">
                       ${subcategoryItems.reduce((sum, item) => sum + Number(item.amount), 0).toLocaleString()}
                     </Badge>
                   </div>
@@ -86,7 +86,7 @@ export const BalanceSheetSection = ({ title, items, className }: BalanceSheetSec
                     {subcategoryItems.map((item) => (
                       <div
                         key={item.id}
-                        className="flex justify-between items-start p-4 bg-muted/50 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-border/50"
+                        className="flex justify-between items-start p-4 bg-black/40 backdrop-blur-sm rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 border border-white/5 hover:border-white/10 hover:bg-black/50"
                       >
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
