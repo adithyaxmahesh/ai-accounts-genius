@@ -1,5 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import { corsHeaders } from './utils.ts';
+import { processTransactions } from './transactionProcessor.ts';
+import { processEquity } from './equityProcessor.ts';
+import { processIncomeStatement } from './incomeProcessor.ts';
 
 interface DocumentAnalysis {
   transactions: any[];
@@ -54,6 +57,17 @@ export async function processDocument(
   const writeOffs: WriteOff[] = [];
   let riskLevel = 'low';
 
+  // Extract transactions from document
+  const { processedTransactions, extractedFindings } = await processTransactions(lines);
+  transactions.push(...processedTransactions);
+  findings.push(...extractedFindings);
+
+  // Process equity statements
+  await processEquity(supabaseClient, document.user_id, transactions);
+
+  // Process income statements
+  await processIncomeStatement(supabaseClient, document.user_id, transactions);
+
   const numberPattern = /\$?\d{1,3}(,\d{3})*(\.\d{2})?/;
   const expenseKeywords = ['expense', 'payment', 'purchase', 'cost', 'fee', 'charge'];
 
@@ -79,89 +93,18 @@ export async function processDocument(
 
           findings.push(`Potential write-off detected: $${amount.toLocaleString()} - ${category}`);
         }
-
-        transactions.push({
-          amount: isExpense ? -amount : amount,
-          description: line.trim(),
-          line: lines.indexOf(line) + 1
-        });
       }
     }
   }
-
-  // Calculate equity components
-  const equityComponents = await calculateEquityFromTransactions(transactions);
-
-  // Get previous equity statement
-  const { data: previousEquity } = await supabaseClient
-    .from('owners_equity_statements')
-    .select('*')
-    .eq('user_id', document.user_id)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .single();
-
-  const openingBalance = previousEquity?.amount || 0;
-  const closingBalance = openingBalance + 
-    equityComponents.netIncome - 
-    equityComponents.withdrawals + 
-    equityComponents.otherChanges;
-
-  // Insert new equity statement
-  await supabaseClient
-    .from('owners_equity_statements')
-    .insert({
-      user_id: document.user_id,
-      category: 'statement',
-      name: 'Automated Equity Statement',
-      amount: closingBalance,
-      description: 'Automatically generated from document analysis',
-      type: 'closing_balance',
-      date: new Date().toISOString()
-    });
-
-  // Insert detailed entries
-  const equityEntries = [
-    {
-      user_id: document.user_id,
-      category: 'net_income',
-      name: 'Net Income',
-      amount: equityComponents.netIncome,
-      type: 'income',
-      date: new Date().toISOString()
-    },
-    {
-      user_id: document.user_id,
-      category: 'withdrawals',
-      name: 'Withdrawals',
-      amount: equityComponents.withdrawals,
-      type: 'withdrawal',
-      date: new Date().toISOString()
-    },
-    {
-      user_id: document.user_id,
-      category: 'other_changes',
-      name: 'Other Changes',
-      amount: equityComponents.otherChanges,
-      type: 'adjustment',
-      date: new Date().toISOString()
-    }
-  ];
-
-  await supabaseClient
-    .from('owners_equity_statements')
-    .insert(equityEntries);
-
-  findings.push(`Equity statement generated with closing balance: $${closingBalance}`);
 
   return {
     transactions,
     findings,
     riskLevel,
     recommendations: [
-      "Review generated equity statement for accuracy",
-      "Verify all income and withdrawal classifications",
-      "Consider any missing equity adjustments"
+      "Review generated income statement for accuracy",
+      "Verify revenue and expense classifications",
+      "Consider any missing transactions"
     ],
     writeOffs
   };
