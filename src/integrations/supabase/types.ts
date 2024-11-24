@@ -920,6 +920,51 @@ export type Database = {
           },
         ]
       }
+      generated_tax_forms: {
+        Row: {
+          created_at: string
+          form_data: Json
+          id: string
+          status: string | null
+          template_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          form_data: Json
+          id?: string
+          status?: string | null
+          template_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          form_data?: Json
+          id?: string
+          status?: string | null
+          template_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_tax_forms_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "tax_form_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_tax_forms_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_analytics: {
         Row: {
           created_at: string
@@ -1571,6 +1616,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tax_form_templates: {
+        Row: {
+          created_at: string
+          form_type: string
+          form_year: number
+          id: string
+          template_data: Json
+        }
+        Insert: {
+          created_at?: string
+          form_type: string
+          form_year: number
+          id?: string
+          template_data: Json
+        }
+        Update: {
+          created_at?: string
+          form_type?: string
+          form_year?: number
+          id?: string
+          template_data?: Json
+        }
+        Relationships: []
       }
       tax_planning_chats: {
         Row: {
