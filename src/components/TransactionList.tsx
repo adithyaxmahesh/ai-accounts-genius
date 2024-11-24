@@ -8,6 +8,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { cn } from "@/lib/utils";
 import { WriteOff } from "@/components/types";
 import { useToast } from "@/components/ui/use-toast";
+import { DollarSign } from "lucide-react";
 
 export const TransactionList = () => {
   const { session } = useAuth();
@@ -79,6 +80,8 @@ export const TransactionList = () => {
     return Number(writeOff.amount) || 0;
   };
 
+  const totalDeductions = writeOffs.reduce((sum, writeOff) => sum + calculateTotalAmount(writeOff), 0);
+
   const getChargesBreakdown = (description: string) => {
     const { charges } = parseDescription(description);
     if (charges.length > 0) {
@@ -99,6 +102,17 @@ export const TransactionList = () => {
           {showAll ? "Show Less" : "View All"}
         </Button>
       </div>
+
+      <div className="bg-muted/50 p-4 rounded-lg mb-6">
+        <div className="flex items-center gap-2">
+          <DollarSign className="h-5 w-5 text-primary" />
+          <div>
+            <p className="text-sm text-muted-foreground">Total Deductions</p>
+            <p className="text-2xl font-bold">{formatCurrency(totalDeductions)}</p>
+          </div>
+        </div>
+      </div>
+
       <div className={cn(
         "relative",
         showAll ? "h-[400px]" : "h-auto"
