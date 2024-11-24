@@ -22,6 +22,7 @@ const CA_TAX_BRACKETS = [
 const STANDARD_DEDUCTION = 5202 // California standard deduction for 2023
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }

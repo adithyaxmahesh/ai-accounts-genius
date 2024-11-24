@@ -5,6 +5,7 @@ import { corsHeaders } from './utils.ts'
 import { processDocument, updateFinancialRecords } from './documentProcessor.ts'
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -73,13 +74,24 @@ serve(async (req) => {
         recommendations: analysis.recommendations,
         writeOffs: analysis.writeOffs
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
     );
   } catch (error) {
     console.error('Error in document analysis:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        }, 
+        status: 400 
+      }
     );
   }
 });
