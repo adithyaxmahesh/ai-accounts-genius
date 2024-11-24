@@ -558,6 +558,53 @@ export type Database = {
           },
         ]
       }
+      cash_flow_statements: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          name: string
+          type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          name: string
+          type: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          name?: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_flow_statements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       collaborator_access: {
         Row: {
           access_level: string
@@ -1027,6 +1074,53 @@ export type Database = {
           },
         ]
       }
+      income_statements: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          name: string
+          type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          name: string
+          type: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          name?: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "income_statements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_analytics: {
         Row: {
           created_at: string
@@ -1097,6 +1191,53 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      owners_equity_statements: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          name: string
+          type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          name: string
+          type: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          name?: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owners_equity_statements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       processed_documents: {
         Row: {
