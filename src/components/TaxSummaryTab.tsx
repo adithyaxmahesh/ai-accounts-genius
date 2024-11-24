@@ -1,11 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { TaxSummaryCard } from "./tax-summary/TaxSummaryCard";
 import { TaxSummarySelects } from "./tax-summary/TaxSummarySelects";
 import { calculateTaxes } from "./tax-summary/TaxCalculationUtils";
 import { TaxSummaryHeader } from "./tax-summary/TaxSummaryHeader";
 import { TaxSummaryGrid } from "./tax-summary/TaxSummaryGrid";
 import { useTaxAnalysis } from "./tax-summary/useTaxAnalysis";
-import { useState } from "react";
 
 interface TaxSummaryProps {
   audit?: any;
@@ -14,6 +13,14 @@ interface TaxSummaryProps {
 const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
   const [selectedBusinessType, setSelectedBusinessType] = useState<string>('corporation');
   const [selectedState, setSelectedState] = useState<string>('California');
+  const [taxCalculation, setTaxCalculation] = useState({
+    totalAmount: 0,
+    deductions: 0,
+    estimatedTax: 0,
+    effectiveRate: 0,
+    taxableIncome: 0,
+    minimumTax: 800
+  });
 
   const { businessInfo, taxAnalysis, updateTaxAnalysis } = useTaxAnalysis(
     selectedBusinessType,
@@ -37,14 +44,16 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
     }
   }, [selectedBusinessType, selectedState]);
 
-  const {
-    totalAmount = 0,
-    deductions = 0,
-    estimatedTax = 0,
-    effectiveRate = 0,
-    taxableIncome = 0,
-    minimumTax = 800
-  } = calculateTaxes(taxAnalysis, audit, selectedBusinessType, selectedState) || {};
+  useEffect(() => {
+    const updateTaxes = async () => {
+      const result = await calculateTaxes(taxAnalysis, audit, selectedBusinessType, selectedState);
+      if (result) {
+        setTaxCalculation(result);
+      }
+    };
+    
+    updateTaxes();
+  }, [taxAnalysis, audit, selectedBusinessType, selectedState]);
 
   return (
     <div className="space-y-6">
@@ -62,12 +71,12 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
         />
 
         <TaxSummaryGrid
-          totalAmount={totalAmount}
-          deductions={deductions}
-          taxableIncome={taxableIncome}
-          minimumTax={minimumTax}
-          estimatedTax={estimatedTax}
-          effectiveRate={effectiveRate}
+          totalAmount={taxCalculation.totalAmount}
+          deductions={taxCalculation.deductions}
+          taxableIncome={taxCalculation.taxableIncome}
+          minimumTax={taxCalculation.minimumTax}
+          estimatedTax={taxCalculation.estimatedTax}
+          effectiveRate={taxCalculation.effectiveRate}
         />
       </div>
     </div>
