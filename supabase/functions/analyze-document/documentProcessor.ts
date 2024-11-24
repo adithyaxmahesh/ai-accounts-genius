@@ -16,35 +16,29 @@ interface WriteOff {
   category: string;
 }
 
-async function findMatchingTaxCode(supabaseClient: ReturnType<typeof createClient>, description: string, amount: number): Promise<string | undefined> {
-  const keywords = {
-    'Transportation': ['fuel', 'car', 'vehicle', 'mileage', 'parking', 'toll'],
-    'Office': ['supplies', 'paper', 'printer', 'desk', 'chair', 'computer'],
-    'Marketing': ['advertising', 'promotion', 'campaign', 'marketing'],
-    'Travel': ['hotel', 'flight', 'accommodation', 'travel'],
-    'Equipment': ['machine', 'equipment', 'tool', 'hardware'],
-    'Services': ['consulting', 'service', 'subscription', 'software']
-  };
+async function calculateEquityFromTransactions(transactions: any[]) {
+  let netIncome = 0;
+  let withdrawals = 0;
+  let otherChanges = 0;
 
-  const descLower = description.toLowerCase();
-  let matchedCategory = '';
+  for (const transaction of transactions) {
+    const description = transaction.description.toLowerCase();
+    const amount = transaction.amount;
 
-  for (const [category, words] of Object.entries(keywords)) {
-    if (words.some(word => descLower.includes(word))) {
-      matchedCategory = category;
-      break;
+    if (description.includes('revenue') || description.includes('income')) {
+      netIncome += amount;
+    } else if (description.includes('withdrawal') || description.includes('distribution')) {
+      withdrawals += amount;
+    } else if (description.includes('investment') || description.includes('contribution')) {
+      otherChanges += amount;
     }
   }
 
-  if (matchedCategory) {
-    const { data: taxCode } = await supabaseClient
-      .from('tax_codes')
-      .select('id')
-      .eq('expense_category', matchedCategory)
-      .single();
-
-    return taxCode?.id;
-  }
+  return {
+    netIncome,
+    withdrawals,
+    otherChanges
+  };
 }
 
 export async function processDocument(
@@ -59,7 +53,6 @@ export async function processDocument(
   const transactions: any[] = [];
   const writeOffs: WriteOff[] = [];
   let riskLevel = 'low';
-  let totalAmount = 0;
 
   const numberPattern = /\$?\d{1,3}(,\d{3})*(\.\d{2})?/;
   const expenseKeywords = ['expense', 'payment', 'purchase', 'cost', 'fee', 'charge'];
@@ -92,25 +85,117 @@ export async function processDocument(
           description: line.trim(),
           line: lines.indexOf(line) + 1
         });
-
-        totalAmount += amount;
       }
     }
   }
 
-  const recommendations = [
-    "Review identified write-offs for accuracy",
-    "Verify tax code assignments",
-    "Collect supporting documentation for write-offs"
+  // Calculate equity components
+  const equityComponents = await calculateEquityFromTransactions(transactions);
+
+  // Get previous equity statement
+  const { data: previousEquity } = await supabaseClient
+    .from('owners_equity_statements')
+    .select('*')
+    .eq('user_id', document.user_id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  const openingBalance = previousEquity?.amount || 0;
+  const closingBalance = openingBalance + 
+    equityComponents.netIncome - 
+    equityComponents.withdrawals + 
+    equityComponents.otherChanges;
+
+  // Insert new equity statement
+  await supabaseClient
+    .from('owners_equity_statements')
+    .insert({
+      user_id: document.user_id,
+      category: 'statement',
+      name: 'Automated Equity Statement',
+      amount: closingBalance,
+      description: 'Automatically generated from document analysis',
+      type: 'closing_balance',
+      date: new Date().toISOString()
+    });
+
+  // Insert detailed entries
+  const equityEntries = [
+    {
+      user_id: document.user_id,
+      category: 'net_income',
+      name: 'Net Income',
+      amount: equityComponents.netIncome,
+      type: 'income',
+      date: new Date().toISOString()
+    },
+    {
+      user_id: document.user_id,
+      category: 'withdrawals',
+      name: 'Withdrawals',
+      amount: equityComponents.withdrawals,
+      type: 'withdrawal',
+      date: new Date().toISOString()
+    },
+    {
+      user_id: document.user_id,
+      category: 'other_changes',
+      name: 'Other Changes',
+      amount: equityComponents.otherChanges,
+      type: 'adjustment',
+      date: new Date().toISOString()
+    }
   ];
+
+  await supabaseClient
+    .from('owners_equity_statements')
+    .insert(equityEntries);
+
+  findings.push(`Equity statement generated with closing balance: $${closingBalance}`);
 
   return {
     transactions,
     findings,
     riskLevel,
-    recommendations,
+    recommendations: [
+      "Review generated equity statement for accuracy",
+      "Verify all income and withdrawal classifications",
+      "Consider any missing equity adjustments"
+    ],
     writeOffs
   };
+}
+
+async function findMatchingTaxCode(supabaseClient: ReturnType<typeof createClient>, description: string, amount: number): Promise<string | undefined> {
+  const keywords = {
+    'Transportation': ['fuel', 'car', 'vehicle', 'mileage', 'parking', 'toll'],
+    'Office': ['supplies', 'paper', 'printer', 'desk', 'chair', 'computer'],
+    'Marketing': ['advertising', 'promotion', 'campaign', 'marketing'],
+    'Travel': ['hotel', 'flight', 'accommodation', 'travel'],
+    'Equipment': ['machine', 'equipment', 'tool', 'hardware'],
+    'Services': ['consulting', 'service', 'subscription', 'software']
+  };
+
+  const descLower = description.toLowerCase();
+  let matchedCategory = '';
+
+  for (const [category, words] of Object.entries(keywords)) {
+    if (words.some(word => descLower.includes(word))) {
+      matchedCategory = category;
+      break;
+    }
+  }
+
+  if (matchedCategory) {
+    const { data: taxCode } = await supabaseClient
+      .from('tax_codes')
+      .select('id')
+      .eq('expense_category', matchedCategory)
+      .single();
+
+    return taxCode?.id;
+  }
 }
 
 export async function updateFinancialRecords(
