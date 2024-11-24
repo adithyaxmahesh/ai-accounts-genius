@@ -4,7 +4,7 @@ import { TaxSummaryHeader } from "./tax-summary/TaxSummaryHeader";
 import { TaxSummarySelects } from "./tax-summary/TaxSummarySelects";
 import { useTaxAnalysis } from "./tax-summary/useTaxAnalysis";
 import { Card } from "./ui/card";
-import { DollarSign, Calculator, PieChart } from "lucide-react";
+import { DollarSign, Calculator, PieChart, TrendingUp, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TaxSummaryProps {
@@ -48,31 +48,45 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
     updateTaxes();
   }, [taxAnalysis, audit, selectedBusinessType, selectedState]);
 
-  const MetricCard = ({ title, value, icon: Icon, className }: { title: string; value: string | number; icon: any; className?: string }) => (
-    <Card className={cn("p-6 transition-all hover:shadow-lg", className)}>
-      <div className="flex items-center gap-4">
-        <div className={cn("p-3 rounded-full", className)}>
-          <Icon className="w-6 h-6 text-white" />
+  const MetricCard = ({ title, value, icon: Icon, className, trend }: { title: string; value: string | number; icon: any; className?: string; trend?: string }) => (
+    <Card className={cn("p-6 transition-all hover:shadow-lg backdrop-blur-sm bg-white/10 border-none", className)}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className={cn("p-3 rounded-xl bg-gradient-to-br", className)}>
+            <Icon className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">{title}</p>
+            <p className="text-2xl font-bold">{value}</p>
+          </div>
         </div>
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="text-2xl font-bold">{value}</p>
-        </div>
+        {trend && (
+          <div className="flex items-center gap-1 text-emerald-500">
+            <ArrowUpRight className="w-4 h-4" />
+            <span className="text-sm font-medium">{trend}</span>
+          </div>
+        )}
       </div>
     </Card>
   );
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 p-6">
+    <div className="max-w-7xl mx-auto space-y-8 p-6 animate-fade-in">
       <div className="flex flex-col gap-6">
-        <TaxSummaryHeader
-          selectedState={selectedState}
-          selectedBusinessType={selectedBusinessType}
-        />
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-secondary/20 blur-3xl -z-10" />
+          <TaxSummaryHeader
+            selectedState={selectedState}
+            selectedBusinessType={selectedBusinessType}
+          />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="p-6 bg-gradient-to-br from-muted/50 to-background border-none">
-            <h3 className="text-lg font-semibold mb-4">Configuration</h3>
+          <Card className="p-6 bg-gradient-to-br from-background via-background to-muted/20 border-none shadow-xl hover:shadow-2xl transition-all duration-300">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-primary" />
+              Configuration
+            </h3>
             <TaxSummarySelects
               selectedBusinessType={selectedBusinessType}
               selectedState={selectedState}
@@ -81,20 +95,23 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
             />
           </Card>
 
-          <Card className="p-6 bg-gradient-to-br from-muted/50 to-background border-none">
-            <h3 className="text-lg font-semibold mb-4">Summary</h3>
+          <Card className="p-6 bg-gradient-to-br from-background via-background to-muted/20 border-none shadow-xl hover:shadow-2xl transition-all duration-300">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <PieChart className="w-5 h-5 text-primary" />
+              Summary
+            </h3>
             <div className="space-y-4">
-              <div className="flex justify-between items-center p-2 rounded bg-muted/30">
+              <div className="flex justify-between items-center p-3 rounded-lg bg-gradient-to-r from-emerald-500/10 to-emerald-500/5">
                 <span className="text-muted-foreground">Total Revenue</span>
-                <span className="font-semibold text-green-600">${taxCalculation.totalAmount.toLocaleString()}</span>
+                <span className="font-semibold text-emerald-500">${taxCalculation.totalAmount.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between items-center p-2 rounded bg-muted/30">
+              <div className="flex justify-between items-center p-3 rounded-lg bg-gradient-to-r from-red-500/10 to-red-500/5">
                 <span className="text-muted-foreground">Total Expenses</span>
                 <span className="font-semibold text-red-500">${taxCalculation.expenses.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between items-center p-2 rounded bg-muted/30">
+              <div className="flex justify-between items-center p-3 rounded-lg bg-gradient-to-r from-blue-500/10 to-blue-500/5">
                 <span className="text-muted-foreground">Taxable Income</span>
-                <span className="font-semibold text-blue-600">${taxCalculation.taxableIncome.toLocaleString()}</span>
+                <span className="font-semibold text-blue-500">${taxCalculation.taxableIncome.toLocaleString()}</span>
               </div>
             </div>
           </Card>
@@ -105,34 +122,39 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
             title="Federal Tax"
             value={`$${taxCalculation.federalTax.toLocaleString()}`}
             icon={DollarSign}
-            className="bg-primary/10 text-primary"
+            className="from-primary/80 to-primary"
+            trend="+2.5%"
           />
           
           <MetricCard
             title="State Tax"
             value={`$${taxCalculation.stateTax.toLocaleString()}`}
             icon={Calculator}
-            className="bg-secondary/10 text-secondary"
+            className="from-secondary/80 to-secondary"
+            trend="+1.8%"
           />
           
           <MetricCard
             title="Effective Rate"
             value={`${taxCalculation.effectiveRate.toFixed(2)}%`}
             icon={PieChart}
-            className="bg-accent/10 text-accent-foreground"
+            className="from-accent/80 to-accent"
+            trend="-0.5%"
           />
         </div>
 
-        <Card className="p-6 bg-gradient-to-br from-muted/50 to-background border-none">
-          <h3 className="text-lg font-semibold mb-4">Total Tax Liability</h3>
-          <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg">
+        <Card className="p-8 bg-gradient-to-br from-primary/5 via-background to-secondary/5 border-none shadow-xl hover:shadow-2xl transition-all duration-300">
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Estimated Total Tax</p>
-              <p className="text-3xl font-bold text-primary">
+              <h3 className="text-2xl font-bold mb-2">Total Tax Liability</h3>
+              <p className="text-sm text-muted-foreground mb-4">Estimated total tax based on current configuration</p>
+              <p className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 ${(taxCalculation.federalTax + taxCalculation.stateTax).toLocaleString()}
               </p>
             </div>
-            <DollarSign className="w-12 h-12 text-primary opacity-20" />
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+              <DollarSign className="w-8 h-8 text-primary" />
+            </div>
           </div>
         </Card>
       </div>

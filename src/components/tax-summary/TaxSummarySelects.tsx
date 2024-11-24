@@ -36,40 +36,52 @@ export const TaxSummarySelects = ({
   onStateChange,
 }: TaxSummarySelectsProps) => {
   return (
-    <>
-      <Card className="p-6">
-        <Building className="h-8 w-8 mb-4 text-primary" />
-        <h3 className="text-lg font-semibold mb-4">Business Type</h3>
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Building className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-semibold">Business Type</h3>
+        </div>
         <Select value={selectedBusinessType} onValueChange={onBusinessTypeChange}>
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full bg-gradient-to-r from-background to-muted/20 border-primary/20">
             <SelectValue placeholder="Select business type" />
           </SelectTrigger>
           <SelectContent>
             {businessTypes.map((type) => (
-              <SelectItem key={type.value} value={type.value}>
+              <SelectItem 
+                key={type.value} 
+                value={type.value}
+                className="hover:bg-primary/10"
+              >
                 {type.label}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-      </Card>
+      </div>
 
-      <Card className="p-6">
-        <MapPin className="h-8 w-8 mb-4 text-primary" />
-        <h3 className="text-lg font-semibold mb-4">State</h3>
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 mb-2">
+          <MapPin className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-semibold">State</h3>
+        </div>
         <Select value={selectedState} onValueChange={onStateChange}>
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full bg-gradient-to-r from-background to-muted/20 border-primary/20">
             <SelectValue placeholder="Select state" />
           </SelectTrigger>
           <SelectContent>
             {states.map((state) => (
-              <SelectItem key={state.value} value={state.value}>
+              <SelectItem 
+                key={state.value} 
+                value={state.value}
+                className="hover:bg-primary/10"
+              >
                 {state.label}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-      </Card>
-    </>
+      </div>
+    </div>
   );
 };
