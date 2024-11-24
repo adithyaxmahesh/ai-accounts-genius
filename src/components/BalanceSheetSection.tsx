@@ -29,14 +29,14 @@ interface BalanceSheetSectionProps {
 
 const getSubcategoryColor = (category: string) => {
   const colors: { [key: string]: string } = {
-    'current-assets': 'bg-green-100 text-green-800',
-    'non-current-assets': 'bg-emerald-100 text-emerald-800',
-    'current-liabilities': 'bg-red-100 text-red-800',
-    'non-current-liabilities': 'bg-rose-100 text-rose-800',
-    'contributed-capital': 'bg-blue-100 text-blue-800',
-    'retained-earnings': 'bg-indigo-100 text-indigo-800',
+    'current-assets': 'bg-green-900/50 text-green-200',
+    'non-current-assets': 'bg-emerald-900/50 text-emerald-200',
+    'current-liabilities': 'bg-red-900/50 text-red-200',
+    'non-current-liabilities': 'bg-rose-900/50 text-rose-200',
+    'contributed-capital': 'bg-blue-900/50 text-blue-200',
+    'retained-earnings': 'bg-indigo-900/50 text-indigo-200',
   };
-  return colors[category.toLowerCase()] || 'bg-slate-100 text-slate-800';
+  return colors[category.toLowerCase()] || 'bg-slate-800 text-slate-200';
 };
 
 export const BalanceSheetSection = ({ title, items, className }: BalanceSheetSectionProps) => {
@@ -57,10 +57,10 @@ export const BalanceSheetSection = ({ title, items, className }: BalanceSheetSec
   const total = items.reduce((sum, item) => sum + Number(item.amount), 0);
 
   return (
-    <Card className={`p-6 ${className}`}>
+    <Card className={`p-6 bg-card ${className}`}>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">{title}</h2>
-        <div className="text-2xl font-bold">
+        <h2 className="text-xl font-semibold text-foreground">{title}</h2>
+        <div className="text-2xl font-bold text-foreground">
           ${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </div>
       </div>
@@ -69,14 +69,14 @@ export const BalanceSheetSection = ({ title, items, className }: BalanceSheetSec
         <div className="space-y-6">
           {Object.entries(groupedItems).map(([term, subcategories]) => (
             <div key={term} className="space-y-4">
-              <h3 className="text-lg font-semibold capitalize">
+              <h3 className="text-lg font-semibold capitalize text-foreground">
                 {term === 'short' ? 'Current' : term === 'long' ? 'Non-Current' : term}
               </h3>
               
               {Object.entries(subcategories).map(([subcategory, subcategoryItems]) => (
                 <div key={subcategory} className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <h4 className="text-md font-medium">{subcategory}</h4>
+                    <h4 className="text-md font-medium text-foreground">{subcategory}</h4>
                     <Badge variant="secondary">
                       ${subcategoryItems.reduce((sum, item) => sum + Number(item.amount), 0).toLocaleString()}
                     </Badge>
@@ -86,11 +86,11 @@ export const BalanceSheetSection = ({ title, items, className }: BalanceSheetSec
                     {subcategoryItems.map((item) => (
                       <div
                         key={item.id}
-                        className="flex justify-between items-start p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                        className="flex justify-between items-start p-4 bg-muted/50 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-border/50"
                       >
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <p className="font-semibold">{item.name}</p>
+                            <p className="font-semibold text-foreground">{item.name}</p>
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger>
@@ -116,7 +116,7 @@ export const BalanceSheetSection = ({ title, items, className }: BalanceSheetSec
                           )}
                         </div>
                         <div className="text-right">
-                          <p className="text-lg font-semibold">${item.amount.toLocaleString()}</p>
+                          <p className="text-lg font-semibold text-foreground">${item.amount.toLocaleString()}</p>
                           <p className="text-xs text-muted-foreground">
                             {formatDate(item.created_at)}
                           </p>
