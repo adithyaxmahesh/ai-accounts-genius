@@ -22,7 +22,7 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
     minimumTax: 800
   });
 
-  const { businessInfo, taxAnalysis, updateTaxAnalysis } = useTaxAnalysis(
+  const { businessInfo, taxAnalysis } = useTaxAnalysis(
     selectedBusinessType,
     selectedState
   );
@@ -33,16 +33,6 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
       setSelectedState(businessInfo.state || 'California');
     }
   }, [businessInfo]);
-
-  useEffect(() => {
-    // Recalculate taxes whenever business type or state changes
-    if (updateTaxAnalysis) {
-      updateTaxAnalysis.mutate({ 
-        businessType: selectedBusinessType, 
-        state: selectedState 
-      });
-    }
-  }, [selectedBusinessType, selectedState]);
 
   useEffect(() => {
     const updateTaxes = async () => {

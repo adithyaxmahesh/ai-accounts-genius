@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
 
 interface TaxCode {
   id: string;
@@ -14,14 +16,27 @@ interface TaxCode {
   deduction_type: string;
 }
 
+const states = [
+  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", 
+  "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", 
+  "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", 
+  "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", 
+  "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", 
+  "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", 
+  "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", 
+  "Wisconsin", "Wyoming"
+];
+
 const TaxCodesList = () => {
+  const [selectedState, setSelectedState] = useState("California");
+
   const { data: taxCodes } = useQuery<TaxCode[]>({
-    queryKey: ['taxCodes', 'California'],
+    queryKey: ['taxCodes', selectedState],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tax_codes')
         .select('*')
-        .eq('state', 'California')
+        .eq('state', selectedState)
         .order('expense_category');
       
       if (error) throw error;
@@ -53,7 +68,22 @@ const TaxCodesList = () => {
 
   return (
     <Card className="p-6">
-      <h2 className="text-2xl font-bold mb-4">California Tax Codes Guide</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Tax Codes Guide</h2>
+        <Select value={selectedState} onValueChange={setSelectedState}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Select state" />
+          </SelectTrigger>
+          <SelectContent>
+            {states.map((state) => (
+              <SelectItem key={state} value={state}>
+                {state}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <ScrollArea className="h-[600px] pr-4">
         <Accordion type="single" collapsible className="space-y-4">
           {groupedTaxCodes && Object.entries(groupedTaxCodes).map(([category, codes]) => (
