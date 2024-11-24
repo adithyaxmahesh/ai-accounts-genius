@@ -458,44 +458,6 @@ export type Database = {
           },
         ]
       }
-      bank_connections: {
-        Row: {
-          access_token: string
-          account_id: string
-          bank_name: string
-          created_at: string
-          id: string
-          last_sync_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          access_token: string
-          account_id: string
-          bank_name: string
-          created_at?: string
-          id?: string
-          last_sync_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          access_token?: string
-          account_id?: string
-          bank_name?: string
-          created_at?: string
-          id?: string
-          last_sync_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "bank_connections_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       business_information: {
         Row: {
           address_line1: string | null
