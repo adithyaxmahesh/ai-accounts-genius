@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/components/AuthProvider";
 import { WriteOffDialog } from "@/components/write-offs/WriteOffDialog";
 import { WriteOffsList } from "@/components/write-offs/WriteOffsList";
+import { TransactionList } from "@/components/TransactionList";
 import TaxCodesList from "@/components/write-offs/TaxCodesList";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
@@ -69,7 +70,7 @@ const WriteOffs = () => {
       </div>
 
       <TaxCodesList />
-      <WriteOffsList userId={session?.user.id ?? ''} />
+      <TransactionList />
 
       <WriteOffDialog
         isOpen={isDialogOpen}

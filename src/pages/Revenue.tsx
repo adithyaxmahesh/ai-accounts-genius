@@ -112,24 +112,6 @@ const Revenue = () => {
           </ResponsiveContainer>
         </div>
       </Card>
-
-      <Card className="p-6 glass-card">
-        <h3 className="text-xl font-semibold mb-4">Recent Transactions</h3>
-        <div className="space-y-4">
-          {revenueData?.slice(0, 5).map((record) => (
-            <div key={record.id} className="flex justify-between items-center p-4 bg-muted rounded-lg">
-              <div>
-                <p className="font-semibold">{record.description || record.category}</p>
-                <p className="text-sm text-muted-foreground">{record.category}</p>
-              </div>
-              <div className="text-right">
-                <p className="font-semibold">${Number(record.amount).toLocaleString()}</p>
-                <p className="text-sm text-muted-foreground">{new Date(record.date).toLocaleDateString()}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
     </div>
   );
 };
