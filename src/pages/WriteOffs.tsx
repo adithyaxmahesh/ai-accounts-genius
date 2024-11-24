@@ -29,7 +29,8 @@ const WriteOffs = () => {
       
       if (error) throw error;
       return data.reduce((sum, record) => sum + Number(record.amount), 0);
-    }
+    },
+    enabled: !!session?.user.id
   });
 
   return (
