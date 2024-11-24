@@ -28,20 +28,27 @@ const Revenue = () => {
     enabled: !!session?.user.id,
   });
 
+  // Group revenue by month and year
   const chartData = revenueData?.reduce((acc: any[], curr) => {
-    const month = new Date(curr.date).toLocaleDateString('default', { month: 'short', year: '2-digit' });
-    const existingMonth = acc.find(item => item.month === month);
+    const date = new Date(curr.date);
+    const month = date.toLocaleDateString('default', { month: 'short', year: '2-digit' });
     
-    if (existingMonth) {
-      existingMonth.amount += Number(curr.amount);
-    } else {
-      acc.push({
+    // Find or create month entry
+    let monthEntry = acc.find(item => item.month === month);
+    if (!monthEntry) {
+      monthEntry = {
         month,
-        amount: Number(curr.amount)
-      });
+        amount: 0,
+        timestamp: date.getTime() // Store timestamp for sorting
+      };
+      acc.push(monthEntry);
     }
+    
+    monthEntry.amount += Number(curr.amount);
     return acc;
-  }, []) || [];
+  }, [])
+  .sort((a, b) => a.timestamp - b.timestamp) // Sort by actual date
+  .map(({ month, amount }) => ({ month, amount })) || []; // Remove timestamp from final data
 
   const totalRevenue = revenueData?.reduce((sum, record) => sum + Number(record.amount), 0) || 0;
   const averageRevenue = revenueData?.length ? totalRevenue / revenueData.length : 0;
