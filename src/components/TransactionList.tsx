@@ -61,7 +61,12 @@ export const TransactionList = () => {
   };
 
   const calculateTotalAmount = (description: string) => {
-    // Find all write-offs with the same description and sum their amounts
+    // Extract numbers from the description (assuming format: text,text,number,number)
+    const numbers = description.split(',').slice(2).map(Number);
+    if (numbers.length === 2) {
+      return numbers[0] + numbers[1];
+    }
+    // Fallback to the original amount if the description format is different
     const relatedWriteOffs = writeOffs.filter(wo => wo.description === description);
     return relatedWriteOffs.reduce((sum, wo) => sum + Number(wo.amount), 0);
   };
@@ -92,7 +97,7 @@ export const TransactionList = () => {
               displayWriteOffs.map((writeOff) => (
                 <div key={writeOff.id} className="flex justify-between items-center p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
                   <div>
-                    <p className="font-semibold">{writeOff.description}</p>
+                    <p className="font-semibold">{writeOff.description.split(',')[0]}</p>
                     {writeOff.tax_codes && (
                       <>
                         <p className="text-sm text-muted-foreground">
