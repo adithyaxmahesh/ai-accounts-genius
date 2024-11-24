@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
+import { RevenueSourcesHelp } from "@/components/revenue/RevenueSourcesHelp";
 
 export const RevenueSourcesManager = () => {
   const { toast } = useToast();
@@ -62,7 +63,10 @@ export const RevenueSourcesManager = () => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold">Revenue Sources</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-semibold">Revenue Sources</h2>
+        <RevenueSourcesHelp />
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="p-6">

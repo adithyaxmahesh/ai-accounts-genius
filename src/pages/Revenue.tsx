@@ -7,6 +7,10 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Plus, ArrowLeft, Download, Filter, TrendingUp } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { RevenueSourcesManager } from "@/components/revenue/RevenueSourcesManager";
+import { RevenueCategories } from "@/components/revenue/RevenueCategories";
+import { RevenueComparison } from "@/components/revenue/RevenueComparison";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Revenue = () => {
   const { session } = useAuth();
@@ -53,6 +57,44 @@ const Revenue = () => {
     });
     // Implementation for exporting data would go here
   };
+
+  const categoryData = revenueData?.reduce((acc: any[], curr) => {
+    const category = curr.category || 'Uncategorized';
+    const existingCategory = acc.find(item => item.category === category);
+    
+    if (existingCategory) {
+      existingCategory.amount += Number(curr.amount);
+    } else {
+      acc.push({
+        category,
+        amount: Number(curr.amount)
+      });
+    }
+    return acc;
+  }, []) || [];
+
+  const comparisonData = [
+    {
+      name: 'Jan',
+      current: 4000,
+      previous: 2400,
+    },
+    {
+      name: 'Feb',
+      current: 3000,
+      previous: 1398,
+    },
+    {
+      name: 'Mar',
+      current: 2000,
+      previous: 9800,
+    },
+    {
+      name: 'Apr',
+      current: 2780,
+      previous: 3908,
+    },
+  ];
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -107,48 +149,74 @@ const Revenue = () => {
         </Card>
       </div>
 
-      <Card className="p-6 bg-card">
-        <h3 className="text-xl font-semibold mb-4">Revenue Over Time</h3>
-        <div className="h-[400px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData}>
-              <defs>
-                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#9b87f5" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#9b87f5" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-              <XAxis 
-                dataKey="month" 
-                stroke="#888" 
-                tick={{ fill: '#888' }}
-              />
-              <YAxis 
-                tickFormatter={(value) => `$${value.toLocaleString()}`}
-                stroke="#888"
-                tick={{ fill: '#888' }}
-              />
-              <Tooltip 
-                formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
-                contentStyle={{ 
-                  backgroundColor: '#1A1F2C',
-                  border: '1px solid #333',
-                  borderRadius: '8px'
-                }}
-                labelStyle={{ color: '#888' }}
-              />
-              <Area
-                type="monotone"
-                dataKey="amount"
-                stroke="#9b87f5"
-                fill="url(#colorRevenue)"
-                strokeWidth={2}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </Card>
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="sources">Revenue Sources</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
+          <Card className="p-6 bg-card">
+            <h3 className="text-xl font-semibold mb-4">Revenue Over Time</h3>
+            <div className="h-[400px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#9b87f5" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#9b87f5" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                  <XAxis 
+                    dataKey="month" 
+                    stroke="#888" 
+                    tick={{ fill: '#888' }}
+                  />
+                  <YAxis 
+                    tickFormatter={(value) => `$${value.toLocaleString()}`}
+                    stroke="#888"
+                    tick={{ fill: '#888' }}
+                  />
+                  <Tooltip 
+                    formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
+                    contentStyle={{ 
+                      backgroundColor: '#1A1F2C',
+                      border: '1px solid #333',
+                      borderRadius: '8px'
+                    }}
+                    labelStyle={{ color: '#888' }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="amount"
+                    stroke="#9b87f5"
+                    fill="url(#colorRevenue)"
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <RevenueCategories data={categoryData} />
+            <RevenueComparison data={comparisonData} />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="sources">
+          <RevenueSourcesManager />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-6">
+          <Card className="p-6">
+            <h3 className="text-xl font-semibold mb-4">Advanced Analytics</h3>
+            {/* Advanced analytics content will go here */}
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
