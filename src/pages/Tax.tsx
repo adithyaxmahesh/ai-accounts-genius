@@ -62,49 +62,81 @@ const Tax = () => {
   });
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center space-x-4 mb-6">
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate('/')}
-          className="hover-scale"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Dashboard
-        </Button>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate('/')}
+              className="hover:bg-muted"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <h1 className="text-3xl font-bold text-foreground">Tax Management</h1>
+          </div>
+        </div>
+
+        <div className="bg-card rounded-lg shadow-sm">
+          <Tabs defaultValue="summary" className="w-full">
+            <TabsList className="w-full justify-start border-b bg-muted/50 p-0 h-auto">
+              <TabsTrigger 
+                value="summary" 
+                className="px-6 py-3 data-[state=active]:bg-background rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
+              >
+                Summary
+              </TabsTrigger>
+              <TabsTrigger 
+                value="breakdown"
+                className="px-6 py-3 data-[state=active]:bg-background rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
+              >
+                Breakdown
+              </TabsTrigger>
+              <TabsTrigger 
+                value="planner"
+                className="px-6 py-3 data-[state=active]:bg-background rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
+              >
+                Tax Planner
+              </TabsTrigger>
+              <TabsTrigger 
+                value="deadlines"
+                className="px-6 py-3 data-[state=active]:bg-background rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
+              >
+                Deadlines
+              </TabsTrigger>
+              <TabsTrigger 
+                value="assistant"
+                className="px-6 py-3 data-[state=active]:bg-background rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
+              >
+                Tax Assistant
+              </TabsTrigger>
+            </TabsList>
+
+            <div className="p-6">
+              <TabsContent value="summary" className="mt-0">
+                <TaxSummary analysis={analysis || defaultAnalysis} />
+              </TabsContent>
+
+              <TabsContent value="breakdown" className="mt-0">
+                <TaxBreakdown analysis={analysis || defaultAnalysis} />
+              </TabsContent>
+
+              <TabsContent value="planner" className="mt-0">
+                <TaxPlanner />
+              </TabsContent>
+
+              <TabsContent value="deadlines" className="mt-0">
+                <TaxDeadlines />
+              </TabsContent>
+
+              <TabsContent value="assistant" className="mt-0">
+                <TaxChat />
+              </TabsContent>
+            </div>
+          </Tabs>
+        </div>
       </div>
-
-      <h1 className="text-3xl font-bold">Tax Management</h1>
-
-      <Tabs defaultValue="summary" className="space-y-6">
-        <TabsList className="grid grid-cols-5 gap-4 bg-muted p-1">
-          <TabsTrigger value="summary">Summary</TabsTrigger>
-          <TabsTrigger value="breakdown">Breakdown</TabsTrigger>
-          <TabsTrigger value="planner">Tax Planner</TabsTrigger>
-          <TabsTrigger value="deadlines">Deadlines</TabsTrigger>
-          <TabsTrigger value="assistant">Tax Assistant</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="summary" className="space-y-6">
-          <TaxSummary analysis={analysis || defaultAnalysis} />
-        </TabsContent>
-
-        <TabsContent value="breakdown" className="space-y-6">
-          <TaxBreakdown analysis={analysis || defaultAnalysis} />
-        </TabsContent>
-
-        <TabsContent value="planner" className="space-y-6">
-          <TaxPlanner />
-        </TabsContent>
-
-        <TabsContent value="deadlines" className="space-y-6">
-          <TaxDeadlines />
-        </TabsContent>
-
-        <TabsContent value="assistant" className="space-y-6">
-          <TaxChat />
-        </TabsContent>
-      </Tabs>
     </div>
   );
 };
