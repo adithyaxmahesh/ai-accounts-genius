@@ -14,7 +14,6 @@ interface TaxCode {
   description: string;
   expense_category: string;
   deduction_type: string;
-  state: string | null;
 }
 
 const states = [
@@ -25,38 +24,31 @@ const states = [
   "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", 
   "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", 
   "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", 
-  "Wisconsin", "Wyoming", "Federal"
+  "Wisconsin", "Wyoming"
 ];
 
 const TaxCodesList = () => {
-  const [selectedState, setSelectedState] = useState<string | null>(null);
+  const [selectedState, setSelectedState] = useState("California");
 
-  const { data: taxCodes, isLoading } = useQuery<TaxCode[]>({
+  const { data: taxCodes } = useQuery<TaxCode[]>({
     queryKey: ['taxCodes', selectedState],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from('tax_codes')
         .select('*')
+        .eq('state', selectedState)
         .order('expense_category');
-      
-      if (selectedState) {
-        query = query.eq('state', selectedState);
-      }
-      
-      const { data, error } = await query;
       
       if (error) throw error;
       return data;
-    },
-    enabled: true // Always fetch, even when selectedState is null
+    }
   });
 
   const groupedTaxCodes = taxCodes?.reduce((acc, code) => {
-    const category = code.expense_category || 'Other';
-    if (!acc[category]) {
-      acc[category] = [];
+    if (!acc[code.expense_category]) {
+      acc[code.expense_category] = [];
     }
-    acc[category].push(code);
+    acc[code.expense_category].push(code);
     return acc;
   }, {} as Record<string, TaxCode[]>);
 
@@ -69,8 +61,7 @@ const TaxCodesList = () => {
       'Equipment': 'Document purchase dates, keep receipts, and track depreciation schedules.',
       'Travel': 'Keep detailed logs of business purposes, save all receipts, and separate personal expenses.',
       'Education': 'Document relevance to business, keep certification records and course materials.',
-      'Insurance': 'Maintain policy documents and proof of payments, document business relationship.',
-      'Other': 'Keep detailed records and documentation for all expenses.'
+      'Insurance': 'Maintain policy documents and proof of payments, document business relationship.'
     };
     return adviceMap[category] || 'Keep detailed records and documentation for all expenses.';
   };
@@ -79,12 +70,11 @@ const TaxCodesList = () => {
     <Card className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Tax Codes Guide</h2>
-        <Select value={selectedState || ''} onValueChange={setSelectedState}>
+        <Select value={selectedState} onValueChange={setSelectedState}>
           <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Select state (optional)" />
+            <SelectValue placeholder="Select state" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All States</SelectItem>
             {states.map((state) => (
               <SelectItem key={state} value={state}>
                 {state}
@@ -94,51 +84,40 @@ const TaxCodesList = () => {
         </Select>
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center items-center h-[400px]">
-          <p>Loading tax codes...</p>
-        </div>
-      ) : !groupedTaxCodes || Object.keys(groupedTaxCodes).length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">No tax codes found for the selected criteria.</p>
-        </div>
-      ) : (
-        <ScrollArea className="h-[600px] pr-4">
-          <Accordion type="single" collapsible className="space-y-4">
-            {Object.entries(groupedTaxCodes).map(([category, codes]) => (
-              <AccordionItem key={category} value={category} className="border rounded-lg p-2">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center space-x-2">
-                    <h3 className="text-lg font-semibold">{category}</h3>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <Info className="h-4 w-4 text-muted-foreground" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="max-w-xs">{getDeductionAdvice(category)}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-4 mt-2">
-                    {codes.map((code) => (
-                      <div key={code.id} className="border-l-2 border-primary pl-4">
-                        <h4 className="font-medium">{code.description}</h4>
-                        <p className="text-sm text-muted-foreground">Code: {code.code}</p>
-                        <p className="text-sm text-muted-foreground">Type: {code.deduction_type}</p>
-                        <p className="text-sm text-muted-foreground">State: {code.state || 'Federal'}</p>
-                      </div>
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </ScrollArea>
-      )}
+      <ScrollArea className="h-[600px] pr-4">
+        <Accordion type="single" collapsible className="space-y-4">
+          {groupedTaxCodes && Object.entries(groupedTaxCodes).map(([category, codes]) => (
+            <AccordionItem key={category} value={category} className="border rounded-lg p-2">
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center space-x-2">
+                  <h3 className="text-lg font-semibold">{category}</h3>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="h-4 w-4 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">{getDeductionAdvice(category)}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-4 mt-2">
+                  {codes.map((code) => (
+                    <div key={code.id} className="border-l-2 border-primary pl-4">
+                      <h4 className="font-medium">{code.description}</h4>
+                      <p className="text-sm text-muted-foreground">Code: {code.code}</p>
+                      <p className="text-sm text-muted-foreground">Type: {code.deduction_type}</p>
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </ScrollArea>
     </Card>
   );
 };
