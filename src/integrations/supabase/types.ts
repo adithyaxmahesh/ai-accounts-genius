@@ -1562,6 +1562,36 @@ export type Database = {
           },
         ]
       }
+      state_tax_brackets: {
+        Row: {
+          business_type: string
+          created_at: string
+          id: string
+          max_income: number | null
+          min_income: number
+          rate: number
+          state: string
+        }
+        Insert: {
+          business_type: string
+          created_at?: string
+          id?: string
+          max_income?: number | null
+          min_income: number
+          rate: number
+          state: string
+        }
+        Update: {
+          business_type?: string
+          created_at?: string
+          id?: string
+          max_income?: number | null
+          min_income?: number
+          rate?: number
+          state?: string
+        }
+        Relationships: []
+      }
       state_tax_rates: {
         Row: {
           created_at: string
