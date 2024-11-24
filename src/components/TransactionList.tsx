@@ -51,6 +51,13 @@ export const TransactionList = () => {
 
   const displayWriteOffs = showAll ? writeOffs : writeOffs.slice(0, 3);
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount);
+  };
+
   return (
     <Card className="glass-card p-6">
       <div className="flex justify-between items-center mb-6">
@@ -90,7 +97,7 @@ export const TransactionList = () => {
                     )}
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">${writeOff.amount.toLocaleString()}</p>
+                    <p className="font-semibold">{formatCurrency(writeOff.amount)}</p>
                     <p className="text-sm text-muted-foreground">
                       {new Date(writeOff.date).toLocaleDateString()}
                     </p>

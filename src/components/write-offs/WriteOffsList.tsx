@@ -40,6 +40,13 @@ export const WriteOffsList = ({ userId }: WriteOffsListProps) => {
     enabled: !!userId
   });
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount);
+  };
+
   if (isLoading) {
     return (
       <Card className="p-6 glass-card">
@@ -106,7 +113,7 @@ export const WriteOffsList = ({ userId }: WriteOffsListProps) => {
               )}
             </div>
             <div className="text-right">
-              <p className="font-semibold">${Number(writeOff.amount).toLocaleString()}</p>
+              <p className="font-semibold">{formatCurrency(Number(writeOff.amount))}</p>
               <p className="text-sm text-muted-foreground">{new Date(writeOff.date).toLocaleDateString()}</p>
               <p className="text-sm text-muted-foreground capitalize">{writeOff.status}</p>
             </div>
