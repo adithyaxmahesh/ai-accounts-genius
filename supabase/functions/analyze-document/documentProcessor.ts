@@ -19,6 +19,20 @@ interface WriteOff {
   category: string;
 }
 
+async function parseCSV(text: string) {
+  const lines = text.split('\n').map(line => line.split(','));
+  const headers = lines[0];
+  const rows = lines.slice(1);
+  
+  return rows.map(row => {
+    const obj: { [key: string]: string } = {};
+    headers.forEach((header, i) => {
+      obj[header.trim()] = row[i]?.trim() || '';
+    });
+    return obj;
+  });
+}
+
 async function calculateEquityFromTransactions(transactions: any[]) {
   let netIncome = 0;
   let withdrawals = 0;
@@ -50,48 +64,88 @@ export async function processDocument(
   fileData: Blob
 ): Promise<DocumentAnalysis> {
   const text = await fileData.text();
-  const lines = text.split('\n');
-  
   const findings: string[] = [];
   const transactions: any[] = [];
   const writeOffs: WriteOff[] = [];
   let riskLevel = 'low';
 
-  // Extract transactions from document
-  const { processedTransactions, extractedFindings } = await processTransactions(lines);
-  transactions.push(...processedTransactions);
-  findings.push(...extractedFindings);
+  // Check if it's a CSV file
+  const isCSV = document.original_filename.toLowerCase().endsWith('.csv');
 
-  // Process equity statements
-  await processEquity(supabaseClient, document.user_id, transactions);
-
-  // Process income statements
-  await processIncomeStatement(supabaseClient, document.user_id, transactions);
-
-  const numberPattern = /\$?\d{1,3}(,\d{3})*(\.\d{2})?/;
-  const expenseKeywords = ['expense', 'payment', 'purchase', 'cost', 'fee', 'charge'];
-
-  for (const line of lines) {
-    const matches = line.match(numberPattern);
-    if (matches) {
-      const amount = parseFloat(matches[0].replace(/[$,]/g, ''));
-      if (!isNaN(amount)) {
-        const isExpense = expenseKeywords.some(keyword => 
-          line.toLowerCase().includes(keyword)
-        );
-
-        if (isExpense) {
-          const taxCodeId = await findMatchingTaxCode(supabaseClient, line, amount);
-          const category = taxCodeId ? 'Categorized' : 'Uncategorized';
-          
-          writeOffs.push({
+  if (isCSV) {
+    try {
+      const parsedData = await parseCSV(text);
+      
+      // Process CSV data
+      parsedData.forEach(row => {
+        const amount = parseFloat(row.amount || row.Amount || '0');
+        const description = row.description || row.Description || '';
+        
+        if (!isNaN(amount)) {
+          transactions.push({
             amount,
-            description: line.trim(),
-            taxCodeId,
-            category
+            description,
+            date: row.date || row.Date || new Date().toISOString(),
+            type: amount < 0 ? 'expense' : 'income'
           });
 
-          findings.push(`Potential write-off detected: $${amount.toLocaleString()} - ${category}`);
+          if (amount < 0) {
+            const taxCodeId = findMatchingTaxCode(supabaseClient, description, Math.abs(amount));
+            writeOffs.push({
+              amount: Math.abs(amount),
+              description,
+              taxCodeId,
+              category: 'Uncategorized'
+            });
+            findings.push(`Potential write-off detected: $${Math.abs(amount).toLocaleString()} - ${description}`);
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error processing CSV:', error);
+      findings.push('Error processing CSV file: ' + error.message);
+      riskLevel = 'high';
+    }
+  } else {
+    // Process non-CSV files
+    const lines = text.split('\n');
+    
+    // Extract transactions from document
+    const { processedTransactions, extractedFindings } = await processTransactions(lines);
+    transactions.push(...processedTransactions);
+    findings.push(...extractedFindings);
+
+    // Process equity statements
+    await processEquity(supabaseClient, document.user_id, transactions);
+
+    // Process income statements
+    await processIncomeStatement(supabaseClient, document.user_id, transactions);
+
+    const numberPattern = /\$?\d{1,3}(,\d{3})*(\.\d{2})?/;
+    const expenseKeywords = ['expense', 'payment', 'purchase', 'cost', 'fee', 'charge'];
+
+    for (const line of lines) {
+      const matches = line.match(numberPattern);
+      if (matches) {
+        const amount = parseFloat(matches[0].replace(/[$,]/g, ''));
+        if (!isNaN(amount)) {
+          const isExpense = expenseKeywords.some(keyword => 
+            line.toLowerCase().includes(keyword)
+          );
+
+          if (isExpense) {
+            const taxCodeId = await findMatchingTaxCode(supabaseClient, line, amount);
+            const category = taxCodeId ? 'Categorized' : 'Uncategorized';
+            
+            writeOffs.push({
+              amount,
+              description: line.trim(),
+              taxCodeId,
+              category
+            });
+
+            findings.push(`Potential write-off detected: $${amount.toLocaleString()} - ${category}`);
+          }
         }
       }
     }
