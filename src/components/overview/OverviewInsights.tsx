@@ -1,5 +1,4 @@
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { LineChart, TrendingUp, DollarSign, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useRealtimeFinancials } from "@/hooks/useRealtimeFinancials";
@@ -9,14 +8,11 @@ export const OverviewInsights = () => {
 
   return (
     <Card className="p-6 bg-gradient-to-br from-gray-900 to-gray-800 border-0">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center mb-6">
         <div className="flex items-center gap-2">
           <LineChart className="h-6 w-6 text-primary" />
           <h2 className="text-xl font-semibold">Financial Overview (Last 24h)</h2>
         </div>
-        <Button variant="outline" className="bg-gray-800/50 border-gray-700">
-          View Details
-        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
