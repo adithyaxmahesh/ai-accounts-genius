@@ -60,6 +60,12 @@ export const TransactionList = () => {
     }).format(amount);
   };
 
+  const calculateTotalAmount = (description: string) => {
+    // Find all write-offs with the same description and sum their amounts
+    const relatedWriteOffs = writeOffs.filter(wo => wo.description === description);
+    return relatedWriteOffs.reduce((sum, wo) => sum + Number(wo.amount), 0);
+  };
+
   return (
     <Card className="glass-card p-6">
       <div className="flex justify-between items-center mb-6">
@@ -99,7 +105,7 @@ export const TransactionList = () => {
                     )}
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">{formatCurrency(writeOff.amount)}</p>
+                    <p className="font-semibold">{formatCurrency(calculateTotalAmount(writeOff.description))}</p>
                     <p className="text-sm text-muted-foreground">
                       {new Date(writeOff.date).toLocaleDateString()}
                     </p>
