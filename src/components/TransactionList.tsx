@@ -61,12 +61,16 @@ export const TransactionList = () => {
   };
 
   const calculateTotalAmount = (description: string) => {
-    // Extract numbers from the description (assuming format: text,text,number,number)
-    const numbers = description.split(',').slice(2).map(Number);
-    if (numbers.length === 2) {
-      return numbers[0] + numbers[1];
+    // First try to extract numbers from the description (format: text,text,number,number)
+    const parts = description.split(',');
+    if (parts.length >= 4) {
+      const numbers = parts.slice(2).map(Number);
+      if (numbers.every(n => !isNaN(n))) {
+        return numbers.reduce((sum, n) => sum + n, 0);
+      }
     }
-    // Fallback to the original amount if the description format is different
+    
+    // If that fails, sum all write-offs with the same description
     const relatedWriteOffs = writeOffs.filter(wo => wo.description === description);
     return relatedWriteOffs.reduce((sum, wo) => sum + Number(wo.amount), 0);
   };
