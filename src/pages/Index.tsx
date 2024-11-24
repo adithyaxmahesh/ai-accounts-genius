@@ -65,8 +65,8 @@ const Index = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-4">
-      <div className="flex justify-between items-center">
+    <div className="container mx-auto p-4 space-y-2">
+      <div className="flex justify-between items-center mb-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="relative">
@@ -82,8 +82,8 @@ const Index = () => {
       
       <FinancialMetrics />
 
-      {/* Main Navigation Grid - Reduced gap-6 to gap-4 */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {/* Main Navigation Grid */}
+      <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
         <Link to="/documents" className="group">
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
@@ -232,16 +232,17 @@ const Index = () => {
             </CardContent>
           </Card>
         </Link>
+
       </div>
 
-      {/* Additional Dashboard Features - Reduced space-y-8 to space-y-4 */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-4">
+      {/* Additional Dashboard Features */}
+      <div className="grid gap-2 md:grid-cols-2">
+        <div className="space-y-2">
           <FinancialPlanningCard />
           <FinancialHealthCard />
           <StateOperations />
         </div>
-        <div className="space-y-4">
+        <div className="space-y-2">
           <CollaboratorsList />
           <AutomationRules />
         </div>
