@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { AddIncomeStatementEntry } from "@/components/income-statement/AddIncomeStatementEntry";
+import { Loader2 } from "lucide-react";
 
 interface IncomeStatementItem {
   id: string;
@@ -66,8 +68,9 @@ const IncomeStatement = () => {
   return (
     <div className="container mx-auto p-6">
       <Card className="mb-6">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Income Statement</CardTitle>
+          <AddIncomeStatementEntry />
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="single-step" className="w-full">
@@ -78,7 +81,9 @@ const IncomeStatement = () => {
 
             <TabsContent value="single-step">
               {isLoading ? (
-                <p>Loading...</p>
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
               ) : statements.length > 0 ? (
                 <div className="space-y-6">
                   <div className="space-y-4">
@@ -87,7 +92,12 @@ const IncomeStatement = () => {
                       .filter(item => item.type === 'revenue')
                       .map(item => (
                         <div key={item.id} className="flex justify-between items-center p-2 bg-muted rounded">
-                          <span>{item.name}</span>
+                          <div>
+                            <span className="font-medium">{item.name}</span>
+                            {item.description && (
+                              <p className="text-sm text-muted-foreground">{item.description}</p>
+                            )}
+                          </div>
                           <span className="text-green-600">${item.amount.toFixed(2)}</span>
                         </div>
                       ))
@@ -104,7 +114,12 @@ const IncomeStatement = () => {
                       .filter(item => item.type === 'expense')
                       .map(item => (
                         <div key={item.id} className="flex justify-between items-center p-2 bg-muted rounded">
-                          <span>{item.name}</span>
+                          <div>
+                            <span className="font-medium">{item.name}</span>
+                            {item.description && (
+                              <p className="text-sm text-muted-foreground">{item.description}</p>
+                            )}
+                          </div>
                           <span className="text-red-600">${item.amount.toFixed(2)}</span>
                         </div>
                       ))
@@ -126,20 +141,30 @@ const IncomeStatement = () => {
                   </div>
                 </div>
               ) : (
-                <p>No income statement data found.</p>
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No income statement data found.</p>
+                  <p className="mt-2">Click "Add Entry" to get started.</p>
+                </div>
               )}
             </TabsContent>
 
             <TabsContent value="multi-step">
               {isLoading ? (
-                <p>Loading...</p>
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
               ) : statements.length > 0 ? (
                 <div className="space-y-6">
                   <div className="space-y-4">
                     <h3 className="font-semibold text-lg">Operating Activities</h3>
                     {categorizeOperations(statements).operating.map(item => (
                       <div key={item.id} className="flex justify-between items-center p-2 bg-muted rounded">
-                        <span>{item.name}</span>
+                        <div>
+                          <span className="font-medium">{item.name}</span>
+                          {item.description && (
+                            <p className="text-sm text-muted-foreground">{item.description}</p>
+                          )}
+                        </div>
                         <span className={item.type === 'revenue' ? "text-green-600" : "text-red-600"}>
                           ${item.amount.toFixed(2)}
                         </span>
@@ -151,7 +176,12 @@ const IncomeStatement = () => {
                     <h3 className="font-semibold text-lg">Non-Operating Activities</h3>
                     {categorizeOperations(statements).nonOperating.map(item => (
                       <div key={item.id} className="flex justify-between items-center p-2 bg-muted rounded">
-                        <span>{item.name}</span>
+                        <div>
+                          <span className="font-medium">{item.name}</span>
+                          {item.description && (
+                            <p className="text-sm text-muted-foreground">{item.description}</p>
+                          )}
+                        </div>
                         <span className={item.type === 'revenue' ? "text-green-600" : "text-red-600"}>
                           ${item.amount.toFixed(2)}
                         </span>
@@ -170,7 +200,10 @@ const IncomeStatement = () => {
                   </div>
                 </div>
               ) : (
-                <p>No income statement data found.</p>
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No income statement data found.</p>
+                  <p className="mt-2">Click "Add Entry" to get started.</p>
+                </div>
               )}
             </TabsContent>
           </Tabs>
