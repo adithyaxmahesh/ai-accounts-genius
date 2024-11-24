@@ -49,7 +49,6 @@ export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemP
   const { session } = useAuth();
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
   const [description, setDescription] = useState("");
   const [selectedTab, setSelectedTab] = useState("asset");
@@ -87,6 +86,7 @@ export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemP
     },
     onSuccess: () => {
       onSuccess();
+      onClose();
     },
   });
 
@@ -97,7 +97,7 @@ export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemP
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] bg-background">
         <DialogHeader>
           <DialogTitle>Add Balance Sheet Item</DialogTitle>
         </DialogHeader>
@@ -116,6 +116,7 @@ export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemP
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              className="bg-background"
             />
           </div>
           <div>
@@ -127,12 +128,16 @@ export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemP
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               required
+              className="bg-background"
             />
           </div>
           <div>
             <Label htmlFor="subcategory">Subcategory</Label>
-            <Select value={subcategory} onValueChange={setSubcategory} required>
-              <SelectTrigger>
+            <Select 
+              value={subcategory} 
+              onValueChange={setSubcategory}
+            >
+              <SelectTrigger className="bg-background">
                 <SelectValue placeholder="Select subcategory" />
               </SelectTrigger>
               <SelectContent>
@@ -151,6 +156,7 @@ export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemP
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add any relevant details or notes"
+              className="bg-background"
             />
           </div>
           <div className="flex justify-end space-x-2">
