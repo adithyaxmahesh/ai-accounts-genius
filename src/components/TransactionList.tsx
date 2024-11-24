@@ -17,7 +17,6 @@ export const TransactionList = () => {
   const { data: writeOffs = [], isError, error } = useQuery({
     queryKey: ['write-offs', session?.user.id],
     queryFn: async () => {
-      console.log("Fetching write-offs for user:", session?.user.id); // Debug log
       const { data, error } = await supabase
         .from('write_offs')
         .select(`
@@ -34,11 +33,9 @@ export const TransactionList = () => {
         .returns<WriteOff[]>();
       
       if (error) {
-        console.error("Error fetching write-offs:", error); // Debug log
         throw error;
       }
       
-      console.log("Fetched write-offs:", data); // Debug log
       return data || [];
     },
     enabled: !!session?.user.id
