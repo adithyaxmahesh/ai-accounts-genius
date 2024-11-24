@@ -8,6 +8,9 @@ import AuditDetail from "@/pages/AuditDetail";
 import Revenue from "@/pages/Revenue";
 import WriteOffs from "@/pages/WriteOffs";
 import BalanceSheet from "@/pages/BalanceSheet";
+import IncomeStatement from "@/pages/IncomeStatement";
+import CashFlow from "@/pages/CashFlow";
+import OwnersEquity from "@/pages/OwnersEquity";
 import Forecast from "@/pages/Forecast";
 import Assurance from "@/pages/Assurance";
 
@@ -23,6 +26,9 @@ const AppRoutes = () => {
       <Route path="/revenue" element={<Revenue />} />
       <Route path="/write-offs" element={<WriteOffs />} />
       <Route path="/balance-sheet" element={<BalanceSheet />} />
+      <Route path="/income-statement" element={<IncomeStatement />} />
+      <Route path="/cash-flow" element={<CashFlow />} />
+      <Route path="/owners-equity" element={<OwnersEquity />} />
       <Route path="/forecast" element={<Forecast />} />
       <Route path="/assurance" element={<Assurance />} />
     </Routes>
