@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { AddIncomeStatementEntry } from "@/components/income-statement/AddIncomeStatementEntry";
 import { Loader2 } from "lucide-react";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 
 interface IncomeStatementItem {
   id: string;
@@ -22,6 +23,9 @@ interface IncomeStatementItem {
 const IncomeStatement = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
+
+  // Set up real-time subscription
+  useRealtimeSubscription('income_statements', ['income-statements', session?.user.id]);
 
   const { data: statements = [], isLoading } = useQuery({
     queryKey: ['income-statements', session?.user.id],

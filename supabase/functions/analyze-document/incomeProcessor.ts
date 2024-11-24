@@ -42,7 +42,8 @@ export async function processIncomeStatement(
       name: transaction.description,
       amount: Math.abs(transaction.amount),
       type: transaction.type,
-      description: `Automatically generated from document analysis - Line ${transaction.line}`
+      description: `Automatically generated from document analysis - Line ${transaction.line}`,
+      date: new Date().toISOString().split('T')[0]
     };
   });
 
