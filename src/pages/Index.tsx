@@ -164,6 +164,38 @@ const Index = () => {
           </Card>
         </Link>
 
+        <Link to="/assurance" className="group">
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Shield className="h-5 w-5 text-primary" />
+                <span>Assurance Services</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Manage assurance engagements and access learning materials for CPA certification.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to="/forecast" className="group">
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                <span>Forecast</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Predict future revenue and tax obligations.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
         <div className="group">
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
@@ -200,38 +232,6 @@ const Index = () => {
             </CardContent>
           </Card>
         </div>
-
-        <Link to="/forecast" className="group">
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                <span>Forecast</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Predict future revenue and tax obligations.
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link to="/assurance" className="group">
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Shield className="h-5 w-5 text-primary" />
-                <span>Assurance Services</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Manage assurance engagements and access learning materials for CPA certification.
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
 
       </div>
 
