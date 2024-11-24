@@ -3,7 +3,12 @@ import { ArrowLeft, Download, Filter, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 
-export const RevenueHeader = () => {
+interface RevenueHeaderProps {
+  onFilterClick: () => void;
+  onAddRevenueClick: () => void;
+}
+
+export const RevenueHeader = ({ onFilterClick, onAddRevenueClick }: RevenueHeaderProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -32,11 +37,11 @@ export const RevenueHeader = () => {
           <Download className="h-4 w-4" />
           Export
         </Button>
-        <Button variant="outline" className="gap-2">
+        <Button variant="outline" onClick={onFilterClick} className="gap-2">
           <Filter className="h-4 w-4" />
           Filter
         </Button>
-        <Button onClick={() => navigate('/revenue/add')} className="gap-2">
+        <Button onClick={onAddRevenueClick} className="gap-2">
           <Plus className="h-4 w-4" />
           Add Revenue
         </Button>
