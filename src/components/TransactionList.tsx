@@ -60,19 +60,31 @@ export const TransactionList = () => {
     }).format(amount);
   };
 
-  const calculateTotalAmount = (description: string) => {
-    // First try to extract numbers from the description (format: text,text,number,number)
+  const parseDescription = (description: string) => {
     const parts = description.split(',');
-    if (parts.length >= 4) {
-      const numbers = parts.slice(2).map(Number);
-      if (numbers.every(n => !isNaN(n))) {
-        return numbers.reduce((sum, n) => sum + n, 0);
-      }
+    return {
+      name: parts[0],
+      charges: parts.slice(2).map(Number).filter(n => !isNaN(n))
+    };
+  };
+
+  const calculateTotalAmount = (description: string) => {
+    const { charges } = parseDescription(description);
+    if (charges.length > 0) {
+      return charges.reduce((sum, n) => sum + n, 0);
     }
     
-    // If that fails, sum all write-offs with the same description
+    // Fallback to summing all write-offs with the same description
     const relatedWriteOffs = writeOffs.filter(wo => wo.description === description);
     return relatedWriteOffs.reduce((sum, wo) => sum + Number(wo.amount), 0);
+  };
+
+  const getChargesBreakdown = (description: string) => {
+    const { charges } = parseDescription(description);
+    if (charges.length > 0) {
+      return charges.map(formatCurrency).join(' + ');
+    }
+    return '';
   };
 
   return (
@@ -101,7 +113,7 @@ export const TransactionList = () => {
               displayWriteOffs.map((writeOff) => (
                 <div key={writeOff.id} className="flex justify-between items-center p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
                   <div>
-                    <p className="font-semibold">{writeOff.description.split(',')[0]}</p>
+                    <p className="font-semibold">{parseDescription(writeOff.description).name}</p>
                     {writeOff.tax_codes && (
                       <>
                         <p className="text-sm text-muted-foreground">
@@ -112,6 +124,9 @@ export const TransactionList = () => {
                         </p>
                       </>
                     )}
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {getChargesBreakdown(writeOff.description)}
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="font-semibold">{formatCurrency(calculateTotalAmount(writeOff.description))}</p>
