@@ -17,8 +17,13 @@ export const RevenueChart = ({ data }: RevenueChartProps) => {
   ] : data;
 
   return (
-    <Card className="p-6 bg-card">
-      <h3 className="text-xl font-semibold mb-4">Revenue Over Time</h3>
+    <Card className="p-6">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-xl font-semibold">Revenue Over Time</h3>
+        <div className="text-sm text-muted-foreground">
+          {data.length} entries
+        </div>
+      </div>
       <div className="h-[400px]">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart 
