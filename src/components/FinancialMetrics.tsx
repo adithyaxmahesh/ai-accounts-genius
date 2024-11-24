@@ -105,6 +105,23 @@ export const FinancialMetrics = () => {
           {metrics?.monthOverMonthGrowth > 0 ? '+' : ''}{metrics?.monthOverMonthGrowth.toFixed(1)}% from last month
         </p>
       </Card>
+
+      <Card 
+        className="glass-card p-6 hover-scale cursor-pointer"
+        onClick={() => navigate('/tax')}
+      >
+        <AlertTriangle className="h-8 w-8 mb-2 text-blue-500" />
+        <h3 className="text-lg font-semibold mb-1">Net Profit</h3>
+        <p className="text-xl font-bold truncate min-h-[2rem] flex items-center justify-start">
+          <span className="text-blue-500 text-3xl font-bold">
+            ${((metrics?.revenue || 0) * 0.8).toLocaleString()}
+          </span>
+        </p>
+        <p className="text-sm text-muted-foreground mt-1">
+          80% profit margin
+        </p>
+      </Card>
+
       <Card 
         className="glass-card p-6 hover-scale cursor-pointer"
         onClick={() => navigate('/balance-sheet')}
@@ -124,21 +141,6 @@ export const FinancialMetrics = () => {
         </div>
         <p className="text-sm text-muted-foreground mt-2">
           ${metrics?.revenue.toLocaleString()} of ${monthlyGoal.toLocaleString()} goal
-        </p>
-      </Card>
-      <Card 
-        className="glass-card p-6 hover-scale cursor-pointer"
-        onClick={() => navigate('/tax')}
-      >
-        <AlertTriangle className="h-8 w-8 mb-2 text-blue-500" />
-        <h3 className="text-lg font-semibold mb-1">Net Profit</h3>
-        <p className="text-xl font-bold truncate min-h-[2rem] flex items-center justify-start">
-          <span className="text-blue-500 text-3xl font-bold">
-            ${((metrics?.revenue || 0) * 0.8).toLocaleString()}
-          </span>
-        </p>
-        <p className="text-sm text-muted-foreground mt-1">
-          80% profit margin
         </p>
       </Card>
     </div>
