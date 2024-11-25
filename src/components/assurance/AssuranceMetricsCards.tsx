@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { MetricsDialog } from "./MetricsDialog";
 import { MetricsProps } from "./types";
 import { getDetailedContent } from "./utils";
-import { BarChart3, CheckCircle2, Clock, AlertTriangle, ShieldCheck } from "lucide-react";
+import { BarChart3, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
 
 export const AssuranceMetricsCards = ({
   totalEngagements,
@@ -22,7 +22,6 @@ export const AssuranceMetricsCards = ({
       description: `${completedEngagements} completed, ${inProgressEngagements} in progress`,
       icon: BarChart3,
       color: "text-blue-500",
-      bgColor: "bg-blue-50",
     },
     {
       id: "status",
@@ -31,7 +30,6 @@ export const AssuranceMetricsCards = ({
       description: `${completedEngagements} out of ${totalEngagements} engagements`,
       icon: CheckCircle2,
       color: "text-green-500",
-      bgColor: "bg-green-50",
     },
     {
       id: "progress",
@@ -40,7 +38,6 @@ export const AssuranceMetricsCards = ({
       description: "Active engagements",
       icon: Clock,
       color: "text-yellow-500",
-      bgColor: "bg-yellow-50",
     },
     {
       id: "compliance",
@@ -49,29 +46,23 @@ export const AssuranceMetricsCards = ({
       description: `${highRiskEngagements} high risk items identified`,
       icon: AlertTriangle,
       color: "text-red-500",
-      bgColor: "bg-red-50",
     },
   ];
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-6">
-        <ShieldCheck className="h-6 w-6 text-primary" />
-        <h2 className="text-2xl font-semibold">Assurance Metrics</h2>
-      </div>
-      
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {metrics.map((metric) => {
           const Icon = metric.icon;
           return (
             <Card
               key={metric.id}
-              className="p-6 hover:shadow-lg transition-all duration-200 cursor-pointer animate-fade-in"
+              className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
               onClick={() => setSelectedMetric(metric.id)}
             >
               <div className="flex items-center gap-4">
-                <div className={`${metric.bgColor} p-3 rounded-lg`}>
-                  <Icon className={`h-8 w-8 ${metric.color}`} />
+                <div className={`${metric.color}`}>
+                  <Icon className="h-8 w-8" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">
