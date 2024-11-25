@@ -2114,6 +2114,68 @@ export type Database = {
           },
         ]
       }
+      processed_invoices: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          due_date: string | null
+          extracted_data: Json | null
+          id: string
+          invoice_date: string | null
+          line_items: Json | null
+          original_filename: string
+          status: string | null
+          storage_path: string
+          suggested_categories: Json | null
+          total_amount: number | null
+          updated_at: string
+          user_id: string | null
+          vendor_name: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          due_date?: string | null
+          extracted_data?: Json | null
+          id?: string
+          invoice_date?: string | null
+          line_items?: Json | null
+          original_filename: string
+          status?: string | null
+          storage_path: string
+          suggested_categories?: Json | null
+          total_amount?: number | null
+          updated_at?: string
+          user_id?: string | null
+          vendor_name?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          due_date?: string | null
+          extracted_data?: Json | null
+          id?: string
+          invoice_date?: string | null
+          line_items?: Json | null
+          original_filename?: string
+          status?: string | null
+          storage_path?: string
+          suggested_categories?: Json | null
+          total_amount?: number | null
+          updated_at?: string
+          user_id?: string | null
+          vendor_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processed_invoices_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           company_name: string | null
