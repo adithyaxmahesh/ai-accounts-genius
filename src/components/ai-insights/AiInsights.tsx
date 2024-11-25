@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
-import { Brain, TrendingUp, AlertTriangle } from "lucide-react";
+import { Brain, TrendingUp, AlertTriangle, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 
@@ -10,6 +10,7 @@ export const AiInsights = () => {
   const { data: insights } = useQuery({
     queryKey: ['ai-insights', session?.user.id],
     queryFn: async () => {
+      // Fetch financial insights
       const { data: revenueData } = await supabase
         .from('revenue_records')
         .select('amount, date')
@@ -22,11 +23,20 @@ export const AiInsights = () => {
         .eq('user_id', session?.user.id)
         .order('date', { ascending: false });
 
-      // Calculate insights
+      // Fetch AI assurance analysis
+      const { data: assuranceAnalysis } = await supabase
+        .from('ai_assurance_analysis')
+        .select('*')
+        .eq('user_id', session?.user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      // Calculate financial insights
       const totalRevenue = revenueData?.reduce((sum, record) => sum + record.amount, 0) || 0;
       const totalWriteOffs = writeOffs?.reduce((sum, record) => sum + record.amount, 0) || 0;
       const netIncome = totalRevenue - totalWriteOffs;
 
+      // Combine financial and assurance insights
       const insights = [
         {
           id: 1,
@@ -44,7 +54,17 @@ export const AiInsights = () => {
           id: 3,
           category: 'alert',
           insight: `Based on your transaction history, your monthly revenue average is $${(totalRevenue / (revenueData?.length || 1)).toFixed(2)}.`
-        }
+        },
+        // Add AI assurance insights
+        ...(assuranceAnalysis?.map((analysis, index) => ({
+          id: 4 + index,
+          category: 'assurance',
+          insight: `Assurance Analysis: Risk Score ${(analysis.risk_score * 100).toFixed(1)}%, Confidence Score ${(analysis.confidence_score * 100).toFixed(1)}%. ${
+            analysis.findings?.[0]?.description || 'No significant findings.'
+          }`,
+          recommendations: analysis.recommendations,
+          evidenceValidation: analysis.evidence_validation
+        })) || [])
       ];
 
       return insights;
@@ -55,7 +75,7 @@ export const AiInsights = () => {
     <Card className="glass-card p-6">
       <div className="flex items-center gap-2 mb-6">
         <Brain className="h-6 w-6 text-primary" />
-        <h2 className="text-xl font-semibold">AI Financial Insights</h2>
+        <h2 className="text-xl font-semibold">AI Financial & Assurance Insights</h2>
       </div>
 
       <div className="space-y-4">
@@ -64,12 +84,24 @@ export const AiInsights = () => {
             <div className="flex items-center gap-2 mb-2">
               {insight.category === 'trend' ? (
                 <TrendingUp className="h-4 w-4 text-primary" />
+              ) : insight.category === 'assurance' ? (
+                <Shield className="h-4 w-4 text-blue-500" />
               ) : (
                 <AlertTriangle className="h-4 w-4 text-yellow-500" />
               )}
               <p className="font-semibold capitalize">{insight.category}</p>
             </div>
             <p className="text-sm text-muted-foreground">{insight.insight}</p>
+            {insight.recommendations && (
+              <div className="mt-2">
+                <p className="text-sm font-medium">Recommendations:</p>
+                <ul className="text-sm text-muted-foreground list-disc list-inside">
+                  {insight.recommendations.map((rec: any, index: number) => (
+                    <li key={index}>{rec.description}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         ))}
       </div>

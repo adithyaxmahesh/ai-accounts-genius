@@ -9,6 +9,76 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_assurance_analysis: {
+        Row: {
+          analysis_type: string
+          confidence_score: number | null
+          created_at: string | null
+          engagement_id: string | null
+          evidence_validation: Json | null
+          findings: Json | null
+          id: string
+          nlp_analysis: Json | null
+          procedure_id: string | null
+          recommendations: Json | null
+          risk_score: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analysis_type: string
+          confidence_score?: number | null
+          created_at?: string | null
+          engagement_id?: string | null
+          evidence_validation?: Json | null
+          findings?: Json | null
+          id?: string
+          nlp_analysis?: Json | null
+          procedure_id?: string | null
+          recommendations?: Json | null
+          risk_score?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analysis_type?: string
+          confidence_score?: number | null
+          created_at?: string | null
+          engagement_id?: string | null
+          evidence_validation?: Json | null
+          findings?: Json | null
+          id?: string
+          nlp_analysis?: Json | null
+          procedure_id?: string | null
+          recommendations?: Json | null
+          risk_score?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_assurance_analysis_engagement_id_fkey"
+            columns: ["engagement_id"]
+            isOneToOne: false
+            referencedRelation: "assurance_engagements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_assurance_analysis_procedure_id_fkey"
+            columns: ["procedure_id"]
+            isOneToOne: false
+            referencedRelation: "assurance_procedures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_assurance_analysis_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_insights: {
         Row: {
           category: string

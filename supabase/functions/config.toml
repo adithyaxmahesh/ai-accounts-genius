@@ -1,10 +1,10 @@
 project_id = "nmrjqfntvxflkabdigfl"
 
-[functions.security-middleware]
-verify_jwt = false
-
 [functions.analyze-document]
 verify_jwt = true
 
 [functions.generate-insights]
+verify_jwt = true
+
+[functions.analyze-assurance]
 verify_jwt = true
