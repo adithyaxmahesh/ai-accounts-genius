@@ -26,9 +26,6 @@ const AuditDetail = () => {
   const { data: audit, isLoading, error } = useQuery({
     queryKey: ['audit', id],
     queryFn: async () => {
-      console.log('Fetching audit data for ID:', id);
-      console.log('Session user ID:', session?.user?.id);
-      
       if (!id || !session?.user?.id) {
         throw new Error('No audit ID provided or user not authenticated');
       }
@@ -44,23 +41,19 @@ const AuditDetail = () => {
         .single();
       
       if (error) {
-        console.error('Supabase error:', error);
         throw error;
       }
       
       if (!data) {
-        console.error('No data found for audit:', id);
         throw new Error('Audit not found');
       }
       
-      console.log('Successfully fetched audit data:', data);
       return data;
     },
     enabled: !!session && !!id,
     retry: 1
   });
 
-  // Handle loading state
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
@@ -73,9 +66,7 @@ const AuditDetail = () => {
     );
   }
 
-  // Handle error state
   if (error) {
-    console.error('Error in AuditDetail:', error);
     toast({
       title: "Error",
       description: error instanceof Error ? error.message : 'Failed to load audit details',
@@ -85,7 +76,6 @@ const AuditDetail = () => {
     return null;
   }
 
-  // Handle not found state
   if (!audit) {
     return (
       <div className="container mx-auto p-6">
@@ -112,7 +102,13 @@ const AuditDetail = () => {
         selectedItemId={selectedItemId}
         setSelectedItemId={setSelectedItemId}
       />
-      <AuditDetailTabs audit={audit} />
+      <AuditDetailTabs 
+        auditId={audit.id} 
+        onStatusChange={() => {
+          // Refetch audit data when status changes
+          window.location.reload();
+        }} 
+      />
     </div>
   );
 };

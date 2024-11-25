@@ -13,6 +13,27 @@ interface AuditDetailTabsProps {
   onStatusChange?: () => void;
 }
 
+const getRiskLevelExplanation = (level: string) => {
+  const explanations: Record<string, string> = {
+    low: "Minimal risk identified - standard monitoring sufficient",
+    medium: "Moderate risk - enhanced monitoring recommended",
+    high: "Significant risk - immediate attention required",
+    critical: "Critical risk level - urgent intervention needed"
+  };
+  return explanations[level] || "Risk level explanation not available";
+};
+
+const getStatusExplanation = (status: string) => {
+  const explanations: Record<string, string> = {
+    planning: "Initial audit planning and scope definition",
+    control_evaluation: "Evaluating internal controls and processes",
+    evidence_gathering: "Collecting and analyzing audit evidence",
+    review: "Reviewing findings and preparing report",
+    completed: "Audit completed and report finalized"
+  };
+  return explanations[status] || "Status explanation not available";
+};
+
 const AuditDetailTabs = ({ auditId, onStatusChange }: AuditDetailTabsProps) => {
   const { data: audit } = useQuery({
     queryKey: ['audit', auditId],
@@ -39,9 +60,13 @@ const AuditDetailTabs = ({ auditId, onStatusChange }: AuditDetailTabsProps) => {
 
       <TabsContent value="overview">
         <div className="grid gap-4 md:grid-cols-2">
-          <AuditHealthSection audit={audit} />
+          <AuditHealthSection 
+            audit={audit} 
+            getRiskLevelExplanation={getRiskLevelExplanation}
+          />
           <AuditStatusSection 
             audit={audit} 
+            getStatusExplanation={getStatusExplanation}
             onUpdate={onStatusChange}
           />
         </div>
