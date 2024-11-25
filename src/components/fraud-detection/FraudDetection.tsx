@@ -22,18 +22,14 @@ interface FraudAlert {
 const formatAnalysis = (analysis: string) => {
   if (!analysis) return '';
   
-  // Split the analysis into lines and filter out empty ones
   const lines = analysis.split('\n').filter(line => line.trim());
-  
-  // Group similar alerts
   const groups: { [key: string]: number } = {};
+  
   lines.forEach(line => {
-    // Extract the base message without specific amounts/times
     const baseMessage = line.replace(/\$\d+(\.\d+)?|(\d{1,2}:\d{2})/g, 'VALUE');
     groups[baseMessage] = (groups[baseMessage] || 0) + 1;
   });
 
-  // Format the output with counts
   return Object.entries(groups)
     .map(([message, count]) => {
       const formattedMessage = message.replace('VALUE', '(multiple values)');

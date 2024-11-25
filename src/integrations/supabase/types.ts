@@ -9,6 +9,109 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      accounts_payable: {
+        Row: {
+          amount: number
+          created_at: string | null
+          discount_amount: number | null
+          due_date: string
+          id: string
+          invoice_number: string | null
+          notes: string | null
+          payment_date: string | null
+          payment_status: string | null
+          updated_at: string | null
+          user_id: string | null
+          vendor_name: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          discount_amount?: number | null
+          due_date: string
+          id?: string
+          invoice_number?: string | null
+          notes?: string | null
+          payment_date?: string | null
+          payment_status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          vendor_name: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          discount_amount?: number | null
+          due_date?: string
+          id?: string
+          invoice_number?: string | null
+          notes?: string | null
+          payment_date?: string | null
+          payment_status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          vendor_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounts_payable_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      accounts_receivable: {
+        Row: {
+          amount: number
+          created_at: string | null
+          customer_name: string
+          due_date: string
+          id: string
+          invoice_number: string | null
+          notes: string | null
+          payment_date: string | null
+          payment_status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          customer_name: string
+          due_date: string
+          id?: string
+          invoice_number?: string | null
+          notes?: string | null
+          payment_date?: string | null
+          payment_status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          customer_name?: string
+          due_date?: string
+          id?: string
+          invoice_number?: string | null
+          notes?: string | null
+          payment_date?: string | null
+          payment_status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounts_receivable_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_assurance_analysis: {
         Row: {
           analysis_type: string
@@ -2093,44 +2196,6 @@ export type Database = {
             columns: ["connection_id"]
             isOneToOne: false
             referencedRelation: "shopify_connections"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      state_operations: {
-        Row: {
-          compliance_status: string | null
-          created_at: string
-          id: string
-          operation_type: string | null
-          state: string | null
-          tax_implications: Json | null
-          user_id: string | null
-        }
-        Insert: {
-          compliance_status?: string | null
-          created_at?: string
-          id?: string
-          operation_type?: string | null
-          state?: string | null
-          tax_implications?: Json | null
-          user_id?: string | null
-        }
-        Update: {
-          compliance_status?: string | null
-          created_at?: string
-          id?: string
-          operation_type?: string | null
-          state?: string | null
-          tax_implications?: Json | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "state_operations_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
