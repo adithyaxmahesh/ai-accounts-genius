@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { Info, Loader2 } from "lucide-react";
+import { Info } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -31,8 +31,9 @@ const AuditTrailSection = ({ auditId }: AuditTrailProps) => {
   if (isLoading) {
     return (
       <Card className="p-6">
-        <div className="flex items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin" />
+        <div className="space-y-4 animate-pulse">
+          <div className="h-6 bg-muted rounded w-1/4"></div>
+          <div className="h-32 bg-muted rounded"></div>
         </div>
       </Card>
     );

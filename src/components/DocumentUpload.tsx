@@ -23,15 +23,13 @@ export const DocumentUpload = ({ className }: { className?: string }) => {
         <div className="relative">
           <input
             type="file"
-            id="document-upload"
-            name="document-upload"
+            id="file-upload"
             className="hidden"
             accept=".pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.jpg,.jpeg,.png,.gif"
             onChange={handleFileUpload}
             disabled={uploading || processing}
-            aria-label="Upload document"
           />
-          <label htmlFor="document-upload">
+          <label htmlFor="file-upload">
             <Button
               className="hover-scale text-sm px-3 py-1 h-8"
               disabled={uploading || processing}
