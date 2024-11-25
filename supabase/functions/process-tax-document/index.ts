@@ -6,30 +6,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-interface TaxDocumentData {
-  totalIncome: number;
-  totalDeductions: number;
-  taxYear: number;
-  documentType: string;
-  lineItems: Array<{
-    category: string;
-    amount: number;
-    description: string;
-  }>;
-}
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY2');
+const supabaseUrl = Deno.env.get('SUPABASE_URL');
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { documentId } = await req.json()
-    
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
+    const { documentId } = await req.json();
 
     // Get document metadata and content
     const { data: document, error: docError } = await supabase
