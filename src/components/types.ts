@@ -49,4 +49,6 @@ export interface AIInsight {
   insight: string;
   recommendations?: Array<{ description: string }>;
   evidenceValidation?: any;
+  created_at?: string;
+  confidence_score?: number;
 }

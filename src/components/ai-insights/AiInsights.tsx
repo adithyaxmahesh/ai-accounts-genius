@@ -65,7 +65,9 @@ export const AiInsights = () => {
             analysis.findings?.[0]?.description || 'No significant findings.'
           }`,
           recommendations: analysis.recommendations,
-          evidenceValidation: analysis.evidence_validation
+          evidenceValidation: analysis.evidence_validation,
+          created_at: analysis.created_at,
+          confidence_score: analysis.confidence_score
         })) || [])
       ];
 
@@ -74,8 +76,8 @@ export const AiInsights = () => {
   });
 
   const chartData = insights?.map(insight => ({
-    date: new Date(insight.created_at).toLocaleDateString(),
-    confidence: insight.confidence_score
+    date: insight.created_at ? new Date(insight.created_at).toLocaleDateString() : new Date().toLocaleDateString(),
+    confidence: insight.confidence_score || 0
   })) || [];
 
   return (
