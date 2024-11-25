@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/components/AuthProvider";
 
-export const useTaxAnalysis = (selectedBusinessType: string, selectedState: string, auditId?: string) => {
+export const useTaxAnalysis = (selectedBusinessType: string, selectedState: string) => {
   const { session } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -32,23 +32,16 @@ export const useTaxAnalysis = (selectedBusinessType: string, selectedState: stri
   });
 
   const { data: taxAnalysis } = useQuery({
-    queryKey: ['tax-analysis', session?.user?.id, selectedBusinessType, selectedState, auditId],
+    queryKey: ['tax-analysis', session?.user?.id, selectedBusinessType, selectedState],
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
       try {
-        let query = supabase
+        const { data, error } = await supabase
           .from('tax_analysis')
           .select('*')
           .eq('user_id', session.user.id)
-          .eq('analysis_type', 'summary');
-
-        // If auditId is provided, filter for that specific audit
-        if (auditId) {
-          query = query.eq('audit_id', auditId);
-        }
-
-        const { data, error } = await query
+          .eq('analysis_type', 'summary')
           .order('created_at', { ascending: false })
           .limit(1)
           .single();
@@ -88,7 +81,6 @@ export const useTaxAnalysis = (selectedBusinessType: string, selectedState: stri
             user_id: session.user.id,
             analysis_type: 'summary',
             jurisdiction: values.state,
-            audit_id: auditId, // Include audit_id in the analysis
             recommendations: {
               business_type: values.businessType,
               state: values.state
@@ -107,7 +99,7 @@ export const useTaxAnalysis = (selectedBusinessType: string, selectedState: stri
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['tax-analysis', session?.user?.id, selectedBusinessType, selectedState, auditId] 
+        queryKey: ['tax-analysis', session?.user?.id, selectedBusinessType, selectedState] 
       });
       toast({
         title: "Settings Updated",
