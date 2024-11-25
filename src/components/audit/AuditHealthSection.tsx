@@ -38,17 +38,19 @@ const AuditHealthSection = ({ audit, getRiskLevelExplanation }: AuditHealthProps
     const controls = audit?.internal_control_assessment || {};
     if (!Object.keys(controls).length) return 0;
 
-    const scoreMap = {
+    const scoreMap: { [key: string]: number } = {
       effective: 1,
       needs_improvement: 0.5,
       ineffective: 0
     };
 
     const total = Object.values(controls).length;
-    const score = Object.values(controls).reduce((acc: number, val: any) => 
-      acc + (scoreMap[val as keyof typeof scoreMap] || 0), 0);
+    const score = Object.values(controls).reduce((acc: number, val: any) => {
+      const scoreValue = typeof val === 'string' ? (scoreMap[val] || 0) : 0;
+      return acc + scoreValue;
+    }, 0);
 
-    return (score / total) * 100;
+    return total > 0 ? (score / total) * 100 : 0;
   };
 
   return (
@@ -100,14 +102,17 @@ const AuditHealthSection = ({ audit, getRiskLevelExplanation }: AuditHealthProps
         {audit?.risk_scores && (
           <div className="space-y-2">
             <span className="text-sm font-medium">Risk Categories</span>
-            {Object.entries(audit.risk_scores).map(([category, score]: [string, any]) => (
-              <div key={category} className="flex justify-between items-center">
-                <span className="text-sm">{category.replace('_', ' ')}</span>
-                <span className={`text-sm font-medium ${getRiskScoreColor(score)}`}>
-                  {(score * 100).toFixed(0)}%
-                </span>
-              </div>
-            ))}
+            {Object.entries(audit.risk_scores).map(([category, score]: [string, any]) => {
+              const numericScore = typeof score === 'number' ? score : 0;
+              return (
+                <div key={category} className="flex justify-between items-center">
+                  <span className="text-sm">{category.replace('_', ' ')}</span>
+                  <span className={`text-sm font-medium ${getRiskScoreColor(numericScore)}`}>
+                    {(numericScore * 100).toFixed(0)}%
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
