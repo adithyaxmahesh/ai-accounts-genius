@@ -313,39 +313,120 @@ export type Database = {
           },
         ]
       }
+      audit_procedures: {
+        Row: {
+          audit_id: string | null
+          created_at: string
+          description: string
+          evidence: Json | null
+          findings: string[] | null
+          id: string
+          method: string
+          performed_at: string | null
+          performed_by: string | null
+          procedure_type: string
+          status: string | null
+        }
+        Insert: {
+          audit_id?: string | null
+          created_at?: string
+          description: string
+          evidence?: Json | null
+          findings?: string[] | null
+          id?: string
+          method: string
+          performed_at?: string | null
+          performed_by?: string | null
+          procedure_type: string
+          status?: string | null
+        }
+        Update: {
+          audit_id?: string | null
+          created_at?: string
+          description?: string
+          evidence?: Json | null
+          findings?: string[] | null
+          id?: string
+          method?: string
+          performed_at?: string | null
+          performed_by?: string | null
+          procedure_type?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_procedures_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "audit_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_procedures_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_reports: {
         Row: {
+          audit_assertions: Json | null
+          audit_objective: string | null
+          audit_opinion: string | null
           created_at: string
           description: string | null
           document_id: string | null
+          engagement_letter: Json | null
+          evidence_collected: Json | null
           findings: Json | null
           id: string
+          internal_control_assessment: Json | null
+          materiality_threshold: number | null
           recommendations: string[] | null
           risk_level: string | null
+          stakeholders: string[] | null
           status: string
           title: string
           user_id: string | null
         }
         Insert: {
+          audit_assertions?: Json | null
+          audit_objective?: string | null
+          audit_opinion?: string | null
           created_at?: string
           description?: string | null
           document_id?: string | null
+          engagement_letter?: Json | null
+          evidence_collected?: Json | null
           findings?: Json | null
           id?: string
+          internal_control_assessment?: Json | null
+          materiality_threshold?: number | null
           recommendations?: string[] | null
           risk_level?: string | null
+          stakeholders?: string[] | null
           status?: string
           title: string
           user_id?: string | null
         }
         Update: {
+          audit_assertions?: Json | null
+          audit_objective?: string | null
+          audit_opinion?: string | null
           created_at?: string
           description?: string | null
           document_id?: string | null
+          engagement_letter?: Json | null
+          evidence_collected?: Json | null
           findings?: Json | null
           id?: string
+          internal_control_assessment?: Json | null
+          materiality_threshold?: number | null
           recommendations?: string[] | null
           risk_level?: string | null
+          stakeholders?: string[] | null
           status?: string
           title?: string
           user_id?: string | null

@@ -3,15 +3,15 @@ import { supabase } from "@/integrations/supabase/client";
 export const getStatusExplanation = (status: string) => {
   switch (status) {
     case 'planning':
-      return "Initial phase: Assessing business context and defining audit scope";
+      return "Initial phase: Defining audit scope, objectives, and materiality thresholds";
     case 'control_evaluation':
-      return "Evaluating internal controls and risk assessment";
+      return "Evaluating internal controls and assessing their effectiveness";
     case 'evidence_gathering':
-      return "Collecting and analyzing financial data and documentation";
+      return "Collecting and analyzing financial data, documentation, and conducting tests";
     case 'review':
-      return "Evaluating findings and preparing draft conclusions";
+      return "Evaluating findings, preparing draft conclusions, and formulating audit opinion";
     case 'completed':
-      return "Audit completed with final opinion issued";
+      return "Audit completed with final opinion issued and recommendations provided";
     default:
       return "Status pending or unknown";
   }
@@ -60,11 +60,20 @@ export const startNewAudit = async (title: string) => {
         description: "Initial audit scope and planning phase",
         findings: [],
         recommendations: [
-          "Review all transactions above average threshold",
-          "Verify supporting documentation for large transactions",
-          "Assess internal controls effectiveness"
+          "Define clear audit objectives and scope",
+          "Identify key stakeholders and their requirements",
+          "Establish materiality thresholds",
+          "Assess internal control environment"
         ],
-        user_id: user.id
+        user_id: user.id,
+        audit_objective: null,
+        stakeholders: [],
+        engagement_letter: null,
+        materiality_threshold: null,
+        internal_control_assessment: null,
+        evidence_collected: null,
+        audit_assertions: null,
+        audit_opinion: null
       }
     ])
     .select()

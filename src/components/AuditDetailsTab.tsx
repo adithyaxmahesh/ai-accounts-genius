@@ -11,6 +11,8 @@ import AuditHealthSection from "@/components/audit/AuditHealthSection";
 import RiskAssessmentMatrix from "@/components/audit/RiskAssessmentMatrix";
 import AuditItemsSection from "@/components/audit/AuditItemsSection";
 import AuditTrailSection from "@/components/audit/AuditTrailSection";
+import AuditPlanningForm from "@/components/audit/AuditPlanningForm";
+import AuditControlEvaluation from "@/components/audit/AuditControlEvaluation";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface AuditDetailsProps {
@@ -30,6 +32,27 @@ const AuditDetailsTab = ({
     queryClient.invalidateQueries({ queryKey: ['audit', audit?.id] });
   };
 
+  const renderAuditPhase = () => {
+    switch (audit?.status) {
+      case 'planning':
+        return (
+          <AuditPlanningForm 
+            auditId={audit.id} 
+            onComplete={handleAuditUpdate} 
+          />
+        );
+      case 'control_evaluation':
+        return (
+          <AuditControlEvaluation 
+            auditId={audit.id} 
+            onComplete={handleAuditUpdate} 
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card className="p-6 glass-card">
@@ -46,8 +69,17 @@ const AuditDetailsTab = ({
           />
         </div>
 
-        <div className="space-y-6">
+        {renderAuditPhase()}
+
+        <div className="space-y-6 mt-6">
           <RiskAssessmentMatrix auditId={audit?.id} />
+
+          {audit?.audit_objective && (
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Audit Objective</h3>
+              <p className="text-muted-foreground">{audit.audit_objective}</p>
+            </div>
+          )}
 
           <div>
             <TooltipProvider>
@@ -66,7 +98,7 @@ const AuditDetailsTab = ({
               </div>
             </TooltipProvider>
             <div className="space-y-4">
-              {Array.isArray(audit?.findings) && audit.findings.map((finding, index) => (
+              {Array.isArray(audit?.findings) && audit.findings.map((finding: string, index: number) => (
                 <div key={index} className="p-4 bg-muted rounded-lg">
                   <p className="text-sm">{finding}</p>
                 </div>
@@ -99,7 +131,7 @@ const AuditDetailsTab = ({
                 </div>
               </TooltipProvider>
               <ul className="list-disc pl-5 space-y-2">
-                {audit.recommendations.map((rec, index) => (
+                {audit.recommendations.map((rec: string, index: number) => (
                   <li key={index} className="text-muted-foreground">{rec}</li>
                 ))}
               </ul>
