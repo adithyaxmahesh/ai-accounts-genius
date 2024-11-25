@@ -27,7 +27,8 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
 
   const { businessInfo, taxAnalysis } = useTaxAnalysis(
     selectedBusinessType,
-    selectedState
+    selectedState,
+    audit?.id // Pass audit ID to filter calculations
   );
 
   useEffect(() => {
@@ -39,7 +40,14 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
 
   useEffect(() => {
     const updateTaxes = async () => {
-      const result = await calculateTaxes(taxAnalysis, audit, selectedBusinessType, selectedState);
+      // Only calculate taxes for items related to this audit
+      const result = await calculateTaxes(
+        taxAnalysis, 
+        audit, 
+        selectedBusinessType, 
+        selectedState,
+        audit?.audit_items || [] // Pass audit items for specific calculations
+      );
       if (result) {
         setTaxCalculation(result);
       }
@@ -78,6 +86,7 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
           <TaxSummaryHeader
             selectedState={selectedState}
             selectedBusinessType={selectedBusinessType}
+            auditTitle={audit?.title} // Pass audit title for context
           />
         </div>
 
@@ -98,19 +107,19 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
           <Card className="p-6 bg-gradient-to-br from-background via-background to-muted/20 border-none shadow-xl hover:shadow-2xl transition-all duration-300">
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <PieChart className="w-5 h-5 text-primary" />
-              Summary
+              Audit-Specific Summary
             </h3>
             <div className="space-y-4">
               <div className="flex justify-between items-center p-3 rounded-lg bg-gradient-to-r from-emerald-500/10 to-emerald-500/5">
-                <span className="text-muted-foreground">Total Revenue</span>
+                <span className="text-muted-foreground">Audit Revenue</span>
                 <span className="font-semibold text-emerald-500">${taxCalculation.totalAmount.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center p-3 rounded-lg bg-gradient-to-r from-red-500/10 to-red-500/5">
-                <span className="text-muted-foreground">Total Expenses</span>
+                <span className="text-muted-foreground">Audit Expenses</span>
                 <span className="font-semibold text-red-500">${taxCalculation.expenses.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center p-3 rounded-lg bg-gradient-to-r from-blue-500/10 to-blue-500/5">
-                <span className="text-muted-foreground">Taxable Income</span>
+                <span className="text-muted-foreground">Taxable Income (Audit)</span>
                 <span className="font-semibold text-blue-500">${taxCalculation.taxableIncome.toLocaleString()}</span>
               </div>
             </div>
@@ -119,7 +128,7 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <MetricCard
-            title="Federal Tax"
+            title="Federal Tax Impact"
             value={`$${taxCalculation.federalTax.toLocaleString()}`}
             icon={DollarSign}
             className="from-primary/80 to-primary"
@@ -127,7 +136,7 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
           />
           
           <MetricCard
-            title="State Tax"
+            title="State Tax Impact"
             value={`$${taxCalculation.stateTax.toLocaleString()}`}
             icon={Calculator}
             className="from-secondary/80 to-secondary"
@@ -146,8 +155,8 @@ const TaxSummaryTab = ({ audit }: TaxSummaryProps) => {
         <Card className="p-8 bg-gradient-to-br from-primary/5 via-background to-secondary/5 border-none shadow-xl hover:shadow-2xl transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-2xl font-bold mb-2">Total Tax Liability</h3>
-              <p className="text-sm text-muted-foreground mb-4">Estimated total tax based on current configuration</p>
+              <h3 className="text-2xl font-bold mb-2">Audit Tax Impact</h3>
+              <p className="text-sm text-muted-foreground mb-4">Estimated tax impact for this audit's findings</p>
               <p className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 ${(taxCalculation.federalTax + taxCalculation.stateTax).toLocaleString()}
               </p>
