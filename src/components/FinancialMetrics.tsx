@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { DollarSign, Target, PiggyBank } from "lucide-react";
+import { DollarSign, Target, PiggyBank, Receipt } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useFinancialData } from "@/hooks/useFinancialData";
 
@@ -55,17 +55,17 @@ export const FinancialMetrics = () => {
         className="relative overflow-hidden bg-[#1A1F2C]/80 backdrop-blur-lg border border-white/10 p-6 hover:scale-105 transition-transform duration-200 cursor-pointer group"
         onClick={() => navigate('/expenses')}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-transparent" />
         <div className="relative z-10">
-          <Target className="h-8 w-8 mb-4 text-purple-500" />
+          <Receipt className="h-8 w-8 mb-4 text-red-500" />
           <div className="space-y-1">
-            <p className="text-sm text-purple-500 font-medium">Expenses</p>
+            <p className="text-sm text-red-500 font-medium">Expenses</p>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-bold text-white">
                 ${metrics?.totalExpenses?.toLocaleString() || '0'}
               </span>
             </div>
-            <p className="text-sm text-purple-500">
+            <p className="text-sm text-red-500">
               {metrics?.totalExpenses ? `${((metrics.totalExpenses / metrics.totalRevenue) * 100).toFixed(1)}% of revenue` : 'No expenses recorded'}
             </p>
           </div>
