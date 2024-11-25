@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Brain, Send, Loader2, Calculator } from "lucide-react";
+import { Brain, Calculator } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { useQuery } from "@tanstack/react-query";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { ChatMessage } from "./chat/ChatMessage";
+import { ChatSuggestions } from "./chat/ChatSuggestions";
+import { ChatInput } from "./chat/ChatInput";
 
 interface ChatMessage {
   type: 'user' | 'assistant';
@@ -23,7 +24,6 @@ export const QueryInterface = () => {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch financial data for context
   const { data: writeOffs } = useQuery({
     queryKey: ['write-offs', session?.user.id],
     queryFn: async () => {
@@ -89,7 +89,6 @@ export const QueryInterface = () => {
     
     setLoading(true);
     try {
-      console.log('Sending query to tax-chat function:', query); // Debug log
       const { data, error } = await supabase.functions.invoke('tax-chat', {
         body: { 
           message: query,
@@ -97,12 +96,7 @@ export const QueryInterface = () => {
         }
       });
 
-      console.log('Response from tax-chat function:', { data, error }); // Debug log
-
-      if (error) {
-        console.error('Supabase function error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       if (!data?.answer) {
         throw new Error('No response received from the AI');
@@ -148,54 +142,20 @@ export const QueryInterface = () => {
           {chatHistory.length > 0 ? (
             <div className="space-y-4 p-4">
               {chatHistory.map((message, index) => (
-                <div
-                  key={index}
-                  className={`p-4 rounded-lg ${
-                    message.type === 'user'
-                      ? 'bg-primary text-primary-foreground ml-12'
-                      : 'bg-muted mr-12'
-                  }`}
-                >
-                  {message.category && (
-                    <Badge className="mb-2" variant="secondary">
-                      {message.category}
-                    </Badge>
-                  )}
-                  <p className="whitespace-pre-wrap">{message.content}</p>
-                </div>
+                <ChatMessage key={index} {...message} />
               ))}
             </div>
           ) : (
-            <div className="text-sm text-muted-foreground p-4">
-              <p>You can ask questions like:</p>
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>"What was my largest expense last month?"</li>
-                <li>"How can I optimize my tax deductions?"</li>
-                <li>"What vehicle expenses can I write off?"</li>
-                <li>"Show me my tax savings opportunities"</li>
-                <li>"Calculate my estimated quarterly taxes"</li>
-                <li>"Analyze my business expense patterns"</li>
-              </ul>
-            </div>
+            <ChatSuggestions />
           )}
         </ScrollArea>
 
-        <div className="flex gap-2">
-          <Input
-            placeholder="Ask about expenses, tax write-offs, or financial optimization..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleQuery()}
-            className="flex-1"
-          />
-          <Button onClick={handleQuery} disabled={loading}>
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
+        <ChatInput
+          query={query}
+          loading={loading}
+          onQueryChange={setQuery}
+          onSubmit={handleQuery}
+        />
       </div>
     </Card>
   );
