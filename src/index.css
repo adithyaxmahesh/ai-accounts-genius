@@ -32,12 +32,12 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-gradient-to-br from-[#1A1F2C] to-[#121520] min-h-screen text-foreground antialiased;
   }
 }
 
 .glass-card {
-  @apply bg-black/40 backdrop-blur-lg rounded-lg border border-white/10 shadow-lg;
+  @apply bg-black/40 backdrop-blur-xl rounded-lg border border-white/10 shadow-lg;
 }
 
 .hover-scale {

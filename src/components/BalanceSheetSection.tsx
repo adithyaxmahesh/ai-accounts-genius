@@ -29,27 +29,22 @@ interface BalanceSheetSectionProps {
 
 const getSubcategoryColor = (category: string) => {
   const colors: { [key: string]: string } = {
-    'current-assets': 'bg-green-900/50 text-green-200',
-    'non-current-assets': 'bg-emerald-900/50 text-emerald-200',
-    'current-liabilities': 'bg-red-900/50 text-red-200',
-    'non-current-liabilities': 'bg-rose-900/50 text-rose-200',
-    'contributed-capital': 'bg-blue-900/50 text-blue-200',
-    'retained-earnings': 'bg-indigo-900/50 text-indigo-200',
+    'current-assets': 'bg-emerald-500/10 text-emerald-200 border-emerald-500/20',
+    'non-current-assets': 'bg-green-500/10 text-green-200 border-green-500/20',
+    'current-liabilities': 'bg-red-500/10 text-red-200 border-red-500/20',
+    'non-current-liabilities': 'bg-rose-500/10 text-rose-200 border-rose-500/20',
+    'contributed-capital': 'bg-blue-500/10 text-blue-200 border-blue-500/20',
+    'retained-earnings': 'bg-indigo-500/10 text-indigo-200 border-indigo-500/20',
   };
-  return colors[category.toLowerCase()] || 'bg-slate-800 text-slate-200';
+  return colors[category.toLowerCase()] || 'bg-slate-800 text-slate-200 border-slate-700';
 };
 
 export const BalanceSheetSection = ({ title, items, className }: BalanceSheetSectionProps) => {
-  // Group items by term (short/long) and then by subcategory
   const groupedItems = items.reduce((acc, item) => {
     const term = item.term || 'other';
     const subcategory = item.subcategory || 'Other';
-    if (!acc[term]) {
-      acc[term] = {};
-    }
-    if (!acc[term][subcategory]) {
-      acc[term][subcategory] = [];
-    }
+    if (!acc[term]) acc[term] = {};
+    if (!acc[term][subcategory]) acc[term][subcategory] = [];
     acc[term][subcategory].push(item);
     return acc;
   }, {} as { [key: string]: { [key: string]: BalanceSheetItem[] } });
@@ -57,83 +52,95 @@ export const BalanceSheetSection = ({ title, items, className }: BalanceSheetSec
   const total = items.reduce((sum, item) => sum + Number(item.amount), 0);
 
   return (
-    <Card className={`p-6 bg-black/60 backdrop-blur-lg border border-white/10 shadow-lg ${className}`}>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold bg-gradient-to-r from-primary/80 to-secondary/80 bg-clip-text text-transparent">{title}</h2>
-        <div className="text-2xl font-bold text-foreground bg-black/50 px-4 py-2 rounded-lg border border-white/5">
-          ${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+    <Card className={`glass-card backdrop-blur-xl bg-black/40 border-white/10 ${className}`}>
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-primary via-primary/80 to-secondary bg-clip-text text-transparent">
+            {title}
+          </h2>
+          <div className="text-2xl font-bold px-4 py-2 rounded-lg bg-black/60 border border-white/10 text-primary">
+            ${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          </div>
         </div>
-      </div>
-      
-      <ScrollArea className="h-[400px] pr-4">
-        <div className="space-y-6">
-          {Object.entries(groupedItems).map(([term, subcategories]) => (
-            <div key={term} className="space-y-4">
-              <h3 className="text-lg font-semibold capitalize bg-gradient-to-r from-primary/90 to-secondary/90 bg-clip-text text-transparent">
-                {term === 'short' ? 'Current' : term === 'long' ? 'Non-Current' : term}
-              </h3>
-              
-              {Object.entries(subcategories).map(([subcategory, subcategoryItems]) => (
-                <div key={subcategory} className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <h4 className="text-md font-medium bg-gradient-to-r from-primary/70 to-secondary/70 bg-clip-text text-transparent">{subcategory}</h4>
-                    <Badge variant="secondary" className="bg-primary/20 text-primary-foreground border border-primary/30">
-                      ${subcategoryItems.reduce((sum, item) => sum + Number(item.amount), 0).toLocaleString()}
-                    </Badge>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    {subcategoryItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex justify-between items-start p-4 bg-black/70 backdrop-blur-sm rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 border border-white/5 hover:border-white/10 hover:bg-black/80"
-                      >
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <p className="font-semibold text-foreground/90">{item.name}</p>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger>
-                                  <Info className="h-4 w-4 text-primary/70" />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>{item.description || 'No description available'}</p>
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    Added on {formatDate(item.created_at)}
-                                  </p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
+        
+        <ScrollArea className="h-[400px] pr-4">
+          <div className="space-y-6">
+            {Object.entries(groupedItems).map(([term, subcategories]) => (
+              <div key={term} className="space-y-4">
+                <h3 className="text-lg font-semibold capitalize text-primary/90">
+                  {term === 'short' ? 'Current' : term === 'long' ? 'Non-Current' : term}
+                </h3>
+                
+                {Object.entries(subcategories).map(([subcategory, subcategoryItems]) => (
+                  <div key={subcategory} className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-md font-medium text-primary/80">{subcategory}</h4>
+                      <Badge variant="outline" className="bg-primary/10 border-primary/20">
+                        ${subcategoryItems.reduce((sum, item) => sum + Number(item.amount), 0).toLocaleString()}
+                      </Badge>
+                    </div>
+                    
+                    <div className="grid gap-3">
+                      {subcategoryItems.map((item) => (
+                        <div
+                          key={item.id}
+                          className="group p-4 rounded-lg transition-all duration-300
+                            bg-gradient-to-br from-black/60 to-black/40
+                            hover:from-black/70 hover:to-black/50
+                            border border-white/5 hover:border-white/10
+                            backdrop-blur-lg shadow-lg hover:shadow-xl
+                            hover:translate-y-[-2px]"
+                        >
+                          <div className="flex justify-between items-start">
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <p className="font-semibold text-white/90 group-hover:text-white">
+                                  {item.name}
+                                </p>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <Info className="h-4 w-4 text-primary/70" />
+                                    </TooltipTrigger>
+                                    <TooltipContent className="bg-black/90 border-white/10">
+                                      <p>{item.description || 'No description available'}</p>
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        Added on {formatDate(item.created_at)}
+                                      </p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
+                              <Badge className={`${getSubcategoryColor(item.category)}`}>
+                                {item.category}
+                              </Badge>
+                              {item.description && (
+                                <p className="text-sm text-white/60">{item.description}</p>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <p className="text-lg font-semibold text-white/90">
+                                ${item.amount.toLocaleString()}
+                              </p>
+                              <p className="text-xs text-white/60">
+                                {formatDate(item.created_at)}
+                              </p>
+                            </div>
                           </div>
-                          <Badge 
-                            className={getSubcategoryColor(item.category)} 
-                            variant="secondary"
-                          >
-                            {item.category}
-                          </Badge>
-                          {item.description && (
-                            <p className="text-sm text-muted-foreground">{item.description}</p>
-                          )}
                         </div>
-                        <div className="text-right">
-                          <p className="text-lg font-semibold text-foreground/90">${item.amount.toLocaleString()}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatDate(item.created_at)}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-      </ScrollArea>
-      
-      {items.length === 0 && (
-        <p className="text-muted-foreground text-center py-4">No items added yet</p>
-      )}
+                ))}
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+        
+        {items.length === 0 && (
+          <p className="text-white/60 text-center py-4">No items added yet</p>
+        )}
+      </div>
     </Card>
   );
 };
