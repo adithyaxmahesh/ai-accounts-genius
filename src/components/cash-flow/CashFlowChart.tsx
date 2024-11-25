@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend } from 'recharts';
 
 interface CashFlowChartProps {
   data: Array<{
@@ -45,54 +45,67 @@ export const CashFlowChart = ({ data }: CashFlowChartProps) => {
   };
 
   return (
-    <Card className="p-4">
-      <h3 className="font-semibold mb-4">Cash Flow Trends</h3>
+    <Card className="p-4 bg-background">
+      <h3 className="font-semibold mb-4 text-foreground">Cash Flow Trends</h3>
       <div className="h-[400px]">
         <ChartContainer config={chartConfig}>
-          <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis
-              dataKey="date"
-              className="text-sm text-muted-foreground"
-              tickLine={false}
-              axisLine={false}
-            />
-            <YAxis
-              className="text-sm text-muted-foreground"
-              tickLine={false}
-              axisLine={false}
-              tickFormatter={(value) => `$${value.toLocaleString()}`}
-            />
-            <ChartTooltip content={<ChartTooltipContent />} />
-            <Line
-              type="monotone"
-              dataKey="operatingCashFlow"
-              name="operatingCF"
-              strokeWidth={2}
-              dot={false}
-            />
-            <Line
-              type="monotone"
-              dataKey="financingCashFlow"
-              name="financingCF"
-              strokeWidth={2}
-              dot={false}
-            />
-            <Line
-              type="monotone"
-              dataKey="freeCashFlow"
-              name="freeCF"
-              strokeWidth={2}
-              dot={false}
-            />
-            <Line
-              type="monotone"
-              dataKey="netCashFlow"
-              name="netCF"
-              strokeWidth={2}
-              dot={false}
-            />
-          </LineChart>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
+              <XAxis
+                dataKey="date"
+                className="text-sm text-muted-foreground"
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis
+                className="text-sm text-muted-foreground"
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(value) => `$${value.toLocaleString()}`}
+              />
+              <ChartTooltip 
+                content={<ChartTooltipContent />}
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--background))',
+                  border: '1px solid hsl(var(--border))',
+                }}
+              />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="operatingCashFlow"
+                name="Operating CF"
+                stroke={chartConfig.operatingCF.theme.dark}
+                strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="financingCashFlow"
+                name="Financing CF"
+                stroke={chartConfig.financingCF.theme.dark}
+                strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="freeCashFlow"
+                name="Free CF"
+                stroke={chartConfig.freeCF.theme.dark}
+                strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="netCashFlow"
+                name="Net CF"
+                stroke={chartConfig.netCF.theme.dark}
+                strokeWidth={2}
+                dot={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </ChartContainer>
       </div>
     </Card>
