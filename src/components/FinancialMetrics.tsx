@@ -102,7 +102,7 @@ export const FinancialMetrics = () => {
           </span>
         </p>
         <p className="text-sm text-muted-foreground mt-1">
-          {metrics?.monthOverMonthGrowth > 0 ? '+' : ''}{metrics?.monthOverMonthGrowth.toFixed(1)}% from last month
+          {metrics?.monthOverMonthGrowth > 0 ? '+' : ''}{metrics?.monthOverMonthGrowth.toFixed(2)}% from last month
         </p>
       </Card>
 
@@ -114,7 +114,10 @@ export const FinancialMetrics = () => {
         <h3 className="text-lg font-semibold mb-1">Net Profit</h3>
         <p className="text-xl font-bold truncate min-h-[2rem] flex items-center justify-start">
           <span className="text-blue-500 text-3xl font-bold">
-            ${((metrics?.revenue || 0) * 0.8).toLocaleString()}
+            ${((metrics?.revenue || 0) * 0.8).toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            })}
           </span>
         </p>
         <p className="text-sm text-muted-foreground mt-1">
@@ -130,7 +133,7 @@ export const FinancialMetrics = () => {
         <h3 className="text-lg font-semibold mb-1">Financial Goals</h3>
         <p className="text-xl font-bold truncate min-h-[2rem] flex items-center justify-start">
           <span className="text-purple-500 text-3xl font-bold">
-            {progressPercentage.toFixed(1)}%
+            {progressPercentage.toFixed(2)}%
           </span>
         </p>
         <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
