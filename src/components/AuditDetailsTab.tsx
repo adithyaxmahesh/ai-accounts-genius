@@ -6,6 +6,7 @@ import {
   TooltipTrigger,
   TooltipProvider
 } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 import AuditStatusSection from "@/components/audit/AuditStatusSection";
 import AuditHealthSection from "@/components/audit/AuditHealthSection";
 import RiskAssessmentMatrix from "@/components/audit/RiskAssessmentMatrix";
@@ -32,21 +33,55 @@ const AuditDetailsTab = ({
     queryClient.invalidateQueries({ queryKey: ['audit', audit?.id] });
   };
 
+  const renderPhaseHeader = () => {
+    const phases = ['planning', 'control_evaluation', 'evidence_gathering', 'review', 'completed'];
+    const currentPhaseIndex = phases.indexOf(audit?.status);
+
+    return (
+      <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
+        {phases.map((phase, index) => (
+          <Badge
+            key={phase}
+            variant={index === currentPhaseIndex ? "default" : "outline"}
+            className={`text-sm whitespace-nowrap ${
+              index === currentPhaseIndex ? "bg-primary" : 
+              index < currentPhaseIndex ? "bg-muted text-muted-foreground" : ""
+            }`}
+          >
+            {phase.replace('_', ' ').charAt(0).toUpperCase() + phase.slice(1).replace('_', ' ')}
+          </Badge>
+        ))}
+      </div>
+    );
+  };
+
   const renderAuditPhase = () => {
     switch (audit?.status) {
       case 'planning':
         return (
-          <AuditPlanningForm 
-            auditId={audit.id} 
-            onComplete={handleAuditUpdate} 
-          />
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Planning Phase</h2>
+            <p className="text-muted-foreground mb-4">
+              Define the audit scope, objectives, and identify key stakeholders.
+            </p>
+            <AuditPlanningForm 
+              auditId={audit.id} 
+              onComplete={handleAuditUpdate} 
+            />
+          </div>
         );
       case 'control_evaluation':
         return (
-          <AuditControlEvaluation 
-            auditId={audit.id} 
-            onComplete={handleAuditUpdate} 
-          />
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Control Evaluation Phase</h2>
+            <p className="text-muted-foreground mb-4">
+              Evaluate internal controls and assess their effectiveness.
+            </p>
+            <AuditControlEvaluation 
+              auditId={audit.id} 
+              onComplete={handleAuditUpdate} 
+            />
+          </div>
         );
       default:
         return null;
@@ -56,6 +91,8 @@ const AuditDetailsTab = ({
   return (
     <div className="space-y-6">
       <Card className="p-6 glass-card">
+        {renderPhaseHeader()}
+        
         <div className="flex justify-between items-start mb-6">
           <AuditStatusSection 
             audit={audit}
@@ -75,7 +112,7 @@ const AuditDetailsTab = ({
           <RiskAssessmentMatrix auditId={audit?.id} />
 
           {audit?.audit_objective && (
-            <div>
+            <div className="bg-muted/50 p-4 rounded-lg">
               <h3 className="text-lg font-semibold mb-2">Audit Objective</h3>
               <p className="text-muted-foreground">{audit.audit_objective}</p>
             </div>
@@ -114,7 +151,7 @@ const AuditDetailsTab = ({
           <AuditItemsSection auditItems={audit?.audit_items || []} />
 
           {Array.isArray(audit?.recommendations) && audit.recommendations.length > 0 && (
-            <div>
+            <div className="bg-muted/50 p-4 rounded-lg">
               <TooltipProvider>
                 <div className="flex items-center gap-2 mb-2">
                   <h3 className="text-lg font-semibold">
