@@ -1,9 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import { performRiskAssessment } from './riskAssessment.ts';
-import { testInternalControls } from './controlTests.ts';
-import { detectAnomalies } from './anomalyDetection.ts';
-import { AuditData } from './types.ts';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { performRiskAssessment } from "./riskAssessment.ts";
+import { testInternalControls } from "./controlTests.ts";
+import { detectAnomalies } from "./anomalyDetection.ts";
+import { AuditData } from "./types.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,34 +11,45 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { auditId } = await req.json();
+    const { auditId, frequency, startDate, endDate, documentId } = await req.json();
     
     if (!auditId) {
       throw new Error('Audit ID is required');
     }
 
-    console.log('Starting automated audit for audit ID:', auditId);
+    console.log('Starting automated audit:', { auditId, frequency, startDate, endDate, documentId });
     
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Fetch audit data and related transactions
-    const { data: audit, error: fetchError } = await supabaseClient
+    let query = supabaseClient
       .from('audit_reports')
       .select(`
         *,
         audit_items (*)
       `)
-      .eq('id', auditId)
-      .single();
+      .eq('id', auditId);
+
+    // Add document-specific filter if provided
+    if (documentId) {
+      query = query.eq('document_id', documentId);
+    }
+
+    // Add date range filters based on frequency
+    if (frequency === 'custom' && startDate && endDate) {
+      query = query
+        .gte('created_at', startDate)
+        .lte('created_at', endDate);
+    }
+
+    const { data: audit, error: fetchError } = await query.single();
 
     if (fetchError) {
       console.error('Error fetching audit data:', fetchError);
@@ -51,15 +62,15 @@ serve(async (req) => {
 
     console.log('Fetched audit data, starting analysis...');
 
-    // 1. Risk Assessment
+    // Perform risk assessment
     const riskScores = await performRiskAssessment(audit as AuditData);
     console.log('Risk assessment completed:', riskScores);
     
-    // 2. Control Testing
+    // Test internal controls
     const controlEffectiveness = await testInternalControls(audit as AuditData, supabaseClient);
     console.log('Control testing completed:', controlEffectiveness);
     
-    // 3. Anomaly Detection
+    // Detect anomalies
     const anomalies = detectAnomalies(audit as AuditData);
     console.log('Anomaly detection completed:', anomalies);
 
@@ -71,7 +82,12 @@ serve(async (req) => {
           completed_at: new Date().toISOString(),
           risk_scores: riskScores,
           control_effectiveness: controlEffectiveness,
-          anomaly_detection: anomalies
+          anomaly_detection: anomalies,
+          frequency,
+          date_range: {
+            start: startDate,
+            end: endDate
+          }
         },
         status: 'completed'
       })
