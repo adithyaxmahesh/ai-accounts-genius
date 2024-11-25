@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { jsPDF } from "jspdf";
 
 export const getStatusExplanation = (status: string) => {
   switch (status) {
@@ -113,6 +114,91 @@ export const startNewAudit = async (title: string) => {
   return data;
 };
 
+export const generateAuditReport = async (audit: any) => {
+  const doc = new jsPDF();
+  let yPos = 20;
+
+  // Title
+  doc.setFontSize(20);
+  doc.text(audit.title, 20, yPos);
+  yPos += 20;
+
+  // Audit Details
+  doc.setFontSize(12);
+  doc.text(`Status: ${audit.status}`, 20, yPos);
+  yPos += 10;
+  doc.text(`Risk Level: ${audit.risk_level}`, 20, yPos);
+  yPos += 10;
+  doc.text(`Created: ${new Date(audit.created_at).toLocaleDateString()}`, 20, yPos);
+  yPos += 20;
+
+  // Objective
+  if (audit.audit_objective) {
+    doc.setFontSize(16);
+    doc.text("Audit Objective", 20, yPos);
+    yPos += 10;
+    doc.setFontSize(12);
+    doc.text(audit.audit_objective, 20, yPos, { maxWidth: 170 });
+    yPos += 20;
+  }
+
+  // Findings
+  if (audit.findings?.length) {
+    doc.setFontSize(16);
+    doc.text("Findings", 20, yPos);
+    yPos += 10;
+    doc.setFontSize(12);
+    audit.findings.forEach((finding: string) => {
+      doc.text(`• ${finding}`, 20, yPos, { maxWidth: 170 });
+      yPos += 10;
+    });
+    yPos += 10;
+  }
+
+  // Recommendations
+  if (audit.recommendations?.length) {
+    doc.setFontSize(16);
+    doc.text("Recommendations", 20, yPos);
+    yPos += 10;
+    doc.setFontSize(12);
+    audit.recommendations.forEach((rec: string) => {
+      doc.text(`• ${rec}`, 20, yPos, { maxWidth: 170 });
+      yPos += 10;
+    });
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("User not authenticated");
+
+  const fileName = `${audit.id}_report.pdf`;
+  const filePath = `${user.id}/${fileName}`;
+  
+  // Convert PDF to Blob
+  const pdfBlob = doc.output('blob');
+  
+  // Upload to Storage
+  const { error: uploadError } = await supabase.storage
+    .from('audit-reports')
+    .upload(filePath, pdfBlob, {
+      contentType: 'application/pdf',
+      upsert: true
+    });
+
+  if (uploadError) throw uploadError;
+
+  // Save document reference
+  const { error: dbError } = await supabase
+    .from('audit_report_documents')
+    .insert({
+      audit_id: audit.id,
+      document_path: filePath
+    });
+
+  if (dbError) throw dbError;
+
+  return filePath;
+};
+
 export const updateAuditStatus = async (id: string, status: string) => {
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -161,5 +247,15 @@ export const updateAuditStatus = async (id: string, status: string) => {
     .single();
 
   if (error) throw error;
+
+  // Generate report when audit is completed
+  if (status === 'completed') {
+    try {
+      await generateAuditReport(data);
+    } catch (error) {
+      console.error('Error generating audit report:', error);
+    }
+  }
+
   return data;
 };

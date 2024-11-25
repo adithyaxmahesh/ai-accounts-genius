@@ -656,6 +656,38 @@ export type Database = {
           },
         ]
       }
+      audit_report_documents: {
+        Row: {
+          audit_id: string
+          created_at: string | null
+          document_path: string
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          audit_id: string
+          created_at?: string | null
+          document_path: string
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          audit_id?: string
+          created_at?: string | null
+          document_path?: string
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_report_documents_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "audit_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_reports: {
         Row: {
           anomaly_detection: Json | null
