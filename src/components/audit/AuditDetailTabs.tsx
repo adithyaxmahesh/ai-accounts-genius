@@ -1,8 +1,8 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AuditItemsSection } from "./AuditItemsSection";
-import { AuditHealthSection } from "./AuditHealthSection";
-import { AuditStatusSection } from "./AuditStatusSection";
-import { AuditTrailSection } from "./AuditTrailSection";
+import AuditItemsSection from "./AuditItemsSection";
+import AuditHealthSection from "./AuditHealthSection";
+import AuditStatusSection from "./AuditStatusSection";
+import AuditTrailSection from "./AuditTrailSection";
 import { AutomatedAuditSection } from "./AutomatedAuditSection";
 import { AutomatedAuditResults } from "./AutomatedAuditResults";
 import { useQuery } from "@tanstack/react-query";
