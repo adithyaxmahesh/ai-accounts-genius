@@ -217,91 +217,6 @@ export type Database = {
           },
         ]
       }
-      assurance_ai_insights: {
-        Row: {
-          confidence_score: number | null
-          created_at: string | null
-          data_points: Json | null
-          engagement_id: string | null
-          id: string
-          insight_type: string
-          recommendations: Json | null
-          risk_factors: Json | null
-          updated_at: string | null
-        }
-        Insert: {
-          confidence_score?: number | null
-          created_at?: string | null
-          data_points?: Json | null
-          engagement_id?: string | null
-          id?: string
-          insight_type: string
-          recommendations?: Json | null
-          risk_factors?: Json | null
-          updated_at?: string | null
-        }
-        Update: {
-          confidence_score?: number | null
-          created_at?: string | null
-          data_points?: Json | null
-          engagement_id?: string | null
-          id?: string
-          insight_type?: string
-          recommendations?: Json | null
-          risk_factors?: Json | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "assurance_ai_insights_engagement_id_fkey"
-            columns: ["engagement_id"]
-            isOneToOne: false
-            referencedRelation: "assurance_engagements"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      assurance_automated_tests: {
-        Row: {
-          anomalies_detected: boolean | null
-          created_at: string | null
-          engagement_id: string | null
-          executed_at: string | null
-          id: string
-          results: Json | null
-          test_parameters: Json | null
-          test_type: string
-        }
-        Insert: {
-          anomalies_detected?: boolean | null
-          created_at?: string | null
-          engagement_id?: string | null
-          executed_at?: string | null
-          id?: string
-          results?: Json | null
-          test_parameters?: Json | null
-          test_type: string
-        }
-        Update: {
-          anomalies_detected?: boolean | null
-          created_at?: string | null
-          engagement_id?: string | null
-          executed_at?: string | null
-          id?: string
-          results?: Json | null
-          test_parameters?: Json | null
-          test_type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "assurance_automated_tests_engagement_id_fkey"
-            columns: ["engagement_id"]
-            isOneToOne: false
-            referencedRelation: "assurance_engagements"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       assurance_engagements: {
         Row: {
           client_name: string
@@ -462,47 +377,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
-      }
-      assurance_monitoring: {
-        Row: {
-          alert_type: string
-          created_at: string | null
-          current_value: Json | null
-          engagement_id: string | null
-          id: string
-          severity: string
-          status: string | null
-          threshold_data: Json | null
-        }
-        Insert: {
-          alert_type: string
-          created_at?: string | null
-          current_value?: Json | null
-          engagement_id?: string | null
-          id?: string
-          severity: string
-          status?: string | null
-          threshold_data?: Json | null
-        }
-        Update: {
-          alert_type?: string
-          created_at?: string | null
-          current_value?: Json | null
-          engagement_id?: string | null
-          id?: string
-          severity?: string
-          status?: string | null
-          threshold_data?: Json | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "assurance_monitoring_engagement_id_fkey"
-            columns: ["engagement_id"]
-            isOneToOne: false
-            referencedRelation: "assurance_engagements"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       assurance_procedures: {
         Row: {
