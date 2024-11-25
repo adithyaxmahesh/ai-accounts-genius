@@ -50,10 +50,18 @@ export type Database = {
           created_at: string | null
           end_date: string | null
           engagement_type: string
+          evidence_collected: Json | null
           findings: Json | null
           id: string
+          materiality_threshold: number | null
+          objective: string | null
+          opinion_basis: string | null
+          opinion_type: string | null
           recommendations: Json | null
+          risk_areas: Json | null
           risk_assessment: Json | null
+          scope: string | null
+          stakeholders: Json | null
           start_date: string | null
           status: string
           updated_at: string | null
@@ -64,10 +72,18 @@ export type Database = {
           created_at?: string | null
           end_date?: string | null
           engagement_type: string
+          evidence_collected?: Json | null
           findings?: Json | null
           id?: string
+          materiality_threshold?: number | null
+          objective?: string | null
+          opinion_basis?: string | null
+          opinion_type?: string | null
           recommendations?: Json | null
+          risk_areas?: Json | null
           risk_assessment?: Json | null
+          scope?: string | null
+          stakeholders?: Json | null
           start_date?: string | null
           status?: string
           updated_at?: string | null
@@ -78,10 +94,18 @@ export type Database = {
           created_at?: string | null
           end_date?: string | null
           engagement_type?: string
+          evidence_collected?: Json | null
           findings?: Json | null
           id?: string
+          materiality_threshold?: number | null
+          objective?: string | null
+          opinion_basis?: string | null
+          opinion_type?: string | null
           recommendations?: Json | null
+          risk_areas?: Json | null
           risk_assessment?: Json | null
+          scope?: string | null
+          stakeholders?: Json | null
           start_date?: string | null
           status?: string
           updated_at?: string | null
@@ -93,6 +117,57 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assurance_evidence: {
+        Row: {
+          collected_by: string | null
+          collection_date: string | null
+          description: string
+          engagement_id: string | null
+          evidence_type: string
+          id: string
+          metadata: Json | null
+          reliability_score: number | null
+          source: string | null
+        }
+        Insert: {
+          collected_by?: string | null
+          collection_date?: string | null
+          description: string
+          engagement_id?: string | null
+          evidence_type: string
+          id?: string
+          metadata?: Json | null
+          reliability_score?: number | null
+          source?: string | null
+        }
+        Update: {
+          collected_by?: string | null
+          collection_date?: string | null
+          description?: string
+          engagement_id?: string | null
+          evidence_type?: string
+          id?: string
+          metadata?: Json | null
+          reliability_score?: number | null
+          source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assurance_evidence_collected_by_fkey"
+            columns: ["collected_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assurance_evidence_engagement_id_fkey"
+            columns: ["engagement_id"]
+            isOneToOne: false
+            referencedRelation: "assurance_engagements"
             referencedColumns: ["id"]
           },
         ]

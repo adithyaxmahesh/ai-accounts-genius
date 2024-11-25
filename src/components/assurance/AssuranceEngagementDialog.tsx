@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +23,9 @@ export const AssuranceEngagementDialog = ({
     clientName: "",
     engagementType: "",
     startDate: "",
+    objective: "",
+    scope: "",
+    materialityThreshold: "",
   });
 
   const handleSubmit = async () => {
@@ -31,7 +35,10 @@ export const AssuranceEngagementDialog = ({
         engagement_type: formData.engagementType,
         start_date: formData.startDate,
         user_id: userId,
-        status: "pending", // Explicitly set initial status
+        status: "planning",
+        objective: formData.objective,
+        scope: formData.scope,
+        materiality_threshold: parseFloat(formData.materialityThreshold) || null,
       });
 
       if (error) throw error;
@@ -46,6 +53,9 @@ export const AssuranceEngagementDialog = ({
         clientName: "",
         engagementType: "",
         startDate: "",
+        objective: "",
+        scope: "",
+        materialityThreshold: "",
       });
     } catch (error) {
       console.error("Error creating engagement:", error);
@@ -59,19 +69,19 @@ export const AssuranceEngagementDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>New Assurance Engagement</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium">Organization/Business Name</label>
+            <label className="text-sm font-medium">Organization Name</label>
             <Input
               value={formData.clientName}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, clientName: e.target.value }))
               }
-              placeholder="Enter the name of the organization you're auditing"
+              placeholder="Enter the organization name"
             />
           </div>
 
@@ -103,6 +113,40 @@ export const AssuranceEngagementDialog = ({
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, startDate: e.target.value }))
               }
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium">Objective</label>
+            <Textarea
+              value={formData.objective}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, objective: e.target.value }))
+              }
+              placeholder="Define the purpose of the assurance engagement"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium">Scope</label>
+            <Textarea
+              value={formData.scope}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, scope: e.target.value }))
+              }
+              placeholder="Define the boundaries of the assurance engagement"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium">Materiality Threshold</label>
+            <Input
+              type="number"
+              value={formData.materialityThreshold}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, materialityThreshold: e.target.value }))
+              }
+              placeholder="Enter the materiality threshold amount"
             />
           </div>
 

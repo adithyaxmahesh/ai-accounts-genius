@@ -1,4 +1,4 @@
-import { ClipboardCheck, FileSpreadsheet, BookOpen } from "lucide-react";
+import { ClipboardCheck, FileSpreadsheet, BookOpen, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
@@ -12,31 +12,47 @@ const assuranceProcessSteps = [
       "Risk Assessment",
       "Materiality Determination",
       "Engagement Timeline",
-      "Resource Allocation"
+      "Resource Allocation",
+      "Stakeholder Identification"
     ]
   },
   {
-    id: "fieldwork",
-    title: "Fieldwork",
-    description: "Evidence gathering and testing procedures",
+    id: "evidence",
+    title: "Evidence Gathering",
+    description: "Collection and documentation of evidence",
     icon: <FileSpreadsheet className="h-5 w-5" />,
     content: [
-      "Substantive Testing",
-      "Control Testing",
-      "Documentation Review",
-      "Sample Selection"
+      "Document Inspection",
+      "Process Observation",
+      "Management Inquiries",
+      "External Confirmations",
+      "Analytical Procedures"
     ]
   },
   {
-    id: "review",
-    title: "Quality Review",
-    description: "Review of work performed and findings",
+    id: "evaluation",
+    title: "Evidence Evaluation",
+    description: "Analysis and assessment of collected evidence",
     icon: <BookOpen className="h-5 w-5" />,
     content: [
-      "Working Paper Review",
-      "Finding Evaluation",
-      "Evidence Assessment",
-      "Quality Control"
+      "Evidence Sufficiency",
+      "Evidence Reliability",
+      "Finding Documentation",
+      "Risk Reassessment",
+      "Compliance Verification"
+    ]
+  },
+  {
+    id: "conclusion",
+    title: "Reporting & Conclusion",
+    description: "Final assessment and report preparation",
+    icon: <CheckCircle className="h-5 w-5" />,
+    content: [
+      "Opinion Formulation",
+      "Report Drafting",
+      "Management Discussion",
+      "Recommendations",
+      "Final Report Issuance"
     ]
   }
 ];
@@ -45,9 +61,9 @@ export const AssuranceProcessSteps = () => {
   return (
     <Card className="hover:shadow-lg transition-shadow">
       <CardHeader>
-        <CardTitle className="text-xl">Assurance Workflow</CardTitle>
+        <CardTitle className="text-xl">Assurance Process</CardTitle>
         <CardDescription>
-          Learn about the key phases in the assurance process
+          Understanding the key phases in the assurance workflow
         </CardDescription>
       </CardHeader>
       <CardContent>

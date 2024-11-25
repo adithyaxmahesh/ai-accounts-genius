@@ -62,10 +62,8 @@ export const AssuranceList = () => {
         return <CheckCircle2 className="h-4 w-4 text-green-500" />;
       case "in_progress":
         return <Clock className="h-4 w-4 text-blue-500" />;
-      case "pending":
-        return <AlertCircle className="h-4 w-4 text-yellow-500" />;
       default:
-        return null;
+        return <AlertCircle className="h-4 w-4 text-yellow-500" />;
     }
   };
 
@@ -116,20 +114,25 @@ export const AssuranceList = () => {
                         value={engagement.status}
                         onValueChange={(value) => updateEngagementStatus(engagement.id, value)}
                       >
-                        <SelectTrigger className="w-[140px]">
+                        <SelectTrigger className="w-[180px]">
                           <div className="flex items-center gap-2">
                             {getStatusIcon(engagement.status || "")}
                             <SelectValue />
                           </div>
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="in_progress">In Progress</SelectItem>
+                          <SelectItem value="planning">Planning</SelectItem>
+                          <SelectItem value="evidence_gathering">Evidence Gathering</SelectItem>
+                          <SelectItem value="evaluation">Evaluation</SelectItem>
+                          <SelectItem value="reporting">Reporting</SelectItem>
                           <SelectItem value="completed">Completed</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <p><strong>Start Date:</strong> {new Date(engagement.start_date || "").toLocaleDateString()}</p>
+                    {engagement.objective && (
+                      <p><strong>Objective:</strong> {engagement.objective}</p>
+                    )}
                   </div>
                 </div>
               </CardContent>
