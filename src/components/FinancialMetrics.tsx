@@ -91,60 +91,72 @@ export const FinancialMetrics = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <Card 
-        className="glass-card p-6 hover-scale cursor-pointer"
+        className="relative overflow-hidden bg-[#1A1F2C]/80 backdrop-blur-lg border border-white/10 p-6 hover:scale-105 transition-transform duration-200 cursor-pointer group"
         onClick={() => navigate('/revenue')}
       >
-        <DollarSign className="h-8 w-8 mb-2 text-green-500" />
-        <h3 className="text-lg font-semibold mb-1">Total Revenue</h3>
-        <p className="text-xl font-bold truncate min-h-[2rem] flex items-center justify-start">
-          <span className="text-green-500 text-3xl font-bold">
-            ${metrics?.revenue.toLocaleString()}
-          </span>
-        </p>
-        <p className="text-sm text-muted-foreground mt-1">
-          {metrics?.monthOverMonthGrowth > 0 ? '+' : ''}{metrics?.monthOverMonthGrowth.toFixed(2)}% from last month
-        </p>
+        <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+        <div className="relative z-10">
+          <DollarSign className="h-8 w-8 mb-4 text-green-500" />
+          <div className="space-y-1">
+            <p className="text-sm text-green-500 font-medium">Revenue</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-bold text-white">
+                ${metrics?.revenue.toLocaleString()}
+              </span>
+            </div>
+            <p className="text-sm text-green-500">
+              {metrics?.monthOverMonthGrowth > 0 ? '+' : ''}{metrics?.monthOverMonthGrowth.toFixed(1)}% from last month
+            </p>
+          </div>
+        </div>
       </Card>
 
       <Card 
-        className="glass-card p-6 hover-scale cursor-pointer"
+        className="relative overflow-hidden bg-[#1A1F2C]/80 backdrop-blur-lg border border-white/10 p-6 hover:scale-105 transition-transform duration-200 cursor-pointer group"
         onClick={() => navigate('/tax')}
       >
-        <AlertTriangle className="h-8 w-8 mb-2 text-blue-500" />
-        <h3 className="text-lg font-semibold mb-1">Net Profit</h3>
-        <p className="text-xl font-bold truncate min-h-[2rem] flex items-center justify-start">
-          <span className="text-blue-500 text-3xl font-bold">
-            ${((metrics?.revenue || 0) * 0.8).toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2
-            })}
-          </span>
-        </p>
-        <p className="text-sm text-muted-foreground mt-1">
-          80% profit margin
-        </p>
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+        <div className="relative z-10">
+          <AlertTriangle className="h-8 w-8 mb-4 text-blue-500" />
+          <div className="space-y-1">
+            <p className="text-sm text-blue-500 font-medium">Net Profit</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-bold text-white">
+                ${((metrics?.revenue || 0) * 0.8).toLocaleString()}
+              </span>
+            </div>
+            <p className="text-sm text-blue-500">
+              80% profit margin
+            </p>
+          </div>
+        </div>
       </Card>
 
       <Card 
-        className="glass-card p-6 hover-scale cursor-pointer"
+        className="relative overflow-hidden bg-[#1A1F2C]/80 backdrop-blur-lg border border-white/10 p-6 hover:scale-105 transition-transform duration-200 cursor-pointer group"
         onClick={() => navigate('/balance-sheet')}
       >
-        <Target className="h-8 w-8 mb-2 text-purple-500" />
-        <h3 className="text-lg font-semibold mb-1">Financial Goals</h3>
-        <p className="text-xl font-bold truncate min-h-[2rem] flex items-center justify-start">
-          <span className="text-purple-500 text-3xl font-bold">
-            {progressPercentage.toFixed(2)}%
-          </span>
-        </p>
-        <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-          <div 
-            className="bg-purple-500 h-2.5 rounded-full transition-all duration-500" 
-            style={{ width: `${Math.min(progressPercentage, 100)}%` }}
-          />
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+        <div className="relative z-10">
+          <Target className="h-8 w-8 mb-4 text-purple-500" />
+          <div className="space-y-1">
+            <p className="text-sm text-purple-500 font-medium">Goal Progress</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-bold text-white">
+                {progressPercentage.toFixed(1)}%
+              </span>
+            </div>
+            <div className="w-full bg-purple-950/50 rounded-full h-1.5 mt-2">
+              <div 
+                className="bg-purple-500 h-1.5 rounded-full transition-all duration-500" 
+                style={{ width: `${Math.min(progressPercentage, 100)}%` }}
+              />
+            </div>
+            <p className="text-sm text-purple-500 mt-1">
+              ${metrics?.revenue.toLocaleString()} of ${monthlyGoal.toLocaleString()}
+            </p>
+          </div>
         </div>
-        <p className="text-sm text-muted-foreground mt-2">
-          ${metrics?.revenue.toLocaleString()} of ${monthlyGoal.toLocaleString()} goal
-        </p>
       </Card>
     </div>
   );

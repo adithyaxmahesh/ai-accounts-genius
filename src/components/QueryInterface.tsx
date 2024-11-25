@@ -66,7 +66,15 @@ export const QueryInterface = () => {
   });
 
   const handleQuery = async () => {
-    if (!query.trim()) return;
+    if (!query.trim()) {
+      toast({
+        title: "Empty Query",
+        description: "Please enter a question or request",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!session?.user?.id) {
       toast({
         title: "Authentication Required",
@@ -81,6 +89,7 @@ export const QueryInterface = () => {
     
     setLoading(true);
     try {
+      console.log('Sending query to tax-chat function:', query); // Debug log
       const { data, error } = await supabase.functions.invoke('tax-chat', {
         body: { 
           message: query,
@@ -88,7 +97,16 @@ export const QueryInterface = () => {
         }
       });
 
-      if (error) throw error;
+      console.log('Response from tax-chat function:', { data, error }); // Debug log
+
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
+
+      if (!data?.answer) {
+        throw new Error('No response received from the AI');
+      }
 
       const assistantMessage = { 
         type: 'assistant' as const, 
@@ -101,7 +119,7 @@ export const QueryInterface = () => {
       console.error("Error processing query:", error);
       toast({
         title: "Query Failed",
-        description: "There was an error processing your query",
+        description: "There was an error processing your query. Please try again.",
         variant: "destructive",
       });
     } finally {
