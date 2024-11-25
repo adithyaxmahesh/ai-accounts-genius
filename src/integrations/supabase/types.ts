@@ -2432,6 +2432,68 @@ export type Database = {
           },
         ]
       }
+      tax_returns: {
+        Row: {
+          created_at: string
+          filing_data: Json | null
+          filing_status: string
+          form_type: string
+          id: string
+          status: string
+          submitted_at: string | null
+          supporting_documents: Json | null
+          tax_year: number
+          taxable_income: number
+          total_deductions: number
+          total_income: number
+          total_tax: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          filing_data?: Json | null
+          filing_status: string
+          form_type: string
+          id?: string
+          status?: string
+          submitted_at?: string | null
+          supporting_documents?: Json | null
+          tax_year: number
+          taxable_income?: number
+          total_deductions?: number
+          total_income?: number
+          total_tax?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          filing_data?: Json | null
+          filing_status?: string
+          form_type?: string
+          id?: string
+          status?: string
+          submitted_at?: string | null
+          supporting_documents?: Json | null
+          tax_year?: number
+          taxable_income?: number
+          total_deductions?: number
+          total_income?: number
+          total_tax?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_returns_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tax_rules: {
         Row: {
           calculation_formula: string | null

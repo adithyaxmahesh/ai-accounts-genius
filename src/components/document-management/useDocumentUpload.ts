@@ -4,53 +4,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { ProcessedDocument } from "../types";
 import { extractDateFromDocument } from "./documentUtils";
+import { useDocumentProcessing } from "./useDocumentProcessing";
+import { useDocumentFetching } from "./useDocumentFetching";
 
 export const useDocumentUpload = () => {
   const { toast } = useToast();
   const { session } = useAuth();
   const [uploading, setUploading] = useState(false);
-  const [documents, setDocuments] = useState<ProcessedDocument[]>([]);
   const [processing, setProcessing] = useState(false);
-
-  useEffect(() => {
-    if (session?.user.id) {
-      fetchDocuments();
-    }
-  }, [session?.user.id]);
-
-  const fetchDocuments = async () => {
-    if (!session?.user.id) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('processed_documents')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      const formattedDocs: ProcessedDocument[] = data.map(doc => ({
-        id: doc.id,
-        name: doc.original_filename,
-        status: doc.processing_status,
-        confidence: doc.confidence_score || 0,
-        uploadedAt: doc.created_at,
-        documentDate: doc.document_date || null,
-        type: doc.document_type || 'unknown',
-        storage_path: doc.storage_path
-      }));
-
-      setDocuments(formattedDocs);
-    } catch (error) {
-      console.error("Error fetching documents:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch document history",
-        variant: "destructive",
-      });
-    }
-  };
+  
+  const { 
+    documents,
+    fetchDocuments,
+    setDocuments 
+  } = useDocumentFetching(session?.user.id);
+  
+  const {
+    processDocument,
+    processTaxDocument
+  } = useDocumentProcessing();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -101,6 +73,11 @@ export const useDocumentUpload = () => {
 
       setDocuments(prev => [newDoc, ...prev]);
       
+      // If the document appears to be a tax document, process it accordingly
+      if (isTaxDocument(file.name)) {
+        await processTaxDocument(docRecord.id);
+      }
+
       toast({
         title: "Upload Successful",
         description: "Your document has been uploaded and is ready for analysis.",
@@ -121,76 +98,10 @@ export const useDocumentUpload = () => {
     }
   };
 
-  const analyzeDocument = async (documentId: string) => {
-    setProcessing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('analyze-document', {
-        body: { documentId }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Analysis Complete",
-        description: "Document has been processed successfully",
-      });
-
-      setDocuments(prev => prev.map(doc => 
-        doc.id === documentId 
-          ? { 
-              ...doc, 
-              status: 'Analyzed',
-              confidence: data?.confidence_score || 95
-            }
-          : doc
-      ));
-    } catch (error) {
-      console.error("Error analyzing document:", error);
-      toast({
-        title: "Analysis Failed",
-        description: error instanceof Error ? error.message : "There was an error analyzing your document.",
-        variant: "destructive",
-      });
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  const handleDeleteDocument = async (documentId: string) => {
-    try {
-      const document = documents.find(doc => doc.id === documentId);
-      if (!document) throw new Error("Document not found");
-
-      // Delete from storage
-      const { error: storageError } = await supabase.storage
-        .from('documents')
-        .remove([document.storage_path]);
-
-      if (storageError) throw storageError;
-
-      // Delete from database
-      const { error: dbError } = await supabase
-        .from('processed_documents')
-        .delete()
-        .eq('id', documentId);
-
-      if (dbError) throw dbError;
-
-      // Update UI
-      setDocuments(prev => prev.filter(doc => doc.id !== documentId));
-
-      toast({
-        title: "Success",
-        description: "Document deleted successfully",
-      });
-    } catch (error) {
-      console.error("Delete error:", error);
-      toast({
-        title: "Delete Failed",
-        description: error instanceof Error ? error.message : "Failed to delete document",
-        variant: "destructive",
-      });
-    }
+  const isTaxDocument = (fileName: string): boolean => {
+    const taxDocPatterns = ['w2', '1099', 'tax', 'return', 'schedule'];
+    const lowerFileName = fileName.toLowerCase();
+    return taxDocPatterns.some(pattern => lowerFileName.includes(pattern));
   };
 
   return {
@@ -198,7 +109,6 @@ export const useDocumentUpload = () => {
     processing,
     documents,
     handleFileUpload,
-    analyzeDocument,
-    handleDeleteDocument
+    processDocument,
   };
 };
