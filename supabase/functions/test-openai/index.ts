@@ -13,13 +13,14 @@ serve(async (req) => {
 
   try {
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    console.log('Attempting to test OpenAI API key...');
+    console.log('Starting OpenAI API test...');
     
     if (!openAIApiKey) {
       console.error('OpenAI API key is not set in environment variables');
       throw new Error('OpenAI API key is not configured');
     }
 
+    console.log('Making request to OpenAI API...');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
