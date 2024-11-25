@@ -25,7 +25,7 @@ import { FinancialPlanningCard } from "@/components/financial-planning/Financial
 import { FinancialHealthCard } from "@/components/financial-health/FinancialHealthCard";
 import { CollaboratorsList } from "@/components/collaborators/CollaboratorsList";
 import { AutomationRules } from "@/components/automation/AutomationRules";
-import { StateOperations } from "@/components/state-operations/StateOperations";
+import { BusinessMetrics } from "@/components/dashboard/BusinessMetrics";
 import { ProfileWidget } from "@/components/ProfileWidget";
 import { NotificationsCard } from "@/components/notifications/NotificationsCard";
 import {
@@ -33,8 +33,6 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-// ... keep existing code (imports and component definition start)
 
 const Index = () => {
   const { session } = useAuth();
@@ -245,7 +243,7 @@ const Index = () => {
         <div className="space-y-2">
           <FinancialPlanningCard />
           <FinancialHealthCard />
-          <StateOperations />
+          <BusinessMetrics />
         </div>
         <div className="space-y-2">
           <CollaboratorsList />
