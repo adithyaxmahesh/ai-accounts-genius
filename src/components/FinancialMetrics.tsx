@@ -94,7 +94,7 @@ export const FinancialMetrics = () => {
         className="relative overflow-hidden bg-[#1A1F2C]/80 backdrop-blur-lg border border-white/10 p-6 hover:scale-105 transition-transform duration-200 cursor-pointer group"
         onClick={() => navigate('/revenue')}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+        <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent" />
         <div className="relative z-10">
           <DollarSign className="h-8 w-8 mb-4 text-green-500" />
           <div className="space-y-1">
@@ -115,7 +115,7 @@ export const FinancialMetrics = () => {
         className="relative overflow-hidden bg-[#1A1F2C]/80 backdrop-blur-lg border border-white/10 p-6 hover:scale-105 transition-transform duration-200 cursor-pointer group"
         onClick={() => navigate('/tax')}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent" />
         <div className="relative z-10">
           <AlertTriangle className="h-8 w-8 mb-4 text-blue-500" />
           <div className="space-y-1">
@@ -136,7 +136,7 @@ export const FinancialMetrics = () => {
         className="relative overflow-hidden bg-[#1A1F2C]/80 backdrop-blur-lg border border-white/10 p-6 hover:scale-105 transition-transform duration-200 cursor-pointer group"
         onClick={() => navigate('/balance-sheet')}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent" />
         <div className="relative z-10">
           <Target className="h-8 w-8 mb-4 text-purple-500" />
           <div className="space-y-1">
