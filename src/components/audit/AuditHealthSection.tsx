@@ -47,10 +47,11 @@ const AuditHealthSection = ({ audit, getRiskLevelExplanation }: AuditHealthProps
     const total = Object.values(controls).length;
     const score = Object.values(controls).reduce((acc: number, val: any) => {
       if (typeof val !== 'string') return acc;
-      return acc + (scoreMap[val] || 0);
+      const scoreValue = scoreMap[val] || 0;
+      return Number(acc) + scoreValue;
     }, 0);
 
-    return total > 0 ? (score / total) * 100 : 0;
+    return total > 0 ? (Number(score) / total) * 100 : 0;
   };
 
   return (
