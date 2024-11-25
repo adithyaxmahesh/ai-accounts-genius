@@ -8,11 +8,27 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { MetricsDisplay } from "./MetricsDisplay";
 import { InsightsDisplay } from "./InsightsDisplay";
+import { useQuery } from "@tanstack/react-query";
 
 export const BusinessIntelligence = () => {
   const { session } = useAuth();
   const { toast } = useToast();
   const { data: financialData } = useFinancialData();
+
+  const { data: insights, refetch } = useQuery({
+    queryKey: ['business-insights', session?.user.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('business_insights')
+        .select('*')
+        .eq('user_id', session?.user.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      
+      if (error) throw error;
+      return data || [];
+    }
+  });
 
   const generateInsights = async () => {
     try {
@@ -28,6 +44,8 @@ export const BusinessIntelligence = () => {
       });
 
       if (error) throw error;
+
+      await refetch();
 
       toast({
         title: "Insights Generated",
@@ -87,7 +105,7 @@ export const BusinessIntelligence = () => {
         </ResponsiveContainer>
       </div>
 
-      <InsightsDisplay />
+      <InsightsDisplay insights={insights || []} />
     </Card>
   );
 };
