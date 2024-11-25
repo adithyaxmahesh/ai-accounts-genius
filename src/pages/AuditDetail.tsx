@@ -1,25 +1,16 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import AuditDetailHeader from "@/components/audit/AuditDetailHeader";
 import AuditDetailTabs from "@/components/audit/AuditDetailTabs";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const AuditDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const { session } = useAuth();
-
-  useEffect(() => {
-    if (!session) {
-      navigate('/auth');
-      return;
-    }
-  }, [session, navigate]);
 
   const { data: audit, isLoading, error } = useQuery({
     queryKey: ['audit', id],
@@ -32,25 +23,22 @@ const AuditDetail = () => {
         .from('audit_reports')
         .select(`
           *,
-          audit_items (*)
+          audit_items(*)
         `)
         .eq('id', id)
         .eq('user_id', session.user.id)
         .single();
       
-      if (error) {
-        throw error;
-      }
-      
-      if (!data) {
-        throw new Error('Audit not found');
-      }
-      
+      if (error) throw error;
       return data;
     },
-    enabled: !!session && !!id,
-    retry: 1
+    enabled: !!session && !!id
   });
+
+  if (!session) {
+    navigate('/auth');
+    return null;
+  }
 
   if (isLoading) {
     return (
@@ -90,21 +78,17 @@ const AuditDetail = () => {
     );
   }
 
-  const flaggedItems = audit?.audit_items?.filter(item => item.status === 'flagged') || [];
-
   return (
     <div className="container mx-auto p-6 space-y-6">
       <AuditDetailHeader 
         audit={audit}
-        flaggedItems={flaggedItems}
-        selectedItemId={selectedItemId}
-        setSelectedItemId={setSelectedItemId}
+        flaggedItems={audit?.audit_items?.filter(item => item.status === 'flagged') || []}
       />
       <AuditDetailTabs 
-        auditId={audit.id} 
+        auditId={id!} 
         onStatusChange={() => {
           window.location.reload();
-        }} 
+        }}
       />
     </div>
   );

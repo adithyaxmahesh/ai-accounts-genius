@@ -35,12 +35,12 @@ const getStatusExplanation = (status: string) => {
 };
 
 const AuditDetailTabs = ({ auditId, onStatusChange }: AuditDetailTabsProps) => {
-  const { data: audit } = useQuery({
+  const { data: audit, isLoading } = useQuery({
     queryKey: ['audit', auditId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('audit_reports')
-        .select('*')
+        .select('*, audit_items(*)')
         .eq('id', auditId)
         .single();
       
@@ -48,6 +48,14 @@ const AuditDetailTabs = ({ auditId, onStatusChange }: AuditDetailTabsProps) => {
       return data;
     }
   });
+
+  if (isLoading) {
+    return <div className="animate-pulse">Loading audit details...</div>;
+  }
+
+  if (!audit) {
+    return <div>Audit not found</div>;
+  }
 
   return (
     <Tabs defaultValue="overview" className="space-y-4">
