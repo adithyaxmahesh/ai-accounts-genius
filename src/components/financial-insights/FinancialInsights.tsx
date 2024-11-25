@@ -30,6 +30,9 @@ export const FinancialInsights = () => {
   const { session } = useAuth();
   const { data: metrics } = useFinancialData();
   
+  // Default revenue goal if not provided by metrics
+  const DEFAULT_REVENUE_GOAL = 100000;
+  
   // Fetch historical data for comparison
   const { data: historicalMetrics } = useQuery({
     queryKey: ['historical-metrics', session?.user.id],
@@ -69,7 +72,7 @@ export const FinancialInsights = () => {
     const expenseEfficiencyWeight = 0.3;
     
     const profitMarginScore = Math.min(100, (metrics.profitMargin / 20) * 100);
-    const revenueGoalScore = Math.min(100, (metrics.totalRevenue / metrics.revenueGoal) * 100);
+    const revenueGoalScore = Math.min(100, (metrics.totalRevenue / DEFAULT_REVENUE_GOAL) * 100);
     const expenseEfficiencyScore = Math.min(100, ((metrics.totalRevenue - metrics.totalExpenses) / metrics.totalRevenue) * 100);
     
     return Math.round(
@@ -95,7 +98,7 @@ export const FinancialInsights = () => {
   const performanceScore = calculatePerformanceScore();
   const expenseEfficiency = calculateExpenseEfficiency();
   const revenuePerformance = metrics?.totalRevenue 
-    ? ((metrics.totalRevenue / (metrics.revenueGoal || metrics.totalRevenue)) * 100) - 100 
+    ? ((metrics.totalRevenue / DEFAULT_REVENUE_GOAL) * 100) - 100 
     : 0;
 
   return (
