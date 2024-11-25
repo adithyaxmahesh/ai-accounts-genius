@@ -7,9 +7,6 @@ export const FinancialMetrics = () => {
   const navigate = useNavigate();
   const { data: metrics } = useFinancialData();
 
-  const monthlyGoal = 100000;
-  const progressPercentage = ((metrics?.totalRevenue || 0) / monthlyGoal) * 100;
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <Card 
@@ -35,7 +32,7 @@ export const FinancialMetrics = () => {
 
       <Card 
         className="relative overflow-hidden bg-[#1A1F2C]/80 backdrop-blur-lg border border-white/10 p-6 hover:scale-105 transition-transform duration-200 cursor-pointer group"
-        onClick={() => navigate('/expenses')}
+        onClick={() => navigate('/balance-sheet')}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent" />
         <div className="relative z-10">
@@ -56,26 +53,20 @@ export const FinancialMetrics = () => {
 
       <Card 
         className="relative overflow-hidden bg-[#1A1F2C]/80 backdrop-blur-lg border border-white/10 p-6 hover:scale-105 transition-transform duration-200 cursor-pointer group"
-        onClick={() => navigate('/balance-sheet')}
+        onClick={() => navigate('/expenses')}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent" />
         <div className="relative z-10">
           <Target className="h-8 w-8 mb-4 text-purple-500" />
           <div className="space-y-1">
-            <p className="text-sm text-purple-500 font-medium">Goal Progress</p>
+            <p className="text-sm text-purple-500 font-medium">Expenses</p>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-bold text-white">
-                {progressPercentage.toFixed(1)}%
+                ${metrics?.totalExpenses?.toLocaleString() || '0'}
               </span>
             </div>
-            <div className="w-full bg-purple-950/50 rounded-full h-1.5 mt-2">
-              <div 
-                className="bg-purple-500 h-1.5 rounded-full transition-all duration-500" 
-                style={{ width: `${Math.min(progressPercentage, 100)}%` }}
-              />
-            </div>
-            <p className="text-sm text-purple-500 mt-1">
-              ${metrics?.totalRevenue.toLocaleString()} of ${monthlyGoal.toLocaleString()}
+            <p className="text-sm text-purple-500">
+              {metrics?.totalExpenses ? `${((metrics.totalExpenses / metrics.totalRevenue) * 100).toFixed(1)}% of revenue` : 'No expenses recorded'}
             </p>
           </div>
         </div>
