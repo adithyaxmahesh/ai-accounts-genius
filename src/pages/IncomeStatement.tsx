@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { AddIncomeStatementEntry } from "@/components/income-statement/AddIncomeStatementEntry";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, TrendingUp, TrendingDown } from "lucide-react";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { fetchAndTransformIncomeData } from "@/utils/incomeStatementUtils";
 import { useToast } from "@/components/ui/use-toast";
@@ -27,7 +27,6 @@ const IncomeStatement = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Set up real-time subscription for both revenue_records and write_offs
   useRealtimeSubscription('revenue_records', ['income-statements', session?.user.id]);
   useRealtimeSubscription('write_offs', ['income-statements', session?.user.id]);
 
@@ -69,6 +68,52 @@ const IncomeStatement = () => {
 
   const { revenues, expenses, netIncome } = calculateTotals(statements);
 
+  const FinanceMetricCard = ({ label, value, type }: { label: string; value: number; type: 'revenue' | 'expense' | 'income' }) => {
+    const isPositive = value >= 0;
+    const Icon = isPositive ? TrendingUp : TrendingDown;
+    
+    const getGradient = () => {
+      switch (type) {
+        case 'revenue':
+          return 'from-green-500/20 to-green-500/5';
+        case 'expense':
+          return 'from-red-500/20 to-red-500/5';
+        case 'income':
+          return isPositive ? 'from-primary/20 to-primary/5' : 'from-destructive/20 to-destructive/5';
+      }
+    };
+
+    const getTextColor = () => {
+      switch (type) {
+        case 'revenue':
+          return 'text-green-500';
+        case 'expense':
+          return 'text-red-500';
+        case 'income':
+          return isPositive ? 'text-primary' : 'text-destructive';
+      }
+    };
+
+    return (
+      <div className={cn(
+        "p-6 rounded-lg bg-gradient-to-br backdrop-blur-sm animate-fade-in",
+        getGradient(),
+        "border border-white/10 shadow-xl hover:shadow-2xl transition-all duration-300"
+      )}>
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm font-medium text-muted-foreground">{label}</span>
+          <Icon className={cn("h-5 w-5", getTextColor())} />
+        </div>
+        <p className={cn(
+          "text-2xl font-bold tracking-tight",
+          getTextColor()
+        )}>
+          ${Math.abs(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </p>
+      </div>
+    );
+  };
+
   if (!session) {
     return (
       <div className="container mx-auto p-6">
@@ -108,7 +153,25 @@ const IncomeStatement = () => {
                   <Loader2 className="h-8 w-8 animate-spin" />
                 </div>
               ) : statements.length > 0 ? (
-                <div className="space-y-6">
+                <div className="space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <FinanceMetricCard
+                      label="Total Revenues"
+                      value={revenues}
+                      type="revenue"
+                    />
+                    <FinanceMetricCard
+                      label="Total Expenses"
+                      value={-expenses}
+                      type="expense"
+                    />
+                    <FinanceMetricCard
+                      label="Net Income"
+                      value={netIncome}
+                      type="income"
+                    />
+                  </div>
+
                   <div className="space-y-4">
                     <h3 className="font-semibold text-lg">Revenues</h3>
                     {statements
@@ -151,16 +214,6 @@ const IncomeStatement = () => {
                       <span>Total Expenses</span>
                       <span className="text-red-600">${expenses.toFixed(2)}</span>
                     </div>
-                  </div>
-
-                  <div className={cn(
-                    "flex justify-between items-center p-4 rounded-lg font-bold text-lg",
-                    netIncome >= 0 ? "bg-green-100" : "bg-red-100"
-                  )}>
-                    <span>Net Income</span>
-                    <span className={netIncome >= 0 ? "text-green-600" : "text-red-600"}>
-                      ${netIncome.toFixed(2)}
-                    </span>
                   </div>
                 </div>
               ) : (
@@ -212,14 +265,22 @@ const IncomeStatement = () => {
                     ))}
                   </div>
 
-                  <div className={cn(
-                    "flex justify-between items-center p-4 rounded-lg font-bold text-lg",
-                    netIncome >= 0 ? "bg-green-100" : "bg-red-100"
-                  )}>
-                    <span>Net Income</span>
-                    <span className={netIncome >= 0 ? "text-green-600" : "text-red-600"}>
-                      ${netIncome.toFixed(2)}
-                    </span>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <FinanceMetricCard
+                      label="Total Revenues"
+                      value={revenues}
+                      type="revenue"
+                    />
+                    <FinanceMetricCard
+                      label="Total Expenses"
+                      value={-expenses}
+                      type="expense"
+                    />
+                    <FinanceMetricCard
+                      label="Net Income"
+                      value={netIncome}
+                      type="income"
+                    />
                   </div>
                 </div>
               ) : (
