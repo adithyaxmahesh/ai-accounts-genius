@@ -89,37 +89,37 @@ const AuditDetailsTab = ({
   };
 
   return (
-    <div className="space-y-6">
-      <Card className="p-6 glass-card">
-        {renderPhaseHeader()}
-        
-        <div className="flex justify-between items-start mb-6">
-          <AuditStatusSection 
-            audit={audit}
-            getStatusExplanation={getStatusExplanation}
-            onUpdate={handleAuditUpdate}
-          />
+    <TooltipProvider>
+      <div className="space-y-6">
+        <Card className="p-6 glass-card">
+          {renderPhaseHeader()}
           
-          <AuditHealthSection 
-            audit={audit}
-            getRiskLevelExplanation={getRiskLevelExplanation}
-          />
-        </div>
+          <div className="flex justify-between items-start mb-6">
+            <AuditStatusSection 
+              audit={audit}
+              getStatusExplanation={getStatusExplanation}
+              onUpdate={handleAuditUpdate}
+            />
+            
+            <AuditHealthSection 
+              audit={audit}
+              getRiskLevelExplanation={getRiskLevelExplanation}
+            />
+          </div>
 
-        {renderAuditPhase()}
+          {renderAuditPhase()}
 
-        <div className="space-y-6 mt-6">
-          <RiskAssessmentMatrix auditId={audit?.id} />
+          <div className="space-y-6 mt-6">
+            <RiskAssessmentMatrix auditId={audit?.id} />
 
-          {audit?.audit_objective && (
-            <div className="bg-muted/50 p-4 rounded-lg">
-              <h3 className="text-lg font-semibold mb-2">Audit Objective</h3>
-              <p className="text-muted-foreground">{audit.audit_objective}</p>
-            </div>
-          )}
+            {audit?.audit_objective && (
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold mb-2">Audit Objective</h3>
+                <p className="text-muted-foreground">{audit.audit_objective}</p>
+              </div>
+            )}
 
-          <div>
-            <TooltipProvider>
+            <div>
               <div className="flex items-center gap-2 mb-2">
                 <h3 className="text-lg font-semibold">
                   Findings ({Array.isArray(audit?.findings) ? audit.findings.length : 0})
@@ -133,26 +133,24 @@ const AuditDetailsTab = ({
                   </TooltipContent>
                 </Tooltip>
               </div>
-            </TooltipProvider>
-            <div className="space-y-4">
-              {Array.isArray(audit?.findings) && audit.findings.map((finding: string, index: number) => (
-                <div key={index} className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm">{finding}</p>
-                </div>
-              ))}
-              {(!Array.isArray(audit?.findings) || audit.findings.length === 0) && (
-                <p className="text-muted-foreground text-center py-4">
-                  No findings recorded yet
-                </p>
-              )}
+              <div className="space-y-4">
+                {Array.isArray(audit?.findings) && audit.findings.map((finding: string, index: number) => (
+                  <div key={index} className="p-4 bg-muted rounded-lg">
+                    <p className="text-sm">{finding}</p>
+                  </div>
+                ))}
+                {(!Array.isArray(audit?.findings) || audit.findings.length === 0) && (
+                  <p className="text-muted-foreground text-center py-4">
+                    No findings recorded yet
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
 
-          <AuditItemsSection auditItems={audit?.audit_items || []} />
+            <AuditItemsSection auditItems={audit?.audit_items || []} />
 
-          {Array.isArray(audit?.recommendations) && audit.recommendations.length > 0 && (
-            <div className="bg-muted/50 p-4 rounded-lg">
-              <TooltipProvider>
+            {Array.isArray(audit?.recommendations) && audit.recommendations.length > 0 && (
+              <div className="bg-muted/50 p-4 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <h3 className="text-lg font-semibold">
                     Recommendations ({audit.recommendations.length})
@@ -166,19 +164,19 @@ const AuditDetailsTab = ({
                     </TooltipContent>
                   </Tooltip>
                 </div>
-              </TooltipProvider>
-              <ul className="list-disc pl-5 space-y-2">
-                {audit.recommendations.map((rec: string, index: number) => (
-                  <li key={index} className="text-muted-foreground">{rec}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+                <ul className="list-disc pl-5 space-y-2">
+                  {audit.recommendations.map((rec: string, index: number) => (
+                    <li key={index} className="text-muted-foreground">{rec}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-          <AuditTrailSection auditId={audit?.id} />
-        </div>
-      </Card>
-    </div>
+            <AuditTrailSection auditId={audit?.id} />
+          </div>
+        </Card>
+      </div>
+    </TooltipProvider>
   );
 };
 

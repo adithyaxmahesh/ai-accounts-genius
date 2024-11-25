@@ -6,6 +6,7 @@ import AuditDetailTabs from "@/components/audit/AuditDetailTabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 
 const AuditDetail = () => {
   const { id } = useParams();
@@ -44,12 +45,8 @@ const AuditDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-32 bg-gray-200 rounded"></div>
-          <div className="h-64 bg-gray-200 rounded"></div>
-        </div>
+      <div className="container mx-auto p-6 flex items-center justify-center min-h-[200px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }

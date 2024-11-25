@@ -1,4 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import AuditDetailsTab from "@/components/AuditDetailsTab";
 import AuditItemsSection from "./AuditItemsSection";
 import AuditHealthSection from "./AuditHealthSection";
 import AuditStatusSection from "./AuditStatusSection";
@@ -7,6 +8,7 @@ import { AutomatedAuditSection } from "./AutomatedAuditSection";
 import { AutomatedAuditResults } from "./AutomatedAuditResults";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
 interface AuditDetailTabsProps {
   auditId: string;
@@ -50,7 +52,11 @@ const AuditDetailTabs = ({ auditId, onStatusChange }: AuditDetailTabsProps) => {
   });
 
   if (isLoading) {
-    return <div className="animate-pulse">Loading audit details...</div>;
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   if (!audit) {
@@ -67,17 +73,11 @@ const AuditDetailTabs = ({ auditId, onStatusChange }: AuditDetailTabsProps) => {
       </TabsList>
 
       <TabsContent value="overview">
-        <div className="grid gap-4 md:grid-cols-2">
-          <AuditHealthSection 
-            audit={audit} 
-            getRiskLevelExplanation={getRiskLevelExplanation}
-          />
-          <AuditStatusSection 
-            audit={audit} 
-            getStatusExplanation={getStatusExplanation}
-            onUpdate={onStatusChange}
-          />
-        </div>
+        <AuditDetailsTab 
+          audit={audit}
+          getStatusExplanation={getStatusExplanation}
+          getRiskLevelExplanation={getRiskLevelExplanation}
+        />
       </TabsContent>
 
       <TabsContent value="items">
