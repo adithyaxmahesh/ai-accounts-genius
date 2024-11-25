@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft } from "lucide-react";
 import { TaxSummary } from "@/components/tax-analysis/TaxSummary";
-import { TaxBreakdown } from "@/components/tax-analysis/TaxBreakdown";
+import { TaxObligationTracker } from "@/components/tax-forms/TaxObligationTracker";
+import { PaymentScheduler } from "@/components/tax-forms/PaymentScheduler";
 import { TaxPlanner } from "@/components/tax-analysis/TaxPlanner";
-import { TaxDeadlines } from "@/components/tax-analysis/TaxDeadlines";
 import { TaxChat } from "@/components/tax-analysis/TaxChat";
+import { TaxFormGenerator } from "@/components/tax-forms/TaxFormGenerator";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { Database } from "@/integrations/supabase/types";
@@ -88,22 +89,28 @@ const Tax = () => {
                 Summary
               </TabsTrigger>
               <TabsTrigger 
-                value="breakdown"
+                value="forms"
                 className="px-6 py-3 data-[state=active]:bg-background rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
               >
-                Breakdown
+                Tax Forms
+              </TabsTrigger>
+              <TabsTrigger 
+                value="obligations"
+                className="px-6 py-3 data-[state=active]:bg-background rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
+              >
+                Obligations
+              </TabsTrigger>
+              <TabsTrigger 
+                value="payments"
+                className="px-6 py-3 data-[state=active]:bg-background rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
+              >
+                Payments
               </TabsTrigger>
               <TabsTrigger 
                 value="planner"
                 className="px-6 py-3 data-[state=active]:bg-background rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
               >
                 Tax Planner
-              </TabsTrigger>
-              <TabsTrigger 
-                value="deadlines"
-                className="px-6 py-3 data-[state=active]:bg-background rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
-              >
-                Deadlines
               </TabsTrigger>
               <TabsTrigger 
                 value="assistant"
@@ -118,16 +125,20 @@ const Tax = () => {
                 <TaxSummary analysis={analysis || defaultAnalysis} />
               </TabsContent>
 
-              <TabsContent value="breakdown" className="mt-0">
-                <TaxBreakdown analysis={analysis || defaultAnalysis} />
+              <TabsContent value="forms" className="mt-0">
+                <TaxFormGenerator />
+              </TabsContent>
+
+              <TabsContent value="obligations" className="mt-0">
+                <TaxObligationTracker />
+              </TabsContent>
+
+              <TabsContent value="payments" className="mt-0">
+                <PaymentScheduler />
               </TabsContent>
 
               <TabsContent value="planner" className="mt-0">
                 <TaxPlanner />
-              </TabsContent>
-
-              <TabsContent value="deadlines" className="mt-0">
-                <TaxDeadlines />
               </TabsContent>
 
               <TabsContent value="assistant" className="mt-0">

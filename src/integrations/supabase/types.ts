@@ -1037,6 +1037,50 @@ export type Database = {
           },
         ]
       }
+      business_tax_obligations: {
+        Row: {
+          created_at: string | null
+          due_date: string | null
+          filing_frequency: string | null
+          form_number: string | null
+          id: string
+          obligation_type: string
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          due_date?: string | null
+          filing_frequency?: string | null
+          form_number?: string | null
+          id?: string
+          obligation_type: string
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          due_date?: string | null
+          filing_frequency?: string | null
+          form_number?: string | null
+          id?: string
+          obligation_type?: string
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_tax_obligations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cash_flow_statements: {
         Row: {
           amount: number
@@ -2338,26 +2382,76 @@ export type Database = {
       tax_form_templates: {
         Row: {
           created_at: string
+          filing_requirements: string | null
           form_type: string
           form_year: number
           id: string
+          instructions: string | null
+          irs_form_number: string | null
           template_data: Json
         }
         Insert: {
           created_at?: string
+          filing_requirements?: string | null
           form_type: string
           form_year: number
           id?: string
+          instructions?: string | null
+          irs_form_number?: string | null
           template_data: Json
         }
         Update: {
           created_at?: string
+          filing_requirements?: string | null
           form_type?: string
           form_year?: number
           id?: string
+          instructions?: string | null
+          irs_form_number?: string | null
           template_data?: Json
         }
         Relationships: []
+      }
+      tax_payment_schedules: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          due_date: string | null
+          frequency: string | null
+          id: string
+          payment_type: string
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string | null
+          due_date?: string | null
+          frequency?: string | null
+          id?: string
+          payment_type: string
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          due_date?: string | null
+          frequency?: string | null
+          id?: string
+          payment_type?: string
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_payment_schedules_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tax_planning_chats: {
         Row: {
