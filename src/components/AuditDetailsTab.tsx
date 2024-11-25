@@ -10,6 +10,7 @@ import AuditStatusSection from "@/components/audit/AuditStatusSection";
 import AuditHealthSection from "@/components/audit/AuditHealthSection";
 import RiskAssessmentMatrix from "@/components/audit/RiskAssessmentMatrix";
 import AuditItemsSection from "@/components/audit/AuditItemsSection";
+import AuditTrailSection from "@/components/audit/AuditTrailSection";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface AuditDetailsProps {
@@ -104,6 +105,8 @@ const AuditDetailsTab = ({
               </ul>
             </div>
           )}
+
+          <AuditTrailSection auditId={audit?.id} />
         </div>
       </Card>
     </div>
