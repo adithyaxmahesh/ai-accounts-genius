@@ -13,14 +13,31 @@ interface AutomatedAuditSectionProps {
 
 export const AutomatedAuditSection = ({ auditId, onComplete }: AutomatedAuditSectionProps) => {
   const [isRunning, setIsRunning] = useState(false);
+  const [progress, setProgress] = useState(0);
   const { toast } = useToast();
 
   const startAutomatedAudit = async () => {
     setIsRunning(true);
+    setProgress(0);
+    
     try {
+      // Start progress animation
+      const interval = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(interval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 1000);
+
       const { data, error } = await supabase.functions.invoke('automated-audit', {
         body: { auditId }
       });
+
+      clearInterval(interval);
+      setProgress(100);
 
       if (error) throw error;
 
@@ -41,6 +58,7 @@ export const AutomatedAuditSection = ({ auditId, onComplete }: AutomatedAuditSec
       });
     } finally {
       setIsRunning(false);
+      setTimeout(() => setProgress(0), 1000);
     }
   };
 
@@ -69,7 +87,7 @@ export const AutomatedAuditSection = ({ auditId, onComplete }: AutomatedAuditSec
             <Clock className="h-4 w-4 text-muted-foreground" />
             <span>Analysis in progress...</span>
           </div>
-          <Progress value={45} className="h-2" />
+          <Progress value={progress} className="h-2" />
         </div>
       )}
     </Card>
