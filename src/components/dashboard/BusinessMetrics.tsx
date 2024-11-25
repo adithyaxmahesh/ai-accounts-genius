@@ -4,6 +4,16 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 
+interface BusinessMetric {
+  id: string;
+  user_id: string;
+  category: string;
+  metrics: Record<string, string | number>;
+  recommendations: string[];
+  priority: string;
+  created_at: string;
+}
+
 export const BusinessMetrics = () => {
   const { session } = useAuth();
 
@@ -18,7 +28,7 @@ export const BusinessMetrics = () => {
         .limit(5);
       
       if (error) throw error;
-      return data;
+      return data as BusinessMetric[];
     },
     enabled: !!session?.user.id
   });
@@ -47,7 +57,7 @@ export const BusinessMetrics = () => {
                 {Object.entries(metric.metrics).map(([key, value]) => (
                   <div key={key} className="text-sm">
                     <span className="text-muted-foreground">{key}:</span>{" "}
-                    <span className="font-medium">{value}</span>
+                    <span className="font-medium">{String(value)}</span>
                   </div>
                 ))}
               </div>
