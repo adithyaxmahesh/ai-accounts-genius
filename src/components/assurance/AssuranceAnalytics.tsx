@@ -8,11 +8,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, CheckCircle2, FileCheck, AlertCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/components/ui/use-toast";
+import { useEffect } from "react";
 
 type AssuranceEngagement = Tables<"assurance_engagements">;
 
 export const AssuranceAnalytics = () => {
-  const { data: engagements, isLoading } = useQuery({
+  const { toast } = useToast();
+  
+  const { data: engagements, isLoading, refetch } = useQuery({
     queryKey: ["assurance-analytics"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -24,6 +28,43 @@ export const AssuranceAnalytics = () => {
       return data as AssuranceEngagement[];
     },
   });
+
+  // Automatically trigger AI analysis for engagements without analysis
+  useEffect(() => {
+    const analyzeEngagements = async () => {
+      if (!engagements) return;
+      
+      for (const engagement of engagements) {
+        const needsAnalysis = !(engagement as any).ai_assurance_analysis?.length;
+        
+        if (needsAnalysis) {
+          try {
+            await supabase.functions.invoke('analyze-assurance', {
+              body: { 
+                engagementId: engagement.id,
+                clientName: engagement.client_name,
+                engagementType: engagement.engagement_type,
+                status: engagement.status,
+                findings: engagement.findings,
+                riskAreas: engagement.risk_areas
+              }
+            });
+            
+            toast({
+              title: "AI Analysis Complete",
+              description: `Analysis completed for ${engagement.client_name}`,
+            });
+            
+            refetch();
+          } catch (error) {
+            console.error('Error analyzing engagement:', error);
+          }
+        }
+      }
+    };
+
+    analyzeEngagements();
+  }, [engagements]);
 
   if (isLoading) {
     return (
@@ -80,7 +121,6 @@ export const AssuranceAnalytics = () => {
           highRiskEngagements={highRiskEngagements}
         />
 
-        {/* New AI Analysis Outcomes Section */}
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader>
@@ -151,11 +191,12 @@ export const AssuranceAnalytics = () => {
                   <Progress 
                     value={100 - (outcome.riskScore * 100)} 
                     className="h-2"
-                    indicatorClassName={
-                      outcome.riskScore > 0.7 ? "bg-red-500" :
-                      outcome.riskScore > 0.4 ? "bg-yellow-500" :
-                      "bg-green-500"
-                    }
+                    // Use className instead of indicatorClassName
+                    className={`h-2 ${
+                      outcome.riskScore > 0.7 ? 'bg-red-500' :
+                      outcome.riskScore > 0.4 ? 'bg-yellow-500' :
+                      'bg-green-500'
+                    }`}
                   />
                 </div>
               ))}
