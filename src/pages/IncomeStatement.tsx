@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 import { AddIncomeStatementEntry } from "@/components/income-statement/AddIncomeStatementEntry";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
+import { fetchAndTransformIncomeData } from "@/utils/incomeStatementUtils";
+import { useToast } from "@/components/ui/use-toast";
 
 interface IncomeStatementItem {
   id: string;
@@ -23,21 +25,27 @@ interface IncomeStatementItem {
 const IncomeStatement = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  // Set up real-time subscription
-  useRealtimeSubscription('income_statements', ['income-statements', session?.user.id]);
+  // Set up real-time subscription for both revenue_records and write_offs
+  useRealtimeSubscription('revenue_records', ['income-statements', session?.user.id]);
+  useRealtimeSubscription('write_offs', ['income-statements', session?.user.id]);
 
   const { data: statements = [], isLoading } = useQuery({
     queryKey: ['income-statements', session?.user.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('income_statements')
-        .select('*')
-        .eq('user_id', session?.user.id)
-        .order('date', { ascending: false });
-      
-      if (error) throw error;
-      return data || [];
+      if (!session?.user.id) return [];
+      try {
+        const data = await fetchAndTransformIncomeData(session.user.id);
+        return data;
+      } catch (error) {
+        toast({
+          title: "Error fetching income statement data",
+          description: "There was an error loading your income statement. Please try again.",
+          variant: "destructive"
+        });
+        return [];
+      }
     },
     enabled: !!session?.user.id,
   });
