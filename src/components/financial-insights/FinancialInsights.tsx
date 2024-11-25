@@ -53,14 +53,21 @@ export const FinancialInsights = () => {
     enabled: !!session?.user.id
   });
 
-  // Calculate growth rate
+  // Calculate growth rate based on the most recent data points
   const calculateGrowthRate = () => {
     if (!historicalMetrics || historicalMetrics.length < 2) return 0;
     
-    const oldestRevenue = historicalMetrics[0].amount;
-    const latestRevenue = historicalMetrics[historicalMetrics.length - 1].amount;
+    // Get the most recent revenue and the previous one
+    const sortedData = [...historicalMetrics].sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+
+    const latestRevenue = sortedData[0].amount;
+    const previousRevenue = sortedData[1].amount;
     
-    return ((latestRevenue - oldestRevenue) / oldestRevenue) * 100;
+    if (previousRevenue === 0) return 0;
+    
+    return ((latestRevenue - previousRevenue) / previousRevenue) * 100;
   };
 
   // Calculate performance score
