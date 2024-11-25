@@ -14,7 +14,6 @@ const AuditDetail = () => {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const { session } = useAuth();
 
-  // Redirect if not authenticated
   useEffect(() => {
     if (!session) {
       navigate('/auth');
@@ -22,7 +21,6 @@ const AuditDetail = () => {
     }
   }, [session, navigate]);
 
-  // Fetch audit data
   const { data: audit, isLoading, error } = useQuery({
     queryKey: ['audit', id],
     queryFn: async () => {
@@ -105,7 +103,6 @@ const AuditDetail = () => {
       <AuditDetailTabs 
         auditId={audit.id} 
         onStatusChange={() => {
-          // Refetch audit data when status changes
           window.location.reload();
         }} 
       />
