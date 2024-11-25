@@ -84,11 +84,17 @@ export const BusinessSettings = () => {
     setSaving(true);
 
     try {
+      // Format the fiscal_year_end date to YYYY-MM-DD format
+      const formattedInfo = {
+        ...businessInfo,
+        fiscal_year_end: businessInfo.fiscal_year_end ? new Date(businessInfo.fiscal_year_end).toISOString().split('T')[0] : null
+      };
+
       const { error } = await supabase
         .from("business_information")
         .upsert({
           user_id: session.user.id,
-          ...businessInfo,
+          ...formattedInfo,
           updated_at: new Date().toISOString(),
         });
 
