@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, CheckCircle2, FileCheck, AlertCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 
 type AssuranceEngagement = Tables<"assurance_engagements">;
 
@@ -150,12 +151,12 @@ export const AssuranceAnalytics = () => {
 
                   <Progress 
                     value={100 - (outcome.riskScore * 100)} 
-                    className="h-2"
-                    indicatorClassName={
+                    className={cn(
+                      "h-2",
                       outcome.riskScore > 0.7 ? "bg-red-500" :
                       outcome.riskScore > 0.4 ? "bg-yellow-500" :
                       "bg-green-500"
-                    }
+                    )}
                   />
                 </div>
               ))}
