@@ -1,44 +1,43 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import "https://deno.land/x/xhr@0.1.0/mod.ts"
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
+
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY2');
+const supabaseUrl = Deno.env.get('SUPABASE_URL');
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { userId } = await req.json()
-    console.log('Generating insights for user:', userId)
+    const { userId } = await req.json();
+    console.log('Generating insights for user:', userId);
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
 
-    // Fetch relevant data
-    const { data: revenueData } = await supabase
-      .from('revenue_records')
+    // Fetch financial data
+    const { data: financialData, error: financialError } = await supabase
+      .from('financial_health_metrics')
       .select('*')
       .eq('user_id', userId)
-      .order('date', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
 
-    const { data: writeOffs } = await supabase
-      .from('write_offs')
-      .select('*')
-      .eq('user_id', userId)
-      .order('date', { ascending: false })
+    if (financialError) throw financialError;
 
-    // Generate insights with OpenAI
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Generate insights using GPT-4
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY2')}`,
+        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -46,57 +45,53 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a business intelligence AI. Analyze financial data and provide actionable insights.'
+            content: 'You are a financial analyst AI that provides insights and recommendations based on financial metrics.'
           },
           {
             role: 'user',
-            content: `Analyze this business data and provide insights: ${JSON.stringify({
-              revenue: revenueData,
-              writeOffs
-            })}`
+            content: `Analyze these financial metrics and provide insights: ${JSON.stringify(financialData)}`
           }
         ],
       }),
-    })
+    });
 
-    const aiResponse = await openAIResponse.json()
-    console.log('AI Response:', aiResponse)
+    const aiResponse = await response.json();
+    const analysis = aiResponse.choices[0].message.content;
 
-    const analysis = aiResponse.choices[0].message.content
+    // Process AI response into structured insights
+    const insights = [
+      {
+        category: 'trend',
+        insight: `Financial Health Score: ${financialData.health_score}. ${analysis.split('.')[0]}.`,
+        confidence_score: 0.85
+      },
+      {
+        category: 'optimization',
+        insight: analysis.split('.')[1] || 'Consider reviewing your financial metrics for optimization opportunities.',
+        confidence_score: 0.75
+      }
+    ];
 
-    // Store insights
-    const { error: insightError } = await supabase
-      .from('business_insights')
-      .insert({
+    // Save insights to database
+    const { error: insertError } = await supabase
+      .from('ai_insights')
+      .insert(insights.map(insight => ({
         user_id: userId,
-        category: 'financial_analysis',
-        metrics: {
-          revenue_trend: "positive",
-          expense_efficiency: "moderate",
-          growth_rate: "8.5%"
-        },
-        recommendations: [
-          "Optimize operational costs",
-          "Expand market reach",
-          "Invest in growth opportunities"
-        ],
-        priority: 'high'
-      })
+        ...insight,
+        created_at: new Date().toISOString()
+      })));
 
-    if (insightError) throw insightError
+    if (insertError) throw insertError;
 
     return new Response(
-      JSON.stringify({ 
-        success: true,
-        insights: analysis
-      }),
+      JSON.stringify({ success: true, insights }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    );
   } catch (error) {
-    console.error('Error in generate-insights function:', error)
+    console.error('Error generating insights:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    )
+    );
   }
-})
+});
