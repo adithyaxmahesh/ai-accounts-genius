@@ -3,11 +3,12 @@ import { Card } from "@/components/ui/card";
 import { Brain, TrendingUp, AlertTriangle, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
+import { AIInsight } from "@/components/types";
 
 export const AiInsights = () => {
   const { session } = useAuth();
 
-  const { data: insights } = useQuery({
+  const { data: insights } = useQuery<AIInsight[]>({
     queryKey: ['ai-insights', session?.user.id],
     queryFn: async () => {
       // Fetch financial insights
@@ -37,7 +38,7 @@ export const AiInsights = () => {
       const netIncome = totalRevenue - totalWriteOffs;
 
       // Combine financial and assurance insights
-      const insights = [
+      const insights: AIInsight[] = [
         {
           id: 1,
           category: 'trend',
@@ -96,7 +97,7 @@ export const AiInsights = () => {
               <div className="mt-2">
                 <p className="text-sm font-medium">Recommendations:</p>
                 <ul className="text-sm text-muted-foreground list-disc list-inside">
-                  {insight.recommendations.map((rec: any, index: number) => (
+                  {insight.recommendations.map((rec, index) => (
                     <li key={index}>{rec.description}</li>
                   ))}
                 </ul>

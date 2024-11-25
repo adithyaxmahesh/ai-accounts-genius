@@ -42,3 +42,11 @@ export interface TaxCode {
   expense_category?: string;
   deduction_type: string;
 }
+
+export interface AIInsight {
+  id: number;
+  category: string;
+  insight: string;
+  recommendations?: Array<{ description: string }>;
+  evidenceValidation?: any;
+}
