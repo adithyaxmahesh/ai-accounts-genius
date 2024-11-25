@@ -110,9 +110,10 @@ export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemP
         </Tabs>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="item-name">Name</Label>
             <Input
-              id="name"
+              id="item-name"
+              name="item-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -120,9 +121,10 @@ export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemP
             />
           </div>
           <div>
-            <Label htmlFor="amount">Amount</Label>
+            <Label htmlFor="item-amount">Amount</Label>
             <Input
-              id="amount"
+              id="item-amount"
+              name="item-amount"
               type="number"
               step="0.01"
               value={amount}
@@ -132,12 +134,13 @@ export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemP
             />
           </div>
           <div>
-            <Label htmlFor="subcategory">Subcategory</Label>
+            <Label htmlFor="item-subcategory">Subcategory</Label>
             <Select 
               value={subcategory} 
               onValueChange={setSubcategory}
+              name="item-subcategory"
             >
-              <SelectTrigger className="bg-background">
+              <SelectTrigger id="item-subcategory" className="bg-background">
                 <SelectValue placeholder="Select subcategory" />
               </SelectTrigger>
               <SelectContent>
@@ -150,9 +153,10 @@ export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemP
             </Select>
           </div>
           <div>
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="item-description">Description</Label>
             <Textarea
-              id="description"
+              id="item-description"
+              name="item-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add any relevant details or notes"
