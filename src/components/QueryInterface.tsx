@@ -67,21 +67,24 @@ export const QueryInterface = () => {
 
   const handleQuery = async () => {
     if (!query.trim()) return;
+    if (!session?.user?.id) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to use the tax assistant",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const userMessage = { type: 'user' as const, content: query };
     setChatHistory(prev => [...prev, userMessage]);
     
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('analyze-query', {
+      const { data, error } = await supabase.functions.invoke('tax-chat', {
         body: { 
-          query,
+          message: query,
           userId: session?.user.id,
-          context: {
-            writeOffs,
-            revenueRecords,
-            taxAnalysis
-          }
         }
       });
 
@@ -94,17 +97,6 @@ export const QueryInterface = () => {
       };
       setChatHistory(prev => [...prev, assistantMessage]);
       
-      if (data.requiresUpdate) {
-        toast({
-          title: "Updating Tax Analysis",
-          description: "Recalculating based on new information...",
-        });
-      } else {
-        toast({
-          title: "Analysis Complete",
-          description: "Your query has been processed",
-        });
-      }
     } catch (error) {
       console.error("Error processing query:", error);
       toast({

@@ -3,6 +3,7 @@ import { TaxFormTemplateList } from "./TaxFormTemplateList";
 import { TaxFormHeader } from "./components/TaxFormHeader";
 import { GeneratedFormsList } from "./components/GeneratedFormsList";
 import { useTaxFormGeneration } from "./hooks/useTaxFormGeneration";
+import { jsPDF } from "jspdf";
 
 export const TaxFormGenerator = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
@@ -16,17 +17,33 @@ export const TaxFormGenerator = () => {
   } = useTaxFormGeneration();
 
   const handleDownload = (form: any) => {
-    const blob = new Blob([JSON.stringify(form.form_data, null, 2)], {
-      type: "application/json",
+    const doc = new jsPDF();
+    
+    // Add form header
+    doc.setFontSize(16);
+    doc.text(`${form.tax_form_templates.form_type} (${form.tax_form_templates.form_year})`, 20, 20);
+    doc.text(`Form ${form.tax_form_templates.irs_form_number}`, 20, 30);
+    
+    // Add form data
+    doc.setFontSize(12);
+    let yPosition = 50;
+    
+    Object.entries(form.form_data).forEach(([key, value]: [string, any]) => {
+      if (typeof value === 'object') {
+        doc.text(`${key}:`, 20, yPosition);
+        yPosition += 10;
+        Object.entries(value).forEach(([subKey, subValue]) => {
+          doc.text(`  ${subKey}: ${subValue}`, 30, yPosition);
+          yPosition += 10;
+        });
+      } else {
+        doc.text(`${key}: ${value}`, 20, yPosition);
+        yPosition += 10;
+      }
     });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `tax-form-${form.tax_form_templates.irs_form_number}-${form.tax_form_templates.form_year}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+
+    // Save the PDF
+    doc.save(`tax-form-${form.tax_form_templates.irs_form_number}-${form.tax_form_templates.form_year}.pdf`);
   };
 
   if (!businessInfo) {
