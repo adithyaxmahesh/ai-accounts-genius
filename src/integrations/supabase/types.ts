@@ -1390,6 +1390,8 @@ export type Database = {
           extracted_data: Json | null
           id: string
           location: string | null
+          ocr_confidence: number | null
+          ocr_text: string | null
           receipt_url: string | null
           suggested_tax_codes: Json | null
           user_id: string | null
@@ -1400,6 +1402,8 @@ export type Database = {
           extracted_data?: Json | null
           id?: string
           location?: string | null
+          ocr_confidence?: number | null
+          ocr_text?: string | null
           receipt_url?: string | null
           suggested_tax_codes?: Json | null
           user_id?: string | null
@@ -1410,6 +1414,8 @@ export type Database = {
           extracted_data?: Json | null
           id?: string
           location?: string | null
+          ocr_confidence?: number | null
+          ocr_text?: string | null
           receipt_url?: string | null
           suggested_tax_codes?: Json | null
           user_id?: string | null

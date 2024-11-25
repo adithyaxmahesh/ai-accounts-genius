@@ -1,9 +1,10 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { FileText, Image, FileSpreadsheet, Brain, Download } from "lucide-react";
+import { FileText, Image, FileSpreadsheet, Brain, Download, Receipt } from "lucide-react";
 import { ProcessedDocument } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useReceiptAnalysis } from "./document-management/useReceiptAnalysis";
 
 interface DocumentListProps {
   documents: ProcessedDocument[];
@@ -13,6 +14,7 @@ interface DocumentListProps {
 
 export const DocumentList = ({ documents, processing, onAnalyze }: DocumentListProps) => {
   const { toast } = useToast();
+  const { analyzing, analyzeReceipt } = useReceiptAnalysis();
 
   const getFileIcon = (fileName: string) => {
     const ext = fileName.split('.').pop()?.toLowerCase();
@@ -29,6 +31,11 @@ export const DocumentList = ({ documents, processing, onAnalyze }: DocumentListP
       default:
         return <FileText className="h-4 w-4 mr-2 text-muted-foreground" />;
     }
+  };
+
+  const isImageFile = (fileName: string) => {
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif'].includes(ext || '');
   };
 
   const handleDownload = async (doc: ProcessedDocument) => {
@@ -55,6 +62,19 @@ export const DocumentList = ({ documents, processing, onAnalyze }: DocumentListP
         variant: "destructive",
       });
     }
+  };
+
+  const handleAnalyzeReceipt = async (doc: ProcessedDocument) => {
+    if (!isImageFile(doc.name)) {
+      toast({
+        title: "Invalid File Type",
+        description: "Only image files can be analyzed as receipts",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    await analyzeReceipt(doc.id);
   };
 
   return (
@@ -100,17 +120,23 @@ export const DocumentList = ({ documents, processing, onAnalyze }: DocumentListP
                 </TableCell>
                 <TableCell>
                   <div className="flex space-x-2">
+                    {isImageFile(doc.name) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleAnalyzeReceipt(doc)}
+                        disabled={analyzing}
+                      >
+                        <Receipt className={`h-4 w-4 ${analyzing ? 'animate-pulse' : ''}`} />
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => onAnalyze(doc.id)}
                       disabled={processing || doc.status === 'Analyzed'}
                     >
-                      {processing ? (
-                        <Brain className="h-4 w-4 animate-pulse" />
-                      ) : (
-                        <Brain className="h-4 w-4" />
-                      )}
+                      <Brain className={`h-4 w-4 ${processing ? 'animate-pulse' : ''}`} />
                     </Button>
                     <Button
                       variant="outline"
