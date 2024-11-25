@@ -83,10 +83,12 @@ export const AIAnalysisOutcome = ({
         )}
       </div>
 
-      <Progress 
-        value={100 - (riskScore * 100)} 
-        className={`h-2 ${getProgressColor(riskScore)}`}
-      />
+      <div className={`h-2 w-full rounded-full bg-secondary overflow-hidden`}>
+        <div 
+          className={`h-full transition-all ${getProgressColor(riskScore)}`}
+          style={{ width: `${100 - (riskScore * 100)}%` }}
+        />
+      </div>
     </div>
   );
 };
