@@ -18,6 +18,11 @@ serve(async (req) => {
 
   try {
     const { auditId } = await req.json()
+    
+    if (!auditId) {
+      throw new Error('Audit ID is required')
+    }
+
     console.log('Starting automated audit for audit ID:', auditId)
     
     const supabaseClient = createClient(
@@ -37,7 +42,7 @@ serve(async (req) => {
 
     if (fetchError) {
       console.error('Error fetching audit data:', fetchError)
-      throw fetchError
+      throw new Error('Failed to fetch audit data')
     }
 
     if (!audit) {
@@ -90,7 +95,7 @@ serve(async (req) => {
 
     if (updateError) {
       console.error('Error updating audit report:', updateError)
-      throw updateError
+      throw new Error('Failed to update audit report')
     }
 
     console.log('Automated audit completed successfully')
@@ -98,10 +103,10 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true,
+        summary,
         riskScores,
         controlEffectiveness,
         anomalies,
-        summary,
         recommendations
       }),
       { 
@@ -114,13 +119,16 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in automated audit:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        success: false,
+        error: error.message || 'An unexpected error occurred'
+      }),
       { 
         headers: { 
           ...corsHeaders, 
           'Content-Type': 'application/json' 
-        }, 
-        status: 400 
+        },
+        status: 400
       }
     )
   }

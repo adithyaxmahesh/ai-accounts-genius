@@ -17,6 +17,15 @@ export const AutomatedAuditSection = ({ auditId, onComplete }: AutomatedAuditSec
   const { toast } = useToast();
 
   const startAutomatedAudit = async () => {
+    if (!auditId) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Invalid audit ID provided.",
+      });
+      return;
+    }
+
     setIsRunning(true);
     setProgress(0);
     
@@ -37,9 +46,16 @@ export const AutomatedAuditSection = ({ auditId, onComplete }: AutomatedAuditSec
       });
 
       clearInterval(interval);
-      setProgress(100);
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Failed to complete automated audit');
+      }
+
+      setProgress(100);
 
       toast({
         title: "Automated Audit Complete",
@@ -54,7 +70,7 @@ export const AutomatedAuditSection = ({ auditId, onComplete }: AutomatedAuditSec
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to complete automated audit. Please try again.",
+        description: error.message || "Failed to complete automated audit. Please try again.",
       });
     } finally {
       setIsRunning(false);
