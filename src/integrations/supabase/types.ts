@@ -234,6 +234,47 @@ export type Database = {
           },
         ]
       }
+      audit_compliance_checks: {
+        Row: {
+          audit_id: string | null
+          compliance_notes: string | null
+          created_at: string
+          id: string
+          requirement_description: string | null
+          requirement_name: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          audit_id?: string | null
+          compliance_notes?: string | null
+          created_at?: string
+          id?: string
+          requirement_description?: string | null
+          requirement_name: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          audit_id?: string | null
+          compliance_notes?: string | null
+          created_at?: string
+          id?: string
+          requirement_description?: string | null
+          requirement_name?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_compliance_checks_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "audit_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_items: {
         Row: {
           amount: number | null
@@ -319,6 +360,89 @@ export type Database = {
           },
           {
             foreignKeyName: "audit_reports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_risk_assessments: {
+        Row: {
+          audit_id: string | null
+          created_at: string
+          id: string
+          impact: number | null
+          likelihood: number | null
+          mitigation_steps: Json | null
+          risk_category: string
+          updated_at: string
+        }
+        Insert: {
+          audit_id?: string | null
+          created_at?: string
+          id?: string
+          impact?: number | null
+          likelihood?: number | null
+          mitigation_steps?: Json | null
+          risk_category: string
+          updated_at?: string
+        }
+        Update: {
+          audit_id?: string | null
+          created_at?: string
+          id?: string
+          impact?: number | null
+          likelihood?: number | null
+          mitigation_steps?: Json | null
+          risk_category?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_risk_assessments_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "audit_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_trail: {
+        Row: {
+          action_type: string
+          audit_id: string | null
+          created_at: string
+          details: Json
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          audit_id?: string | null
+          created_at?: string
+          details: Json
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          audit_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_trail_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "audit_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_trail_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"

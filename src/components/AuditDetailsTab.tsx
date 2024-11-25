@@ -1,18 +1,16 @@
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Info, FileText, AlertTriangle, Check, ClipboardList } from "lucide-react";
+import { Info } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
   TooltipProvider
 } from "@/components/ui/tooltip";
-import { useToast } from "@/components/ui/use-toast";
-import { Badge } from "@/components/ui/badge";
-import AuditFindings from "@/components/audit/AuditFindings";
-import AuditProgress from "@/components/audit/AuditProgress";
+import AuditStatusSection from "@/components/audit/AuditStatusSection";
+import AuditHealthSection from "@/components/audit/AuditHealthSection";
+import RiskAssessmentMatrix from "@/components/audit/RiskAssessmentMatrix";
 import AuditItemsSection from "@/components/audit/AuditItemsSection";
-import { updateAuditStatus } from "@/utils/auditUtils";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AuditDetailsProps {
   audit: any;
@@ -20,128 +18,42 @@ interface AuditDetailsProps {
   getRiskLevelExplanation: (level: string) => string;
 }
 
-const AuditDetailsTab = ({ audit, getStatusExplanation, getRiskLevelExplanation }: AuditDetailsProps) => {
-  const { toast } = useToast();
+const AuditDetailsTab = ({ 
+  audit, 
+  getStatusExplanation, 
+  getRiskLevelExplanation 
+}: AuditDetailsProps) => {
+  const queryClient = useQueryClient();
 
-  const handleProgressAudit = async () => {
-    try {
-      const nextStatus = {
-        'planning': 'control_evaluation',
-        'control_evaluation': 'evidence_gathering',
-        'evidence_gathering': 'review',
-        'review': 'completed'
-      }[audit.status];
-
-      if (!nextStatus) {
-        toast({
-          title: "Info",
-          description: "Audit is already completed",
-        });
-        return;
-      }
-
-      await updateAuditStatus(audit.id, nextStatus);
-      toast({
-        title: "Success",
-        description: `Moved to ${nextStatus.replace('_', ' ')} phase`,
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update audit status",
-        variant: "destructive"
-      });
-    }
+  const handleAuditUpdate = () => {
+    queryClient.invalidateQueries({ queryKey: ['audit', audit?.id] });
   };
-
-  const getAuditHealthStatus = () => {
-    const flaggedItems = audit?.audit_items?.filter(item => item.status === 'flagged') || [];
-    const totalItems = audit?.audit_items?.length || 0;
-    
-    if (totalItems === 0) return { status: 'pending', message: 'No items to review' };
-    if (flaggedItems.length === 0) return { status: 'good', message: 'No issues found' };
-    if (flaggedItems.length / totalItems < 0.2) return { status: 'warning', message: 'Minor issues found' };
-    return { status: 'bad', message: 'Significant issues found' };
-  };
-
-  const healthStatus = getAuditHealthStatus();
 
   return (
     <div className="space-y-6">
       <Card className="p-6 glass-card">
         <div className="flex justify-between items-start mb-6">
-          <AuditProgress 
-            status={audit?.status} 
-            getStatusExplanation={getStatusExplanation} 
+          <AuditStatusSection 
+            audit={audit}
+            getStatusExplanation={getStatusExplanation}
+            onUpdate={handleAuditUpdate}
           />
           
-          <div className="space-y-4">
-            <div>
-              <TooltipProvider>
-                <div className="flex items-center gap-2">
-                  <p className="text-muted-foreground">Risk Level</p>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Info className="h-4 w-4 text-muted-foreground" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{getRiskLevelExplanation(audit?.risk_level)}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              </TooltipProvider>
-              <div className="mt-1 flex items-center">
-                {audit?.risk_level === 'high' ? (
-                  <AlertTriangle className="h-4 w-4 text-destructive mr-1" />
-                ) : audit?.status === 'completed' ? (
-                  <Check className="h-4 w-4 text-green-500 mr-1" />
-                ) : null}
-                {audit?.risk_level}
-              </div>
-            </div>
-
-            <div>
-              <TooltipProvider>
-                <div className="flex items-center gap-2">
-                  <p className="text-muted-foreground">Audit Health</p>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Info className="h-4 w-4 text-muted-foreground" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Overall assessment based on findings and flagged items</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              </TooltipProvider>
-              <Badge 
-                variant={
-                  healthStatus.status === 'good' ? 'success' :
-                  healthStatus.status === 'warning' ? 'warning' :
-                  healthStatus.status === 'bad' ? 'destructive' :
-                  'secondary'
-                }
-                className="mt-1"
-              >
-                {healthStatus.message}
-              </Badge>
-            </div>
-          </div>
+          <AuditHealthSection 
+            audit={audit}
+            getRiskLevelExplanation={getRiskLevelExplanation}
+          />
         </div>
 
-        {audit?.status !== 'completed' && (
-          <div className="mb-6">
-            <Button onClick={handleProgressAudit} className="w-full">
-              Progress to Next Phase
-            </Button>
-          </div>
-        )}
-
         <div className="space-y-6">
+          <RiskAssessmentMatrix auditId={audit?.id} />
+
           <div>
             <TooltipProvider>
               <div className="flex items-center gap-2 mb-2">
-                <h3 className="text-lg font-semibold">Findings ({Array.isArray(audit?.findings) ? audit.findings.length : 0})</h3>
+                <h3 className="text-lg font-semibold">
+                  Findings ({Array.isArray(audit?.findings) ? audit.findings.length : 0})
+                </h3>
                 <Tooltip>
                   <TooltipTrigger>
                     <Info className="h-4 w-4 text-muted-foreground" />
