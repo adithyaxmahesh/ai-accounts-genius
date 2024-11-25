@@ -5,12 +5,14 @@ import AuditDetailHeader from "@/components/audit/AuditDetailHeader";
 import AuditDetailTabs from "@/components/audit/AuditDetailTabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 
 const AuditDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { session } = useAuth();
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
   const { data: audit, isLoading, error } = useQuery({
     queryKey: ['audit', id],
@@ -83,6 +85,8 @@ const AuditDetail = () => {
       <AuditDetailHeader 
         audit={audit}
         flaggedItems={audit?.audit_items?.filter(item => item.status === 'flagged') || []}
+        selectedItemId={selectedItemId}
+        setSelectedItemId={setSelectedItemId}
       />
       <AuditDetailTabs 
         auditId={id!} 
