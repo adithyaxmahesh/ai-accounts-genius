@@ -3,6 +3,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { ProcessedDocument } from "../types";
+import { extractDateFromDocument } from "./documentUtils";
 
 export const useDocumentUpload = () => {
   const { toast } = useToast();
@@ -35,6 +36,7 @@ export const useDocumentUpload = () => {
         status: doc.processing_status,
         confidence: doc.confidence_score || 0,
         uploadedAt: doc.created_at,
+        documentDate: doc.document_date || null,
         type: doc.document_type || 'unknown',
         storage_path: doc.storage_path
       }));

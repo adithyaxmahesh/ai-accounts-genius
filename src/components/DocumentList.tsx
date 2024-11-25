@@ -10,11 +10,19 @@ interface DocumentListProps {
   documents: ProcessedDocument[];
   processing: boolean;
   onAnalyze: (documentId: string) => void;
+  onDelete: (documentId: string) => void;
 }
 
-export const DocumentList = ({ documents, processing, onAnalyze }: DocumentListProps) => {
+export const DocumentList = ({ documents, processing, onAnalyze, onDelete }: DocumentListProps) => {
   const { toast } = useToast();
   const { analyzing, analyzeReceipt } = useReceiptAnalysis();
+
+  // Sort documents by document date if available, otherwise by upload date
+  const sortedDocuments = [...documents].sort((a, b) => {
+    const dateA = a.documentDate ? new Date(a.documentDate) : new Date(a.uploadedAt);
+    const dateB = b.documentDate ? new Date(b.documentDate) : new Date(b.uploadedAt);
+    return dateB.getTime() - dateA.getTime();
+  });
 
   const getFileIcon = (fileName: string) => {
     const ext = fileName.split('.').pop()?.toLowerCase();
@@ -85,19 +93,20 @@ export const DocumentList = ({ documents, processing, onAnalyze }: DocumentListP
             <TableHead>Document Name</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Confidence</TableHead>
+            <TableHead>Document Date</TableHead>
             <TableHead>Upload Date</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {documents.length === 0 ? (
+          {sortedDocuments.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center text-muted-foreground">
+              <TableCell colSpan={6} className="text-center text-muted-foreground">
                 No documents uploaded yet
               </TableCell>
             </TableRow>
           ) : (
-            documents.map((doc) => (
+            sortedDocuments.map((doc) => (
               <TableRow key={doc.id}>
                 <TableCell className="font-medium">
                   <div className="flex items-center">
@@ -107,14 +116,17 @@ export const DocumentList = ({ documents, processing, onAnalyze }: DocumentListP
                 </TableCell>
                 <TableCell>
                   <span className={`px-2 py-1 rounded-full text-sm ${
-                    doc.status === 'Analyzed' ? 'bg-green-100 text-green-800' :
-                    doc.status === 'Processing' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-blue-100 text-blue-800'
+                    doc.status === 'Analyzed' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' :
+                    doc.status === 'Processing' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100' :
+                    'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100'
                   }`}>
                     {doc.status}
                   </span>
                 </TableCell>
                 <TableCell>{doc.confidence}%</TableCell>
+                <TableCell>
+                  {doc.documentDate ? new Date(doc.documentDate).toLocaleDateString() : 'N/A'}
+                </TableCell>
                 <TableCell>
                   {new Date(doc.uploadedAt).toLocaleDateString()}
                 </TableCell>
@@ -124,7 +136,7 @@ export const DocumentList = ({ documents, processing, onAnalyze }: DocumentListP
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleAnalyzeReceipt(doc)}
+                        onClick={() => analyzeReceipt(doc.id)}
                         disabled={analyzing}
                       >
                         <Receipt className={`h-4 w-4 ${analyzing ? 'animate-pulse' : ''}`} />
