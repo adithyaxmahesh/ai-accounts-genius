@@ -13,13 +13,13 @@ interface AuditDetailTabsProps {
   onStatusChange?: () => void;
 }
 
-export const AuditDetailTabs = ({ auditId, onStatusChange }: AuditDetailTabsProps) => {
-  const { data: automatedResults } = useQuery({
-    queryKey: ['audit-automated-results', auditId],
+const AuditDetailTabs = ({ auditId, onStatusChange }: AuditDetailTabsProps) => {
+  const { data: audit } = useQuery({
+    queryKey: ['audit', auditId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('audit_reports')
-        .select('automated_analysis, risk_scores, control_effectiveness, anomaly_detection')
+        .select('*')
         .eq('id', auditId)
         .single();
       
@@ -39,16 +39,16 @@ export const AuditDetailTabs = ({ auditId, onStatusChange }: AuditDetailTabsProp
 
       <TabsContent value="overview">
         <div className="grid gap-4 md:grid-cols-2">
-          <AuditHealthSection auditId={auditId} />
+          <AuditHealthSection audit={audit} />
           <AuditStatusSection 
-            auditId={auditId} 
-            onStatusChange={onStatusChange}
+            audit={audit} 
+            onUpdate={onStatusChange}
           />
         </div>
       </TabsContent>
 
       <TabsContent value="items">
-        <AuditItemsSection auditId={auditId} />
+        <AuditItemsSection auditItems={audit?.audit_items || []} />
       </TabsContent>
 
       <TabsContent value="automated">
@@ -57,12 +57,12 @@ export const AuditDetailTabs = ({ auditId, onStatusChange }: AuditDetailTabsProp
             auditId={auditId}
             onComplete={onStatusChange}
           />
-          {automatedResults?.automated_analysis && (
+          {audit?.automated_analysis && (
             <AutomatedAuditResults 
               results={{
-                riskScores: automatedResults.risk_scores,
-                controlEffectiveness: automatedResults.control_effectiveness,
-                anomaly_detection: automatedResults.anomaly_detection
+                riskScores: audit.risk_scores,
+                controlEffectiveness: audit.control_effectiveness,
+                anomaly_detection: audit.anomaly_detection
               }}
             />
           )}
@@ -75,3 +75,5 @@ export const AuditDetailTabs = ({ auditId, onStatusChange }: AuditDetailTabsProp
     </Tabs>
   );
 };
+
+export default AuditDetailTabs;
