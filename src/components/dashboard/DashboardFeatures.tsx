@@ -1,6 +1,5 @@
 import { FinancialPlanningCard } from "@/components/financial-planning/FinancialPlanningCard";
 import { FinancialHealthCard } from "@/components/financial-health/FinancialHealthCard";
-import { BusinessMetrics } from "@/components/dashboard/BusinessMetrics";
 import { CollaboratorsList } from "@/components/collaborators/CollaboratorsList";
 import { AutomationRules } from "@/components/automation/AutomationRules";
 
@@ -10,7 +9,6 @@ export const DashboardFeatures = () => {
       <div className="space-y-2">
         <FinancialPlanningCard />
         <FinancialHealthCard />
-        <BusinessMetrics />
       </div>
       <div className="space-y-2">
         <CollaboratorsList />
