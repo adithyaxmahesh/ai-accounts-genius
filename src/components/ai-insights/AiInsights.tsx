@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Brain, TrendingUp, AlertTriangle, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { AIInsight } from "@/components/types";
 
 export const AiInsights = () => {
@@ -72,16 +73,56 @@ export const AiInsights = () => {
     }
   });
 
+  const chartData = insights?.map(insight => ({
+    date: new Date(insight.created_at).toLocaleDateString(),
+    confidence: insight.confidence_score
+  })) || [];
+
   return (
-    <Card className="glass-card p-6">
+    <Card className="p-6 bg-card/50 backdrop-blur-sm border-muted">
       <div className="flex items-center gap-2 mb-6">
-        <Brain className="h-6 w-6 text-primary" />
-        <h2 className="text-xl font-semibold">AI Financial & Assurance Insights</h2>
+        <Brain className="h-6 w-6 text-primary animate-pulse" />
+        <h2 className="text-xl font-semibold">AI Financial Insights</h2>
+      </div>
+
+      <div className="h-64 mb-6 bg-muted/50 rounded-lg p-4">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" className="opacity-50" />
+            <XAxis 
+              dataKey="date" 
+              stroke="currentColor" 
+              className="text-xs" 
+            />
+            <YAxis 
+              stroke="currentColor" 
+              className="text-xs"
+            />
+            <Tooltip 
+              contentStyle={{ 
+                background: 'hsl(var(--card))', 
+                border: '1px solid hsl(var(--border))',
+                borderRadius: '0.5rem' 
+              }} 
+            />
+            <Line 
+              type="monotone" 
+              dataKey="confidence" 
+              stroke="hsl(var(--primary))" 
+              strokeWidth={2}
+              dot={{ fill: 'hsl(var(--primary))' }}
+              activeDot={{ r: 6, fill: 'hsl(var(--primary))' }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
 
       <div className="space-y-4">
         {insights?.map((insight) => (
-          <div key={insight.id} className="p-4 bg-muted rounded-lg">
+          <div 
+            key={insight.id} 
+            className="p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+          >
             <div className="flex items-center gap-2 mb-2">
               {insight.category === 'trend' ? (
                 <TrendingUp className="h-4 w-4 text-primary" />
