@@ -4,7 +4,7 @@ import { LineChart, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
+import { Area, AreaChart, ResponsiveContainer } from 'recharts';
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { MetricsDisplay } from "./MetricsDisplay";
 import { InsightsDisplay } from "./InsightsDisplay";
@@ -61,22 +61,29 @@ export const BusinessIntelligence = () => {
     }
   };
 
-  const pieData = [
-    { name: 'Revenue', value: financialData?.totalRevenue || 0 },
-    { name: 'Expenses', value: financialData?.totalExpenses || 0 },
-    { name: 'Profit', value: financialData?.netIncome || 0 }
+  // Sample data for the chart - in production, this would come from your actual data
+  const chartData = [
+    { value: 4000 },
+    { value: 3000 },
+    { value: 5000 },
+    { value: 2780 },
+    { value: 6890 },
+    { value: 7890 },
+    { value: 8390 },
   ];
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
-
   return (
-    <Card className="p-6">
+    <Card className="p-6 bg-gradient-to-br from-gray-900 to-gray-800 border-0">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <LineChart className="h-6 w-6 text-primary" />
           <h2 className="text-xl font-semibold">Business Intelligence</h2>
         </div>
-        <Button onClick={generateInsights} className="hover-scale">
+        <Button 
+          onClick={generateInsights} 
+          variant="outline"
+          className="bg-primary/10 border-primary/20 hover:bg-primary/20"
+        >
           <RefreshCw className="mr-2 h-4 w-4" />
           Generate New Insights
         </Button>
@@ -84,24 +91,27 @@ export const BusinessIntelligence = () => {
 
       {financialData && <MetricsDisplay metrics={financialData} />}
 
-      <div className="h-64 mb-6">
+      <div className="h-[200px] mb-6 mt-8">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-medium text-gray-400">Revenue Trend</h3>
+          <span className="text-xs text-gray-500">Last 7 days</span>
+        </div>
         <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={pieData}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              outerRadius={80}
-              fill="#8884d8"
+          <AreaChart data={chartData}>
+            <defs>
+              <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#9b87f5" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="#9b87f5" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            <Area
+              type="monotone"
               dataKey="value"
-            >
-              {pieData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <Legend />
-          </PieChart>
+              stroke="#9b87f5"
+              fillOpacity={1}
+              fill="url(#colorRevenue)"
+            />
+          </AreaChart>
         </ResponsiveContainer>
       </div>
 
