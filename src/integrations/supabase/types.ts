@@ -458,6 +458,44 @@ export type Database = {
           },
         ]
       }
+      audit_monitoring_alerts: {
+        Row: {
+          alert_type: string
+          audit_id: string | null
+          created_at: string | null
+          details: Json | null
+          id: string
+          severity: string
+          status: string | null
+        }
+        Insert: {
+          alert_type: string
+          audit_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          severity: string
+          status?: string | null
+        }
+        Update: {
+          alert_type?: string
+          audit_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          severity?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_monitoring_alerts_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "audit_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_procedures: {
         Row: {
           audit_id: string | null
@@ -517,9 +555,12 @@ export type Database = {
       }
       audit_reports: {
         Row: {
+          anomaly_detection: Json | null
           audit_assertions: Json | null
           audit_objective: string | null
           audit_opinion: string | null
+          automated_analysis: Json | null
+          control_effectiveness: Json | null
           created_at: string
           description: string | null
           document_id: string | null
@@ -531,15 +572,19 @@ export type Database = {
           materiality_threshold: number | null
           recommendations: string[] | null
           risk_level: string | null
+          risk_scores: Json | null
           stakeholders: string[] | null
           status: string
           title: string
           user_id: string | null
         }
         Insert: {
+          anomaly_detection?: Json | null
           audit_assertions?: Json | null
           audit_objective?: string | null
           audit_opinion?: string | null
+          automated_analysis?: Json | null
+          control_effectiveness?: Json | null
           created_at?: string
           description?: string | null
           document_id?: string | null
@@ -551,15 +596,19 @@ export type Database = {
           materiality_threshold?: number | null
           recommendations?: string[] | null
           risk_level?: string | null
+          risk_scores?: Json | null
           stakeholders?: string[] | null
           status?: string
           title: string
           user_id?: string | null
         }
         Update: {
+          anomaly_detection?: Json | null
           audit_assertions?: Json | null
           audit_objective?: string | null
           audit_opinion?: string | null
+          automated_analysis?: Json | null
+          control_effectiveness?: Json | null
           created_at?: string
           description?: string | null
           document_id?: string | null
@@ -571,6 +620,7 @@ export type Database = {
           materiality_threshold?: number | null
           recommendations?: string[] | null
           risk_level?: string | null
+          risk_scores?: Json | null
           stakeholders?: string[] | null
           status?: string
           title?: string
@@ -672,6 +722,47 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automated_control_tests: {
+        Row: {
+          audit_id: string | null
+          created_at: string | null
+          id: string
+          results: Json | null
+          status: string | null
+          test_data: Json | null
+          test_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          audit_id?: string | null
+          created_at?: string | null
+          id?: string
+          results?: Json | null
+          status?: string | null
+          test_data?: Json | null
+          test_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          audit_id?: string | null
+          created_at?: string | null
+          id?: string
+          results?: Json | null
+          status?: string | null
+          test_data?: Json | null
+          test_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automated_control_tests_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "audit_reports"
             referencedColumns: ["id"]
           },
         ]
