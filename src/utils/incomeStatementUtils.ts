@@ -1,19 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
+import { WriteOff } from "@/components/types";
 
 interface RevenueRecord {
   amount: number;
   category: string;
   description: string;
   date: string;
-}
-
-interface WriteOff {
-  amount: number;
-  description: string;
-  date: string;
-  tax_codes?: {
-    expense_category: string;
-  } | null;
 }
 
 export const fetchAndTransformIncomeData = async (userId: string) => {
@@ -30,15 +22,17 @@ export const fetchAndTransformIncomeData = async (userId: string) => {
   const { data: writeOffs, error: writeOffsError } = await supabase
     .from('write_offs')
     .select(`
-      amount,
-      description,
-      date,
+      *,
       tax_codes (
+        code,
+        description,
+        state,
         expense_category
       )
     `)
     .eq('user_id', userId)
-    .order('date', { ascending: false });
+    .order('date', { ascending: false })
+    .returns<WriteOff[]>();
 
   if (writeOffsError) throw writeOffsError;
 
