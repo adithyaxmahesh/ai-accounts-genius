@@ -8,6 +8,7 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
+import { Progress } from "@/components/ui/progress";
 
 interface RiskAssessment {
   id: string;
@@ -55,8 +56,28 @@ const RiskAssessmentMatrix = ({ auditId }: RiskAssessmentMatrixProps) => {
     }
   };
 
+  const getRiskIcon = (level: string) => {
+    switch (level) {
+      case 'high':
+        return <AlertTriangle className="h-5 w-5 text-red-600" />;
+      case 'medium':
+        return <AlertCircle className="h-5 w-5 text-yellow-600" />;
+      case 'low':
+        return <Info className="h-5 w-5 text-green-600" />;
+      default:
+        return <Info className="h-5 w-5 text-gray-600" />;
+    }
+  };
+
   if (isLoading) {
-    return <div className="animate-pulse h-48 bg-muted rounded-lg" />;
+    return (
+      <Card className="p-6">
+        <div className="space-y-4 animate-pulse">
+          <div className="h-6 bg-muted rounded w-1/4"></div>
+          <div className="h-32 bg-muted rounded"></div>
+        </div>
+      </Card>
+    );
   }
 
   return (
@@ -83,27 +104,47 @@ const RiskAssessmentMatrix = ({ auditId }: RiskAssessmentMatrixProps) => {
               key={risk.id}
               className={`p-4 rounded-lg border ${getRiskColor(riskLevel)}`}
             >
-              <div className="flex items-start justify-between">
-                <div>
+              <div className="space-y-4">
+                <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
-                    {riskLevel === 'high' ? (
-                      <AlertTriangle className="h-4 w-4" />
-                    ) : riskLevel === 'medium' ? (
-                      <AlertCircle className="h-4 w-4" />
-                    ) : (
-                      <Info className="h-4 w-4" />
-                    )}
+                    {getRiskIcon(riskLevel)}
                     <h4 className="font-medium">{risk.risk_category}</h4>
                   </div>
-                  <div className="mt-2 space-y-1 text-sm">
-                    <p>Likelihood: {(risk.likelihood * 100).toFixed(0)}%</p>
-                    <p>Impact: {(risk.impact * 100).toFixed(0)}%</p>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <div className="text-sm font-medium">
+                          Risk Score: {((risk.likelihood * risk.impact) * 100).toFixed(0)}%
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Combined score of likelihood and impact</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+
+                <div className="space-y-2">
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Likelihood</span>
+                      <span>{(risk.likelihood * 100).toFixed(0)}%</span>
+                    </div>
+                    <Progress value={risk.likelihood * 100} className="h-2" />
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Impact</span>
+                      <span>{(risk.impact * 100).toFixed(0)}%</span>
+                    </div>
+                    <Progress value={risk.impact * 100} className="h-2" />
                   </div>
                 </div>
+
                 {risk.mitigation_steps && risk.mitigation_steps.length > 0 && (
-                  <div className="text-sm">
-                    <p className="font-medium mb-1">Mitigation Steps:</p>
-                    <ul className="list-disc pl-4">
+                  <div className="mt-4">
+                    <h5 className="text-sm font-medium mb-2">Mitigation Steps:</h5>
+                    <ul className="list-disc pl-5 space-y-1 text-sm">
                       {risk.mitigation_steps.map((step, index) => (
                         <li key={index}>{step}</li>
                       ))}
