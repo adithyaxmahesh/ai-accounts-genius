@@ -1,4 +1,4 @@
-import { AuditData, ControlTest } from './types';
+import { AuditData, ControlTest } from './types.ts';
 import { createClient } from '@supabase/supabase-js';
 
 export async function testInternalControls(audit: AuditData, supabase: ReturnType<typeof createClient>) {

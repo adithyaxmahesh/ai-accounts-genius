@@ -1,4 +1,4 @@
-import { AuditData, RiskScores } from './types';
+import { AuditData, RiskScores } from './types.ts';
 
 export async function performRiskAssessment(audit: AuditData): Promise<RiskScores> {
   const riskFactors = {

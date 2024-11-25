@@ -1,4 +1,4 @@
-import { AuditData, Anomaly } from './types';
+import { AuditData, Anomaly } from './types.ts';
 
 export function detectAnomalies(audit: AuditData) {
   const anomalies: Anomaly[] = [];
