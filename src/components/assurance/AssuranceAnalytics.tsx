@@ -4,10 +4,7 @@ import { Tables } from "@/integrations/supabase/types";
 import { AssuranceProcessSteps } from "./AssuranceProcessSteps";
 import { AssuranceMetricsCards } from "./AssuranceMetricsCards";
 import { AssuranceRecentActivity } from "./AssuranceRecentActivity";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, CheckCircle2, FileCheck, AlertCircle } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import { AIAnalysisCard } from "./AIAnalysisCard";
 import { useToast } from "@/components/ui/use-toast";
 import { useEffect } from "react";
 
@@ -122,95 +119,7 @@ export const AssuranceAnalytics = () => {
         />
 
         <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileCheck className="h-5 w-5 text-primary" />
-                AI Analysis Outcomes
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {aiAnalysisOutcomes?.map((outcome, index) => (
-                <div key={outcome.engagementId} className="space-y-4 p-4 bg-muted/50 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium">{outcome.clientName}</h4>
-                    <div className="flex gap-2">
-                      <Badge variant={outcome.riskScore > 0.7 ? "destructive" : outcome.riskScore > 0.4 ? "warning" : "success"}>
-                        Risk Score: {(outcome.riskScore * 100).toFixed(0)}%
-                      </Badge>
-                      <Badge variant="outline">
-                        Confidence: {(outcome.confidenceScore * 100).toFixed(0)}%
-                      </Badge>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {outcome.findings.length > 0 && (
-                      <div className="space-y-2">
-                        <h5 className="text-sm font-medium flex items-center gap-2">
-                          <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                          Key Findings
-                        </h5>
-                        <ul className="space-y-1">
-                          {outcome.findings.map((finding: any, idx: number) => (
-                            <li key={idx} className="text-sm flex items-start gap-2">
-                              <span className={`mt-1 h-2 w-2 rounded-full ${
-                                finding.severity === 'high' ? 'bg-red-500' :
-                                finding.severity === 'medium' ? 'bg-yellow-500' :
-                                'bg-green-500'
-                              }`} />
-                              {finding.description}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    
-                    {outcome.recommendations.length > 0 && (
-                      <div className="space-y-2">
-                        <h5 className="text-sm font-medium flex items-center gap-2">
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
-                          Recommendations
-                        </h5>
-                        <ul className="space-y-1">
-                          {outcome.recommendations.map((rec: any, idx: number) => (
-                            <li key={idx} className="text-sm flex items-start gap-2">
-                              <span className={`mt-1 h-2 w-2 rounded-full ${
-                                rec.priority === 'high' ? 'bg-red-500' :
-                                rec.priority === 'medium' ? 'bg-yellow-500' :
-                                'bg-green-500'
-                              }`} />
-                              {rec.description}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-
-                  <Progress 
-                    value={100 - (outcome.riskScore * 100)} 
-                    className="h-2"
-                    // Use className instead of indicatorClassName
-                    className={`h-2 ${
-                      outcome.riskScore > 0.7 ? 'bg-red-500' :
-                      outcome.riskScore > 0.4 ? 'bg-yellow-500' :
-                      'bg-green-500'
-                    }`}
-                  />
-                </div>
-              ))}
-
-              {(!aiAnalysisOutcomes || aiAnalysisOutcomes.length === 0) && (
-                <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
-                  <AlertCircle className="h-12 w-12 mb-4" />
-                  <p>No AI analysis outcomes available yet.</p>
-                  <p className="text-sm">Complete some engagements to see AI-powered insights here.</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
+          <AIAnalysisCard aiAnalysisOutcomes={aiAnalysisOutcomes || []} />
           <AssuranceRecentActivity engagements={engagements || []} />
         </div>
       </div>
