@@ -937,6 +937,50 @@ export type Database = {
           },
         ]
       }
+      break_even_analysis: {
+        Row: {
+          break_even_point: number | null
+          created_at: string
+          fixed_costs: number
+          id: string
+          margin_of_safety: number | null
+          selling_price_per_unit: number
+          updated_at: string
+          user_id: string | null
+          variable_cost_per_unit: number
+        }
+        Insert: {
+          break_even_point?: number | null
+          created_at?: string
+          fixed_costs?: number
+          id?: string
+          margin_of_safety?: number | null
+          selling_price_per_unit?: number
+          updated_at?: string
+          user_id?: string | null
+          variable_cost_per_unit?: number
+        }
+        Update: {
+          break_even_point?: number | null
+          created_at?: string
+          fixed_costs?: number
+          id?: string
+          margin_of_safety?: number | null
+          selling_price_per_unit?: number
+          updated_at?: string
+          user_id?: string | null
+          variable_cost_per_unit?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "break_even_analysis_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_information: {
         Row: {
           address_line1: string | null
