@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -72,7 +72,15 @@ export const BusinessSettings = () => {
   }, [session?.user.id]);
 
   const handleSave = async () => {
-    if (!session?.user.id) return;
+    if (!session?.user.id) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "You must be logged in to save business information",
+      });
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -81,8 +89,7 @@ export const BusinessSettings = () => {
         .upsert({
           user_id: session.user.id,
           ...businessInfo,
-        }, {
-          onConflict: 'user_id'
+          updated_at: new Date().toISOString(),
         });
 
       if (error) throw error;
@@ -96,7 +103,7 @@ export const BusinessSettings = () => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to save business information",
+        description: error.message || "Failed to save business information",
       });
     } finally {
       setSaving(false);
