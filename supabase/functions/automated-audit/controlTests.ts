@@ -1,5 +1,5 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import { AuditData, ControlTest } from './types.ts';
-import { createClient } from '@supabase/supabase-js';
 
 export async function testInternalControls(audit: AuditData, supabase: ReturnType<typeof createClient>) {
   const controlTests: ControlTest[] = [
