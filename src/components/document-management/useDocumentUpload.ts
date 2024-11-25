@@ -73,7 +73,6 @@ export const useDocumentUpload = () => {
 
       setDocuments(prev => [newDoc, ...prev]);
       
-      // If the document appears to be a tax document, process it accordingly
       if (isTaxDocument(file.name)) {
         await processTaxDocument(docRecord.id);
       }
@@ -98,6 +97,64 @@ export const useDocumentUpload = () => {
     }
   };
 
+  const analyzeDocument = async (documentId: string) => {
+    try {
+      setProcessing(true);
+      await processDocument(documentId);
+      await fetchDocuments();
+      
+      toast({
+        title: "Analysis Complete",
+        description: "Document has been successfully analyzed.",
+      });
+    } catch (error) {
+      console.error("Analysis error:", error);
+      toast({
+        title: "Analysis Failed",
+        description: "Failed to analyze document. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleDeleteDocument = async (documentId: string) => {
+    try {
+      const documentToDelete = documents.find(doc => doc.id === documentId);
+      if (!documentToDelete) return;
+
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from("documents")
+        .remove([documentToDelete.storage_path]);
+
+      if (storageError) throw storageError;
+
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from('processed_documents')
+        .delete()
+        .eq('id', documentId);
+
+      if (dbError) throw dbError;
+
+      setDocuments(prev => prev.filter(doc => doc.id !== documentId));
+
+      toast({
+        title: "Document Deleted",
+        description: "Document has been successfully deleted.",
+      });
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete document. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const isTaxDocument = (fileName: string): boolean => {
     const taxDocPatterns = ['w2', '1099', 'tax', 'return', 'schedule'];
     const lowerFileName = fileName.toLowerCase();
@@ -110,5 +167,7 @@ export const useDocumentUpload = () => {
     documents,
     handleFileUpload,
     processDocument,
+    analyzeDocument,
+    handleDeleteDocument
   };
 };
