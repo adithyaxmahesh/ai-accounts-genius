@@ -25,9 +25,9 @@ import { FinancialPlanningCard } from "@/components/financial-planning/Financial
 import { FinancialHealthCard } from "@/components/financial-health/FinancialHealthCard";
 import { CollaboratorsList } from "@/components/collaborators/CollaboratorsList";
 import { AutomationRules } from "@/components/automation/AutomationRules";
-import { BusinessMetrics } from "@/components/dashboard/BusinessMetrics";
 import { ProfileWidget } from "@/components/ProfileWidget";
 import { NotificationsCard } from "@/components/notifications/NotificationsCard";
+import { FinancialInsights } from "@/components/financial-insights/FinancialInsights";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -239,15 +239,17 @@ const Index = () => {
       </div>
 
       {/* Additional Dashboard Features */}
-      <div className="grid gap-2 md:grid-cols-2">
-        <div className="space-y-2">
-          <FinancialPlanningCard />
-          <FinancialHealthCard />
-          <BusinessMetrics />
-        </div>
-        <div className="space-y-2">
-          <CollaboratorsList />
-          <AutomationRules />
+      <div className="grid gap-6">
+        <FinancialInsights />
+        <div className="grid gap-2 md:grid-cols-2">
+          <div className="space-y-2">
+            <FinancialPlanningCard />
+            <FinancialHealthCard />
+          </div>
+          <div className="space-y-2">
+            <CollaboratorsList />
+            <AutomationRules />
+          </div>
         </div>
       </div>
     </div>
