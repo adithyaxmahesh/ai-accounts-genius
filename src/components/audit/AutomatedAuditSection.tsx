@@ -69,6 +69,7 @@ export const AutomatedAuditSection = ({ auditId, onComplete }: AutomatedAuditSec
         <Button 
           onClick={startAutomatedAudit} 
           disabled={isRunning}
+          className="hover-scale"
         >
           {isRunning ? (
             <>
@@ -76,7 +77,10 @@ export const AutomatedAuditSection = ({ auditId, onComplete }: AutomatedAuditSec
               Running Analysis...
             </>
           ) : (
-            "Start Automated Audit"
+            <>
+              <Clock className="mr-2 h-4 w-4" />
+              Start Automated Audit
+            </>
           )}
         </Button>
       </div>
@@ -84,7 +88,7 @@ export const AutomatedAuditSection = ({ auditId, onComplete }: AutomatedAuditSec
       {isRunning && (
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Activity className="h-4 w-4 text-muted-foreground animate-spin" />
             <span>Analysis in progress...</span>
           </div>
           <Progress value={progress} className="h-2" />
