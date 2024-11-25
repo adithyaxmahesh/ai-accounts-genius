@@ -14,6 +14,7 @@ serve(async (req) => {
   try {
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY2');
     console.log('Starting OpenAI API test...');
+    console.log('API Key status:', openAIApiKey ? 'Present' : 'Missing');
     
     if (!openAIApiKey) {
       console.error('OpenAI API key is not set in environment variables');
@@ -28,7 +29,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4-1106-preview',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'user',
@@ -48,6 +49,7 @@ serve(async (req) => {
 
     const data = await response.json();
     console.log('OpenAI API test successful!');
+    console.log('Response:', data.choices[0].message.content);
     
     return new Response(JSON.stringify({ 
       success: true,
