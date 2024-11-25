@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
-import { Info } from "lucide-react";
+import { Info, AlertTriangle } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 import {
   Tooltip,
   TooltipContent,
@@ -15,6 +16,9 @@ import AuditTrailSection from "@/components/audit/AuditTrailSection";
 import AuditPlanningForm from "@/components/audit/AuditPlanningForm";
 import AuditControlEvaluation from "@/components/audit/AuditControlEvaluation";
 import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Brain } from "lucide-react";
 
 interface AuditDetailsProps {
   audit: any;
@@ -28,9 +32,39 @@ const AuditDetailsTab = ({
   getRiskLevelExplanation 
 }: AuditDetailsProps) => {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const handleAuditUpdate = () => {
     queryClient.invalidateQueries({ queryKey: ['audit', audit?.id] });
+  };
+
+  const runAIAnalysis = async () => {
+    try {
+      toast({
+        title: "Running AI Analysis",
+        description: "Analyzing audit data and risk factors...",
+      });
+
+      const { data, error } = await supabase.functions.invoke('analyze-audit-risk', {
+        body: { auditId: audit?.id }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Analysis Complete",
+        description: "AI risk assessment has been updated.",
+      });
+
+      handleAuditUpdate();
+    } catch (error) {
+      console.error('Error running AI analysis:', error);
+      toast({
+        title: "Error",
+        description: "Failed to complete AI analysis. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const renderExecutiveSummary = () => {
@@ -63,94 +97,75 @@ const AuditDetailsTab = ({
     );
   };
 
-  const renderControlEffectiveness = () => {
-    const controls = audit?.internal_control_assessment || {};
-    if (!Object.keys(controls).length) return null;
+  const renderAIAnalysis = () => {
+    if (!audit?.automated_analysis) return null;
 
     return (
       <div className="bg-muted/50 p-4 rounded-lg mb-6">
-        <h3 className="text-lg font-semibold mb-2">Control Effectiveness</h3>
-        <div className="space-y-4">
-          {Object.entries(controls).map(([control, effectiveness]: [string, any]) => (
-            <div key={control} className="flex justify-between items-center">
-              <span className="text-sm font-medium">{control.replace('_', ' ').toUpperCase()}</span>
-              <Badge variant={
-                effectiveness === 'effective' ? 'success' :
-                effectiveness === 'needs_improvement' ? 'warning' :
-                'destructive'
-              }>
-                {effectiveness.replace('_', ' ')}
-              </Badge>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  const renderFindings = () => {
-    if (!Array.isArray(audit?.findings) || audit.findings.length === 0) return null;
-
-    return (
-      <div className="space-y-4 mb-6">
-        <TooltipProvider>
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-lg font-semibold">
-              Key Findings ({audit.findings.length})
-            </h3>
-            <Tooltip>
-              <TooltipTrigger>
-                <Info className="h-4 w-4 text-muted-foreground" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Critical findings from the audit process</p>
-              </TooltipContent>
-            </Tooltip>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Brain className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-semibold">AI Risk Analysis</h3>
           </div>
-        </TooltipProvider>
-        <div className="space-y-4">
-          {audit.findings.map((finding: any, index: number) => (
-            <Card key={index} className="p-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h4 className="font-medium">{finding.title || `Finding ${index + 1}`}</h4>
-                  <p className="text-sm text-muted-foreground mt-1">{finding.description}</p>
-                </div>
-                <Badge variant={
-                  finding.severity === 'critical' ? 'destructive' :
-                  finding.severity === 'major' ? 'warning' :
-                  'default'
-                }>
-                  {finding.severity}
-                </Badge>
-              </div>
-              {finding.impact && (
-                <p className="text-sm mt-2">
-                  <span className="font-medium">Impact: </span>
-                  {finding.impact}
-                </p>
-              )}
-            </Card>
-          ))}
+          <Button onClick={runAIAnalysis} variant="outline" size="sm">
+            Refresh Analysis
+          </Button>
         </div>
-      </div>
-    );
-  };
 
-  const renderRecommendations = () => {
-    if (!Array.isArray(audit?.recommendations) || audit.recommendations.length === 0) return null;
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Risk Score:</span>
+            <Badge variant={
+              audit.automated_analysis.risk_score >= 0.7 ? "destructive" :
+              audit.automated_analysis.risk_score >= 0.4 ? "warning" :
+              "success"
+            }>
+              {(audit.automated_analysis.risk_score * 100).toFixed(0)}%
+            </Badge>
+          </div>
 
-    return (
-      <div className="bg-muted/50 p-4 rounded-lg mb-6">
-        <h3 className="text-lg font-semibold mb-2">Recommendations</h3>
-        <ul className="space-y-2">
-          {audit.recommendations.map((rec: any, index: number) => (
-            <li key={index} className="flex items-start gap-2">
-              <span className="text-primary">•</span>
-              <span className="text-muted-foreground">{rec}</span>
-            </li>
-          ))}
-        </ul>
+          {audit.automated_analysis.findings?.length > 0 && (
+            <div>
+              <h4 className="text-sm font-medium mb-2">Key Findings:</h4>
+              <ul className="space-y-2">
+                {audit.automated_analysis.findings.map((finding: string, index: number) => (
+                  <li key={index} className="flex items-start gap-2 text-sm">
+                    <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5" />
+                    <span>{finding}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {audit.automated_analysis.recommendations?.length > 0 && (
+            <div>
+              <h4 className="text-sm font-medium mb-2">AI Recommendations:</h4>
+              <ul className="space-y-2">
+                {audit.automated_analysis.recommendations.map((rec: string, index: number) => (
+                  <li key={index} className="text-sm flex items-start gap-2">
+                    <span className="text-primary">•</span>
+                    <span>{rec}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {audit.automated_analysis.control_evaluation && (
+            <div>
+              <h4 className="text-sm font-medium mb-2">Control Evaluation:</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {Object.entries(audit.automated_analysis.control_evaluation).map(([control, status]) => (
+                  <div key={control} className="p-3 bg-background rounded-lg">
+                    <p className="text-xs text-muted-foreground">{control}</p>
+                    <p className="text-sm font-medium">{status}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -173,6 +188,7 @@ const AuditDetailsTab = ({
 
         {renderExecutiveSummary()}
         {renderScopeAndObjective()}
+        {renderAIAnalysis()}
         
         <RiskAssessmentMatrix auditId={audit?.id} />
         

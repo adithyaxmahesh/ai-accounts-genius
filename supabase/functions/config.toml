@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.test-openai]
 verify_jwt = false
+
+[functions.analyze-audit-risk]
+verify_jwt = true
