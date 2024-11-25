@@ -113,7 +113,7 @@ export const FinancialMetrics = () => {
 
       <Card 
         className="relative overflow-hidden bg-[#1A1F2C]/80 backdrop-blur-lg border border-white/10 p-6 hover:scale-105 transition-transform duration-200 cursor-pointer group"
-        onClick={() => navigate('/tax')}
+        onClick={() => navigate('/expenses')}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent" />
         <div className="relative z-10">
