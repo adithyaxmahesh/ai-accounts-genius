@@ -14,6 +14,7 @@ serve(async (req) => {
 
   try {
     const { message, userId } = await req.json();
+    console.log('Processing tax chat request for user:', userId);
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -33,11 +34,16 @@ serve(async (req) => {
       console.error('Error fetching tax context:', contextError);
     }
 
-    // Process with OpenAI using a faster model
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY2');
+    if (!openAIApiKey) {
+      throw new Error('OpenAI API key not configured');
+    }
+
+    console.log('Making request to OpenAI API...');
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY2')}`,
+        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -59,10 +65,12 @@ serve(async (req) => {
 
     if (!openAIResponse.ok) {
       const errorData = await openAIResponse.json();
+      console.error('OpenAI API error:', errorData);
       throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
     }
 
     const aiData = await openAIResponse.json();
+    console.log('Successfully received OpenAI response');
     const answer = aiData.choices[0].message.content;
 
     // Save the conversation

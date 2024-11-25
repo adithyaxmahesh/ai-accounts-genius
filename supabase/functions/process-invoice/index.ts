@@ -17,6 +17,7 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Starting invoice processing...');
     const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
     const { invoiceId } = await req.json();
 
@@ -38,6 +39,7 @@ serve(async (req) => {
 
     // Convert file to text
     const text = await fileData.text();
+    console.log('Successfully retrieved invoice text');
 
     // Process with OpenAI
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -61,7 +63,14 @@ serve(async (req) => {
       }),
     });
 
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('OpenAI API error:', error);
+      throw new Error(`OpenAI API error: ${error.error?.message || 'Unknown error'}`);
+    }
+
     const aiResponse = await response.json();
+    console.log('Successfully received OpenAI analysis');
     const analysis = JSON.parse(aiResponse.choices[0].message.content);
 
     // Update invoice with extracted data
