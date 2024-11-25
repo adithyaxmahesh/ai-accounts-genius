@@ -177,7 +177,7 @@ const Index = () => {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Manage assurance engagements and access learning materials for CPA certification.
+                Manage and track assurance engagements and quality control procedures.
               </p>
             </CardContent>
           </Card>
