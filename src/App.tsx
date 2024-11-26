@@ -10,12 +10,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <div className="dark">
-          <AuthProvider>
+        <AuthProvider>
+          <div className="dark">
             <AppRoutes />
             <Toaster />
-          </AuthProvider>
-        </div>
+          </div>
+        </AuthProvider>
       </Router>
     </QueryClientProvider>
   );
