@@ -240,7 +240,6 @@ const Index = () => {
 
       {/* Additional Dashboard Features */}
       <div className="grid gap-6">
-        <FinancialInsights />
         <div className="grid gap-2 md:grid-cols-2">
           <div className="space-y-2">
             <FinancialPlanningCard />
@@ -251,6 +250,9 @@ const Index = () => {
             <AutomationRules />
           </div>
         </div>
+        
+        {/* Financial Insights moved to bottom */}
+        <FinancialInsights />
       </div>
     </div>
   );
