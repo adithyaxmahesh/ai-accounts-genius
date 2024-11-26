@@ -14,6 +14,8 @@ export interface ProcessedDocument {
       category?: string;
       taxCodeId?: string;
       status?: string;
+      payee?: string;
+      purpose?: string;
     }>;
   };
 }
@@ -24,6 +26,8 @@ export interface WriteOff {
   description: string;
   date: string;
   status?: string;
+  payee?: string;
+  purpose?: string;
   tax_codes?: {
     code: string;
     description: string;

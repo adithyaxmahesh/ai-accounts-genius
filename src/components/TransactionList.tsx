@@ -8,7 +8,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { cn } from "@/lib/utils";
 import { WriteOff } from "@/components/types";
 import { useToast } from "@/components/ui/use-toast";
-import { DollarSign } from "lucide-react";
+import { DollarSign, Building, Calendar, Tag } from "lucide-react";
 
 export const TransactionList = () => {
   const { session } = useAuth();
@@ -64,19 +64,17 @@ export const TransactionList = () => {
   const parseDescription = (description: string) => {
     const parts = description.split(',');
     return {
-      name: parts[0],
+      payee: parts[0],
+      purpose: parts[1] || 'Not specified',
       charges: parts.slice(2).map(Number).filter(n => !isNaN(n))
     };
   };
 
   const calculateTotalAmount = (writeOff: WriteOff) => {
-    // If there are charges in the description, use those
     const { charges } = parseDescription(writeOff.description);
     if (charges.length > 0) {
       return charges.reduce((sum, n) => sum + n, 0);
     }
-    
-    // Otherwise use the write-off amount
     return Number(writeOff.amount) || 0;
   };
 
@@ -124,35 +122,50 @@ export const TransactionList = () => {
                 No write-offs found
               </div>
             ) : (
-              displayWriteOffs.map((writeOff) => (
-                <div key={writeOff.id} className="flex justify-between items-center p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
-                  <div>
-                    <p className="font-semibold">{parseDescription(writeOff.description).name}</p>
+              displayWriteOffs.map((writeOff) => {
+                const { payee, purpose } = parseDescription(writeOff.description);
+                return (
+                  <div key={writeOff.id} className="flex flex-col p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Building className="h-4 w-4 text-muted-foreground" />
+                          <p className="font-semibold">{payee}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Tag className="h-4 w-4 text-muted-foreground" />
+                          <p className="text-sm text-muted-foreground">{purpose}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">{formatCurrency(calculateTotalAmount(writeOff))}</p>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Calendar className="h-3 w-3" />
+                          <p>{new Date(writeOff.date).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                    </div>
                     {writeOff.tax_codes && (
-                      <>
+                      <div className="mt-2 pt-2 border-t border-border">
                         <p className="text-sm text-muted-foreground">
                           {writeOff.tax_codes.state} - {writeOff.tax_codes.expense_category}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           {writeOff.tax_codes.code} - {writeOff.tax_codes.description}
                         </p>
-                      </>
+                      </div>
                     )}
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {getChargesBreakdown(writeOff.description)}
+                    {getChargesBreakdown(writeOff.description) && (
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Breakdown: {getChargesBreakdown(writeOff.description)}
+                      </p>
+                    )}
+                    <p className="text-sm text-muted-foreground mt-2 capitalize">
+                      Status: {writeOff.status || "Pending"}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold">{formatCurrency(calculateTotalAmount(writeOff))}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(writeOff.date).toLocaleDateString()}
-                    </p>
-                    <p className="text-sm text-muted-foreground capitalize">
-                      {writeOff.status || "Pending"}
-                    </p>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </ScrollArea>
