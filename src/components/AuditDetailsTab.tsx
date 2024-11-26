@@ -43,6 +43,11 @@ const AuditDetailsTab = ({
           description={audit?.description}
           audit_objective={audit?.audit_objective}
           stakeholders={audit?.stakeholders}
+          start_date={audit?.start_date}
+          end_date={audit?.end_date}
+          risk_level={audit?.risk_level}
+          scope={audit?.scope}
+          key_findings={audit?.findings}
         />
 
         <AuditAIAnalysis 
