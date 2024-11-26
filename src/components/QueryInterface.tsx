@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Brain, Calculator } from "lucide-react";
+import { Brain, Calculator, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
@@ -27,16 +27,18 @@ export const QueryInterface = () => {
   const { data: taxAnalysis } = useQuery({
     queryKey: ['tax-analysis', session?.user.id],
     queryFn: async () => {
+      if (!session?.user.id) return null;
       const { data, error } = await supabase
         .from('tax_analysis')
         .select('*')
-        .eq('user_id', session?.user.id)
+        .eq('user_id', session.user.id)
         .order('created_at', { ascending: false })
         .limit(1);
       
       if (error) throw error;
       return data?.[0];
-    }
+    },
+    enabled: !!session?.user.id
   });
 
   const handleQuery = async (inputQuery: string = query) => {
@@ -58,11 +60,11 @@ export const QueryInterface = () => {
       return;
     }
 
+    setLoading(true);
     const userMessage = { type: 'user' as const, content: inputQuery };
     setChatHistory(prev => [...prev, userMessage]);
     setQuery("");
     
-    setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('tax-chat', {
         body: { 
@@ -84,20 +86,16 @@ export const QueryInterface = () => {
       };
       setChatHistory(prev => [...prev, assistantMessage]);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error processing query:", error);
       toast({
         title: "Query Failed",
-        description: "There was an error processing your query. Please try again.",
+        description: error.message || "There was an error processing your query. Please try again.",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSuggestionClick = (suggestion: string) => {
-    handleQuery(suggestion);
   };
 
   return (
@@ -122,9 +120,15 @@ export const QueryInterface = () => {
               {chatHistory.map((message, index) => (
                 <ChatMessage key={index} {...message} />
               ))}
+              {loading && (
+                <div className="flex items-center gap-2 text-muted-foreground p-3">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Processing your request...
+                </div>
+              )}
             </div>
           ) : (
-            <ChatSuggestions onSuggestionClick={handleSuggestionClick} />
+            <ChatSuggestions onSuggestionClick={handleQuery} />
           )}
         </ScrollArea>
 

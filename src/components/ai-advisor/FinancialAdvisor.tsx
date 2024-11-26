@@ -65,11 +65,11 @@ export const FinancialAdvisor = () => {
         { type: 'ai', content: data.answer }
       ]);
       setQuery("");
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error:', error);
       toast({
         title: "Error",
-        description: "Failed to process your request. Please try again.",
+        description: error.message || "Failed to process your request. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -89,7 +89,9 @@ export const FinancialAdvisor = () => {
           <Button
             key={id}
             variant={selectedCategory === id ? "default" : "outline"}
-            className="flex items-center gap-2"
+            className={`flex items-center gap-2 transition-all ${
+              selectedCategory === id ? 'ring-2 ring-primary' : ''
+            }`}
             onClick={() => setSelectedCategory(id)}
             disabled={loading}
           >
@@ -130,6 +132,12 @@ export const FinancialAdvisor = () => {
                 </div>
               </div>
             ))}
+            {loading && (
+              <div className="flex items-center gap-2 text-muted-foreground p-3">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Processing your request...
+              </div>
+            )}
           </div>
         )}
       </ScrollArea>
