@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Brain, AlertTriangle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 
 interface AuditAIAnalysisProps {
   audit: any;
@@ -11,9 +12,11 @@ interface AuditAIAnalysisProps {
 
 const AuditAIAnalysis = ({ audit, onUpdate }: AuditAIAnalysisProps) => {
   const { toast } = useToast();
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const runAIAnalysis = async () => {
     try {
+      setIsAnalyzing(true);
       toast({
         title: "Running AI Analysis",
         description: "Analyzing audit data and risk factors...",
@@ -38,6 +41,8 @@ const AuditAIAnalysis = ({ audit, onUpdate }: AuditAIAnalysisProps) => {
         description: "Failed to complete AI analysis. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
@@ -50,8 +55,13 @@ const AuditAIAnalysis = ({ audit, onUpdate }: AuditAIAnalysisProps) => {
           <Brain className="h-5 w-5 text-primary" />
           <h3 className="text-lg font-semibold">AI Risk Analysis</h3>
         </div>
-        <Button onClick={runAIAnalysis} variant="outline" size="sm">
-          Refresh Analysis
+        <Button 
+          onClick={runAIAnalysis} 
+          variant="outline" 
+          size="sm"
+          disabled={isAnalyzing}
+        >
+          {isAnalyzing ? "Analyzing..." : "Refresh Analysis"}
         </Button>
       </div>
 

@@ -114,7 +114,6 @@ serve(async (req) => {
   }
 });
 
-// Helper functions
 function calculateRiskScore(analysis: string): number {
   const riskIndicators = analysis.toLowerCase().match(/risk|high|critical|severe|urgent/g)?.length || 0;
   return Math.min(Math.max(riskIndicators * 0.1, 0), 1);
