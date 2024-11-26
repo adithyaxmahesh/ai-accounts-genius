@@ -28,7 +28,6 @@ import { AutomationRules } from "@/components/automation/AutomationRules";
 import { ProfileWidget } from "@/components/ProfileWidget";
 import { NotificationsCard } from "@/components/notifications/NotificationsCard";
 import { FinancialInsights } from "@/components/financial-insights/FinancialInsights";
-import { FinancialAdvisor } from "@/components/financial-advisor/FinancialAdvisor";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -252,11 +251,6 @@ const Index = () => {
             <AutomationRules />
           </div>
         </div>
-      </div>
-
-      {/* Add the FinancialAdvisor at the bottom */}
-      <div className="mt-6">
-        <FinancialAdvisor />
       </div>
     </div>
   );

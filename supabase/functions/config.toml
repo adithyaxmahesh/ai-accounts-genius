@@ -1,4 +1,10 @@
 project_id = "nmrjqfntvxflkabdigfl"
 
-[functions.financial-ai]
+[functions.process-invoice]
+verify_jwt = true
+
+[functions.test-openai]
+verify_jwt = false
+
+[functions.analyze-audit-risk]
 verify_jwt = true
