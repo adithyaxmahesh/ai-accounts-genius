@@ -182,6 +182,138 @@ export type Database = {
           },
         ]
       }
+      ai_budget_recommendations: {
+        Row: {
+          category: string
+          confidence_score: number | null
+          created_at: string | null
+          current_spending: number | null
+          id: string
+          metadata: Json | null
+          reasoning: string | null
+          recommended_spending: number | null
+          savings_potential: number | null
+          user_id: string | null
+        }
+        Insert: {
+          category: string
+          confidence_score?: number | null
+          created_at?: string | null
+          current_spending?: number | null
+          id?: string
+          metadata?: Json | null
+          reasoning?: string | null
+          recommended_spending?: number | null
+          savings_potential?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          confidence_score?: number | null
+          created_at?: string | null
+          current_spending?: number | null
+          id?: string
+          metadata?: Json | null
+          reasoning?: string | null
+          recommended_spending?: number | null
+          savings_potential?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_budget_recommendations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_chat_history: {
+        Row: {
+          category: string | null
+          context: Json | null
+          created_at: string | null
+          feedback: Json | null
+          id: string
+          query: string
+          response: string
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          context?: Json | null
+          created_at?: string | null
+          feedback?: Json | null
+          id?: string
+          query: string
+          response: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          context?: Json | null
+          created_at?: string | null
+          feedback?: Json | null
+          id?: string
+          query?: string
+          response?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_chat_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_financial_advice: {
+        Row: {
+          advice: string
+          category: string
+          confidence_score: number | null
+          created_at: string | null
+          data_points: Json | null
+          id: string
+          metadata: Json | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          advice: string
+          category: string
+          confidence_score?: number | null
+          created_at?: string | null
+          data_points?: Json | null
+          id?: string
+          metadata?: Json | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          advice?: string
+          category?: string
+          confidence_score?: number | null
+          created_at?: string | null
+          data_points?: Json | null
+          id?: string
+          metadata?: Json | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_financial_advice_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_insights: {
         Row: {
           category: string
