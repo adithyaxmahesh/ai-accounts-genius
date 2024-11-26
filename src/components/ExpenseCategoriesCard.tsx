@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExpenseTrends } from "./expenses/ExpenseTrends";
 import { ExpenseAnalysis } from "./expenses/ExpenseAnalysis";
 import { ExpenseRecommendations } from "./expenses/ExpenseRecommendations";
+import { WriteOff } from "@/components/types";
 
 const COLORS = {
   'Operational': '#0088FE',
@@ -46,6 +47,12 @@ const renderActiveShape = (props: any) => {
   );
 };
 
+interface ExpenseCategory {
+  name: string;
+  value: number;
+  color: string;
+}
+
 export const ExpenseCategoriesCard = () => {
   const { session } = useAuth();
   const [activeIndex, setActiveIndex] = useState<number | undefined>();
@@ -70,7 +77,7 @@ export const ExpenseCategoriesCard = () => {
 
       if (error) throw error;
 
-      const categories = (writeOffs || []).reduce((acc, writeOff) => {
+      const categories: Record<string, number> = (writeOffs || []).reduce((acc, writeOff) => {
         const baseCategory = writeOff.tax_codes?.expense_category || 'Miscellaneous';
         const category = Object.keys(COLORS).find(c => 
           baseCategory.toLowerCase().includes(c.toLowerCase())
