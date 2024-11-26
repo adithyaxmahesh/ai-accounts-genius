@@ -7,7 +7,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY2');
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -18,13 +18,7 @@ serve(async (req) => {
 
   try {
     const { engagementId, procedureId, evidenceData, documentText } = await req.json();
-    console.log('Processing assurance analysis for engagement:', engagementId);
-    
     const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
-
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
-    }
 
     // Analyze with GPT-4
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -34,7 +28,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         messages: [
           {
             role: 'system',
@@ -47,12 +41,6 @@ serve(async (req) => {
         ],
       }),
     });
-
-    if (!response.ok) {
-      const error = await response.json();
-      console.error('OpenAI API error:', error);
-      throw new Error(`OpenAI API error: ${error.error?.message || 'Unknown error'}`);
-    }
 
     const aiResponse = await response.json();
     const analysis = aiResponse.choices[0].message.content;
@@ -96,35 +84,43 @@ serve(async (req) => {
   }
 });
 
+// Helper functions
 function calculateRiskScore(analysis: string): number {
+  // Implement risk scoring logic based on AI analysis
   const riskIndicators = analysis.toLowerCase().match(/risk|concern|issue|problem/g)?.length || 0;
   return Math.min(Math.max(riskIndicators * 0.2, 0), 1);
 }
 
 function calculateConfidenceScore(analysis: string): number {
+  // Implement confidence scoring logic
   const confidenceIndicators = analysis.toLowerCase().match(/confident|certain|clear|evident/g)?.length || 0;
   return Math.min(Math.max(confidenceIndicators * 0.25, 0), 1);
 }
 
 function extractFindings(analysis: string): any[] {
-  return analysis.split('\n')
+  // Extract key findings from AI analysis
+  const findings = analysis.split('\n')
     .filter(line => line.toLowerCase().includes('finding:'))
     .map(finding => ({
       description: finding.replace(/^finding:/i, '').trim(),
       severity: determineSeverity(finding),
     }));
+  return findings;
 }
 
 function extractRecommendations(analysis: string): any[] {
-  return analysis.split('\n')
+  // Extract recommendations from AI analysis
+  const recommendations = analysis.split('\n')
     .filter(line => line.toLowerCase().includes('recommend:'))
     .map(rec => ({
       description: rec.replace(/^recommend:/i, '').trim(),
       priority: determinePriority(rec),
     }));
+  return recommendations;
 }
 
 function validateEvidence(analysis: string, evidenceData: any): any {
+  // Validate evidence based on AI analysis
   return {
     isValid: !analysis.toLowerCase().includes('insufficient evidence'),
     completeness: calculateCompleteness(evidenceData),
@@ -134,6 +130,7 @@ function validateEvidence(analysis: string, evidenceData: any): any {
 }
 
 function performNLPAnalysis(analysis: string, documentText: string): any {
+  // Perform NLP analysis on documents
   return {
     keyPhrases: extractKeyPhrases(documentText),
     sentiment: analyzeSentiment(documentText),
@@ -156,29 +153,34 @@ function determinePriority(recommendation: string): string {
 }
 
 function calculateCompleteness(evidenceData: any): number {
+  // Calculate evidence completeness score
   const requiredFields = ['description', 'source', 'date'];
   const availableFields = requiredFields.filter(field => evidenceData[field]);
   return availableFields.length / requiredFields.length;
 }
 
 function calculateReliability(analysis: string): number {
+  // Calculate evidence reliability score
   const reliabilityIndicators = analysis.toLowerCase().match(/reliable|accurate|verified|valid/g)?.length || 0;
   return Math.min(Math.max(reliabilityIndicators * 0.2, 0), 1);
 }
 
 function extractValidationNotes(analysis: string): string[] {
+  // Extract validation notes from analysis
   return analysis.split('\n')
     .filter(line => line.toLowerCase().includes('validation:'))
     .map(note => note.replace(/^validation:/i, '').trim());
 }
 
 function extractKeyPhrases(text: string): string[] {
+  // Extract key phrases using basic NLP
   return text.split(/[.!?]/)
     .filter(sentence => sentence.length > 10)
     .map(sentence => sentence.trim());
 }
 
 function analyzeSentiment(text: string): string {
+  // Basic sentiment analysis
   const positiveWords = text.toLowerCase().match(/good|excellent|positive|successful/g)?.length || 0;
   const negativeWords = text.toLowerCase().match(/bad|poor|negative|failed/g)?.length || 0;
   if (positiveWords > negativeWords) return 'positive';
@@ -187,6 +189,7 @@ function analyzeSentiment(text: string): string {
 }
 
 function extractEntities(text: string): string[] {
+  // Basic entity extraction
   const entities = text.match(/[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*/g) || [];
   return [...new Set(entities)];
 }
