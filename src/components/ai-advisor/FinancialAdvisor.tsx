@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/components/ui/use-toast";
-import { Brain, Calculator, ChartBar, Coins, Receipt, Shield } from "lucide-react";
+import { Brain, Calculator, ChartBar, Coins, Receipt, Shield, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 
@@ -34,6 +34,15 @@ export const FinancialAdvisor = () => {
       return;
     }
 
+    if (!session?.user?.id) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to use the financial advisor",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('financial-ai', {
@@ -45,6 +54,10 @@ export const FinancialAdvisor = () => {
       });
 
       if (error) throw error;
+
+      if (!data?.answer) {
+        throw new Error('No response received from the AI');
+      }
 
       setConversation(prev => [
         ...prev,
@@ -78,6 +91,7 @@ export const FinancialAdvisor = () => {
             variant={selectedCategory === id ? "default" : "outline"}
             className="flex items-center gap-2"
             onClick={() => setSelectedCategory(id)}
+            disabled={loading}
           >
             <Icon className="h-4 w-4" />
             {label}
@@ -125,10 +139,18 @@ export const FinancialAdvisor = () => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Ask about your finances..."
-          onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
+          onKeyPress={(e) => e.key === 'Enter' && !loading && handleSubmit()}
+          disabled={loading}
         />
         <Button onClick={handleSubmit} disabled={loading}>
-          {loading ? "Processing..." : "Ask"}
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Processing...
+            </>
+          ) : (
+            "Ask"
+          )}
         </Button>
       </div>
     </Card>

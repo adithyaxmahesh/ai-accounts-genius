@@ -24,32 +24,6 @@ export const QueryInterface = () => {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const { data: writeOffs } = useQuery({
-    queryKey: ['write-offs', session?.user.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('write_offs')
-        .select('*, tax_codes(*)')
-        .eq('user_id', session?.user.id);
-      
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  const { data: revenueRecords } = useQuery({
-    queryKey: ['revenue-records', session?.user.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('revenue_records')
-        .select('*')
-        .eq('user_id', session?.user.id);
-      
-      if (error) throw error;
-      return data;
-    }
-  });
-
   const { data: taxAnalysis } = useQuery({
     queryKey: ['tax-analysis', session?.user.id],
     queryFn: async () => {
@@ -65,8 +39,8 @@ export const QueryInterface = () => {
     }
   });
 
-  const handleQuery = async () => {
-    if (!query.trim()) {
+  const handleQuery = async (inputQuery: string = query) => {
+    if (!inputQuery.trim()) {
       toast({
         title: "Empty Query",
         description: "Please enter a question or request",
@@ -84,14 +58,15 @@ export const QueryInterface = () => {
       return;
     }
 
-    const userMessage = { type: 'user' as const, content: query };
+    const userMessage = { type: 'user' as const, content: inputQuery };
     setChatHistory(prev => [...prev, userMessage]);
+    setQuery("");
     
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('tax-chat', {
         body: { 
-          message: query,
+          message: inputQuery,
           userId: session?.user.id,
         }
       });
@@ -118,8 +93,11 @@ export const QueryInterface = () => {
       });
     } finally {
       setLoading(false);
-      setQuery("");
     }
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    handleQuery(suggestion);
   };
 
   return (
@@ -146,7 +124,7 @@ export const QueryInterface = () => {
               ))}
             </div>
           ) : (
-            <ChatSuggestions />
+            <ChatSuggestions onSuggestionClick={handleSuggestionClick} />
           )}
         </ScrollArea>
 
@@ -154,7 +132,7 @@ export const QueryInterface = () => {
           query={query}
           loading={loading}
           onQueryChange={setQuery}
-          onSubmit={handleQuery}
+          onSubmit={() => handleQuery()}
         />
       </div>
     </Card>
