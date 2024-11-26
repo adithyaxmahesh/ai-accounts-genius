@@ -12,12 +12,11 @@ import {
   Receipt,
   CreditCard,
   Wallet,
-  Menu,
   ChevronLeft,
   ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface NavItemProps {
   to: string;
@@ -41,8 +40,16 @@ const NavItem = ({ to, icon, label, isCollapsed }: NavItemProps) => (
   </Link>
 );
 
-export const Sidebar = () => {
+interface SidebarProps {
+  onCollapse: (collapsed: boolean) => void;
+}
+
+export const Sidebar = ({ onCollapse }: SidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  useEffect(() => {
+    onCollapse(isCollapsed);
+  }, [isCollapsed, onCollapse]);
 
   return (
     <div
