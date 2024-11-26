@@ -1,50 +1,15 @@
-import { Button } from "@/components/ui/button";
-import { Brain, Calculator, Receipt } from "lucide-react";
-
-interface ChatSuggestionsProps {
-  onSuggestionClick?: (suggestion: string) => void;
-}
-
-export const ChatSuggestions = ({ onSuggestionClick }: ChatSuggestionsProps) => {
-  const suggestions = [
-    {
-      icon: Calculator,
-      text: "How can I optimize my monthly budget?",
-      category: "budgeting"
-    },
-    {
-      icon: Receipt,
-      text: "What tax deductions am I eligible for?",
-      category: "tax"
-    },
-    {
-      icon: Brain,
-      text: "Analyze my investment portfolio risk",
-      category: "investment"
-    }
-  ];
-
+export const ChatSuggestions = () => {
   return (
-    <div className="p-4 space-y-4">
-      <p className="text-muted-foreground text-center">
-        Get started with some suggestions:
-      </p>
-      <div className="grid gap-2">
-        {suggestions.map((suggestion, index) => {
-          const Icon = suggestion.icon;
-          return (
-            <Button
-              key={index}
-              variant="outline"
-              className="flex items-center gap-2 w-full justify-start"
-              onClick={() => onSuggestionClick?.(suggestion.text)}
-            >
-              <Icon className="h-4 w-4" />
-              <span className="text-sm">{suggestion.text}</span>
-            </Button>
-          );
-        })}
-      </div>
+    <div className="text-sm text-muted-foreground p-4">
+      <p>You can ask questions like:</p>
+      <ul className="list-disc list-inside mt-2 space-y-1">
+        <li>"What was my largest expense last month?"</li>
+        <li>"How can I optimize my tax deductions?"</li>
+        <li>"What vehicle expenses can I write off?"</li>
+        <li>"Show me my tax savings opportunities"</li>
+        <li>"Calculate my estimated quarterly taxes"</li>
+        <li>"Analyze my business expense patterns"</li>
+      </ul>
     </div>
   );
 };
