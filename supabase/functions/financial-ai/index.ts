@@ -45,14 +45,14 @@ serve(async (req) => {
     }
 
     console.log('Sending request to OpenAI...');
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: [
           {
             role: 'system',
@@ -71,17 +71,20 @@ serve(async (req) => {
             Question: ${message}`
           }
         ],
+        temperature: 0.7,
+        max_tokens: 500,
       }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.text();
+    if (!openAIResponse.ok) {
+      const errorData = await openAIResponse.text();
       console.error('OpenAI API error:', errorData);
-      throw new Error(`OpenAI API error: ${response.status}`);
+      throw new Error(`OpenAI API error: ${openAIResponse.status}`);
     }
 
-    const aiResponse = await response.json();
-    const advice = aiResponse.choices[0].message.content;
+    const aiData = await openAIResponse.json();
+    console.log('Successfully received OpenAI response');
+    const advice = aiData.choices[0].message.content;
 
     // Determine category based on content
     const category = advice.includes('TAX') ? 'Tax' :
@@ -115,11 +118,16 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('Error in financial-ai function:', error);
+    let errorMessage = 'Failed to process your question.';
+    
+    if (error.message?.includes('Rate limit')) {
+      errorMessage = 'You have reached the rate limit for chat requests. Please try again later.';
+    } else if (error.message?.includes('insufficient_quota')) {
+      errorMessage = 'The monthly API quota has been reached. Please try again next month.';
+    }
+
     return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'An unexpected error occurred',
-        details: error instanceof Error ? error.stack : undefined
-      }),
+      JSON.stringify({ error: errorMessage }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
         status: 500 
