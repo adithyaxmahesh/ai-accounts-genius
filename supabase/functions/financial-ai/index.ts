@@ -14,24 +14,37 @@ serve(async (req) => {
 
   try {
     const { message, userId } = await req.json();
+    
+    if (!message || !userId) {
+      throw new Error('Message and userId are required');
+    }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase environment variables');
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get financial context
-    const { data: financialContext } = await supabase
+    const { data: financialContext, error: contextError } = await supabase
       .from('financial_health_metrics')
       .select('*')
       .eq('user_id', userId)
       .single();
+
+    if (contextError) {
+      console.error('Error fetching financial context:', contextError);
+    }
 
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY2');
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
 
+    console.log('Sending request to OpenAI...');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -53,13 +66,19 @@ serve(async (req) => {
           },
           {
             role: 'user',
-            content: `Context: ${JSON.stringify(financialContext)}
+            content: `Context: ${JSON.stringify(financialContext || {})}
             
             Question: ${message}`
           }
         ],
       }),
     });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('OpenAI API error:', errorData);
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
 
     const aiResponse = await response.json();
     const advice = aiResponse.choices[0].message.content;
@@ -71,7 +90,7 @@ serve(async (req) => {
                     'Planning';
 
     // Store the interaction
-    await supabase
+    const { error: insertError } = await supabase
       .from('ai_financial_advice')
       .insert({
         user_id: userId,
@@ -81,15 +100,30 @@ serve(async (req) => {
         data_points: financialContext
       });
 
+    if (insertError) {
+      console.error('Error storing advice:', insertError);
+    }
+
     return new Response(
       JSON.stringify({ advice, category }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
     );
   } catch (error) {
     console.error('Error in financial-ai function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'An unexpected error occurred',
+        details: error instanceof Error ? error.stack : undefined
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+        status: 500 
+      }
     );
   }
 });
