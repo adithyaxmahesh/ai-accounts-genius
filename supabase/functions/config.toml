@@ -1,13 +1,4 @@
 project_id = "nmrjqfntvxflkabdigfl"
 
-[functions.analyze-document]
-verify_jwt = true
-
-[functions.generate-insights]
-verify_jwt = true
-
-[functions.update-financial-health]
-verify_jwt = true
-
 [functions.financial-ai]
 verify_jwt = true
