@@ -6,17 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { ArrowUpDown, DollarSign, TrendingDown, TrendingUp } from "lucide-react";
-
-interface WriteOff {
-  amount: number;
-  description: string;
-  date: string;
-  tax_codes: {
-    expense_category: string;
-  } | null;
-}
+import { ExpenseTrends } from "./expenses/ExpenseTrends";
+import { ExpenseAnalysis } from "./expenses/ExpenseAnalysis";
+import { ExpenseRecommendations } from "./expenses/ExpenseRecommendations";
 
 const COLORS = {
   'Operational': '#0088FE',
@@ -105,9 +97,6 @@ export const ExpenseCategoriesCard = () => {
   });
 
   const totalExpenses = expenses?.reduce((sum, exp) => sum + exp.value, 0) || 0;
-  const avgExpensePerCategory = totalExpenses / (expenses?.length || 1);
-  const highestExpense = Math.max(...(expenses?.map(e => e.value) || [0]));
-  const lowestExpense = Math.min(...(expenses?.map(e => e.value) || [0]));
 
   if (!expenses?.length) {
     return (
@@ -125,11 +114,12 @@ export const ExpenseCategoriesCard = () => {
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="metrics">Metrics</TabsTrigger>
+          <TabsTrigger value="analysis">Analysis</TabsTrigger>
+          <TabsTrigger value="trends">Trends</TabsTrigger>
+          <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-4">
+        <TabsContent value="overview">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -159,75 +149,7 @@ export const ExpenseCategoriesCard = () => {
               </ResponsiveContainer>
             </div>
 
-            <div className="bg-muted/50 p-4 rounded-lg space-y-4">
-              <h4 className="font-semibold">Quick Stats</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-2">
-                  <DollarSign className="h-4 w-4 text-primary" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total</p>
-                    <p className="font-semibold">${totalExpenses.toLocaleString()}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-green-500" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Highest</p>
-                    <p className="font-semibold">${highestExpense.toLocaleString()}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <TrendingDown className="h-4 w-4 text-red-500" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Lowest</p>
-                    <p className="font-semibold">${lowestExpense.toLocaleString()}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <ArrowUpDown className="h-4 w-4 text-primary" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Average</p>
-                    <p className="font-semibold">${avgExpensePerCategory.toLocaleString()}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="details">
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h4 className="font-semibold">Detailed Breakdown</h4>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    if (sortBy === 'amount') {
-                      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
-                    }
-                    setSortBy('amount');
-                  }}
-                >
-                  Sort by Amount
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    if (sortBy === 'category') {
-                      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
-                    }
-                    setSortBy('category');
-                  }}
-                >
-                  Sort by Category
-                </Button>
-              </div>
-            </div>
-            
-            <ScrollArea className="h-[400px]">
+            <ScrollArea className="h-[300px]">
               <div className="space-y-2">
                 {sortedExpenses?.map((category) => (
                   <div 
@@ -251,42 +173,22 @@ export const ExpenseCategoriesCard = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="metrics">
-          <div className="space-y-4">
-            <h4 className="font-semibold">Expense Metrics</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {sortedExpenses?.map((category) => {
-                const percentage = (category.value / totalExpenses) * 100;
-                return (
-                  <div 
-                    key={category.name}
-                    className="p-4 bg-muted rounded-lg space-y-2"
-                  >
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium">{category.name}</span>
-                      <span className="text-sm text-muted-foreground">
-                        {percentage.toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-secondary rounded-full h-2">
-                      <div
-                        className="bg-primary rounded-full h-2 transition-all"
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-muted-foreground">
-                        ${category.value.toLocaleString()}
-                      </span>
-                      <span className="text-muted-foreground">
-                        of ${totalExpenses.toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+        <TabsContent value="analysis">
+          <ExpenseAnalysis 
+            expenses={sortedExpenses || []} 
+            totalExpenses={totalExpenses}
+          />
+        </TabsContent>
+
+        <TabsContent value="trends">
+          <ExpenseTrends expenses={sortedExpenses || []} />
+        </TabsContent>
+
+        <TabsContent value="recommendations">
+          <ExpenseRecommendations 
+            expenses={sortedExpenses || []} 
+            totalExpenses={totalExpenses}
+          />
         </TabsContent>
       </Tabs>
     </Card>
