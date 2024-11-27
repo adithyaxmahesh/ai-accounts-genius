@@ -4,47 +4,74 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Building2, CreditCard, Landmark } from "lucide-react";
 import { ShopifyConnect } from "@/components/shopify/ShopifyConnect";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { RevenueSourcesHelp } from "@/components/revenue/RevenueSourcesHelp";
+import { usePlaidLink } from "react-plaid-link";
 
 export const RevenueSourcesManager = () => {
   const { toast } = useToast();
   const { session } = useAuth();
-  const [bankDetails, setBankDetails] = useState({
-    bankName: "",
-    accountNumber: "",
-    routingNumber: "",
-  });
   const [isConnectingStripe, setIsConnectingStripe] = useState(false);
+  const [isConnectingPlaid, setIsConnectingPlaid] = useState(false);
 
-  const handleBankConnect = async () => {
-    try {
-      const { error } = await supabase
-        .from('bank_connections')
-        .insert({
-          user_id: session?.user.id,
-          bank_name: bankDetails.bankName,
-          account_number: bankDetails.accountNumber,
-          routing_number: bankDetails.routingNumber,
+  // Plaid Link setup
+  const { open, ready } = usePlaidLink({
+    token: null, // We'll fetch this when needed
+    onSuccess: async (public_token, metadata) => {
+      try {
+        const { error } = await supabase.functions.invoke('plaid-integration', {
+          body: {
+            action: 'exchange-public-token',
+            publicToken: public_token,
+            userId: session?.user.id,
+          }
         });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Bank Account Connected",
-        description: "Your bank account has been successfully connected.",
+        toast({
+          title: "Bank Account Connected",
+          description: "Your bank account has been successfully connected via Plaid.",
+        });
+      } catch (error) {
+        console.error('Error connecting bank account:', error);
+        toast({
+          title: "Error",
+          description: "Failed to connect bank account. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsConnectingPlaid(false);
+      }
+    },
+    onExit: () => {
+      setIsConnectingPlaid(false);
+    },
+  });
+
+  const handlePlaidConnect = async () => {
+    try {
+      setIsConnectingPlaid(true);
+      const { data, error } = await supabase.functions.invoke('plaid-integration', {
+        body: {
+          action: 'create-link-token',
+          userId: session?.user.id,
+        }
       });
-    } catch (error) {
-      console.error('Error connecting bank account:', error);
+
+      if (error) throw error;
+      if (!data?.link_token) throw new Error('No link token received');
+
+      open(); // This will open the Plaid Link interface
+    } catch (error: any) {
+      console.error('Error initiating Plaid connection:', error);
       toast({
         title: "Error",
-        description: "Failed to connect bank account. Please try again.",
+        description: error.message || "Failed to initiate bank connection. Please try again.",
         variant: "destructive",
       });
+      setIsConnectingPlaid(false);
     }
   };
 
@@ -100,46 +127,13 @@ export const RevenueSourcesManager = () => {
           <p className="text-sm text-muted-foreground mb-4">
             Connect your business bank account to track revenue and expenses.
           </p>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="w-full">Connect Bank</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Connect Bank Account</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="bankName">Bank Name</Label>
-                  <Input
-                    id="bankName"
-                    value={bankDetails.bankName}
-                    onChange={(e) => setBankDetails(prev => ({ ...prev, bankName: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="accountNumber">Account Number</Label>
-                  <Input
-                    id="accountNumber"
-                    type="password"
-                    value={bankDetails.accountNumber}
-                    onChange={(e) => setBankDetails(prev => ({ ...prev, accountNumber: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="routingNumber">Routing Number</Label>
-                  <Input
-                    id="routingNumber"
-                    value={bankDetails.routingNumber}
-                    onChange={(e) => setBankDetails(prev => ({ ...prev, routingNumber: e.target.value }))}
-                  />
-                </div>
-                <Button onClick={handleBankConnect} className="w-full">
-                  Connect
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button 
+            onClick={handlePlaidConnect} 
+            disabled={isConnectingPlaid || !ready}
+            className="w-full"
+          >
+            {isConnectingPlaid ? "Connecting..." : "Connect Bank"}
+          </Button>
         </Card>
 
         <Card className="p-6">
