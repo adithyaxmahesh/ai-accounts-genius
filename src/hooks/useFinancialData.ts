@@ -9,6 +9,7 @@ export interface FinancialMetrics {
   averageRevenue: number;
   averageExpense: number;
   profitMargin: number;
+  cashBalance: number;
 }
 
 export const useFinancialData = (dateRange?: { from: Date | null; to: Date | null }) => {
@@ -27,6 +28,13 @@ export const useFinancialData = (dateRange?: { from: Date | null; to: Date | nul
         .select('*')
         .eq('user_id', session?.user.id);
 
+      let cashQuery = supabase
+        .from('balance_sheet_items')
+        .select('*')
+        .eq('user_id', session?.user.id)
+        .eq('category', 'asset')
+        .eq('subcategory', 'cash');
+
       if (dateRange?.from) {
         revenueQuery = revenueQuery.gte('date', dateRange.from.toISOString().split('T')[0]);
         expensesQuery = expensesQuery.gte('date', dateRange.from.toISOString().split('T')[0]);
@@ -36,11 +44,14 @@ export const useFinancialData = (dateRange?: { from: Date | null; to: Date | nul
         expensesQuery = expensesQuery.lte('date', dateRange.to.toISOString().split('T')[0]);
       }
 
-      const [{ data: revenues = [], error: revenueError }, { data: expenses = [], error: expenseError }] = 
-        await Promise.all([revenueQuery, expensesQuery]);
+      const [{ data: revenues = [], error: revenueError }, 
+             { data: expenses = [], error: expenseError },
+             { data: cashItems = [], error: cashError }] = 
+        await Promise.all([revenueQuery, expensesQuery, cashQuery]);
 
       if (revenueError) throw revenueError;
       if (expenseError) throw expenseError;
+      if (cashError) throw cashError;
 
       const totalRevenue = revenues.reduce((sum, record) => sum + Number(record.amount), 0);
       const totalExpenses = expenses.reduce((sum, record) => sum + Number(record.amount), 0);
@@ -48,6 +59,7 @@ export const useFinancialData = (dateRange?: { from: Date | null; to: Date | nul
       const averageRevenue = revenues.length ? totalRevenue / revenues.length : 0;
       const averageExpense = expenses.length ? totalExpenses / expenses.length : 0;
       const profitMargin = totalRevenue ? (netIncome / totalRevenue) * 100 : 0;
+      const cashBalance = cashItems.reduce((sum, item) => sum + Number(item.amount), 0);
 
       return {
         totalRevenue,
@@ -56,6 +68,7 @@ export const useFinancialData = (dateRange?: { from: Date | null; to: Date | nul
         averageRevenue,
         averageExpense,
         profitMargin,
+        cashBalance,
         revenues,
         expenses
       };

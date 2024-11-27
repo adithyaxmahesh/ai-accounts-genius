@@ -8,7 +8,7 @@ export const FinancialMetrics = () => {
   const { data: metrics } = useFinancialData();
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
       <Card 
         className="relative overflow-hidden bg-[#1A1F2C]/80 backdrop-blur-lg border border-white/10 p-6 hover:scale-105 transition-transform duration-200 cursor-pointer group"
         onClick={() => navigate('/revenue')}
@@ -25,6 +25,27 @@ export const FinancialMetrics = () => {
             </div>
             <p className="text-sm text-green-500">
               {metrics?.profitMargin > 0 ? '+' : ''}{metrics?.profitMargin.toFixed(1)}% profit margin
+            </p>
+          </div>
+        </div>
+      </Card>
+
+      <Card 
+        className="relative overflow-hidden bg-[#1A1F2C]/80 backdrop-blur-lg border border-white/10 p-6 hover:scale-105 transition-transform duration-200 cursor-pointer group"
+        onClick={() => navigate('/balance-sheet')}
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent" />
+        <div className="relative z-10">
+          <PiggyBank className="h-8 w-8 mb-4 text-blue-500" />
+          <div className="space-y-1">
+            <p className="text-sm text-blue-500 font-medium">Cash Balance</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-bold text-white">
+                ${metrics?.cashBalance.toLocaleString()}
+              </span>
+            </div>
+            <p className="text-sm text-blue-500">
+              Available funds
             </p>
           </div>
         </div>
