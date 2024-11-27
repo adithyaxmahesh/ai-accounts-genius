@@ -130,7 +130,7 @@ const Audit = () => {
       <div className="flex items-center space-x-4 mb-6">
         <Button 
           variant="ghost" 
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/dashboard')}
           className="hover:bg-gray-100 transition-colors"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />

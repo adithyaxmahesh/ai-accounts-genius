@@ -13,7 +13,7 @@ const Assurance = () => {
       <div className="flex items-center space-x-4 mb-6">
         <Button 
           variant="ghost" 
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/dashboard')}
           className="hover:scale-105 transition-transform"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
