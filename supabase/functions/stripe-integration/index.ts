@@ -2,7 +2,13 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@11.1.0?target=deno'
 
-const stripe = new Stripe(Deno.env.get('STRIPE_API_KEY') as string, {
+const stripeKey = Deno.env.get('STRIPE_API_KEY');
+if (!stripeKey) {
+  console.error('STRIPE_API_KEY is not set in environment variables');
+  throw new Error('STRIPE_API_KEY is required');
+}
+
+const stripe = new Stripe(stripeKey, {
   apiVersion: '2022-11-15',
   httpClient: Stripe.createFetchHttpClient(),
 })
@@ -33,31 +39,42 @@ serve(async (req) => {
     if (action === 'create-connect-account') {
       console.log('Creating Stripe Connect account for user:', userId)
       
-      // Create a Stripe Connect account
-      const account = await stripe.accounts.create({
-        type: 'standard',
-        metadata: {
-          supabaseUserId: userId,
-        },
-      })
-      console.log('Created Stripe account:', account.id)
+      try {
+        // Create a Stripe Connect account
+        const account = await stripe.accounts.create({
+          type: 'standard',
+          metadata: {
+            supabaseUserId: userId,
+          },
+        })
+        console.log('Created Stripe account:', account.id)
 
-      // Create an account link for onboarding
-      const accountLink = await stripe.accountLinks.create({
-        account: account.id,
-        refresh_url: `${req.headers.get('origin')}/revenue`,
-        return_url: `${req.headers.get('origin')}/revenue`,
-        type: 'account_onboarding',
-      })
-      console.log('Created account link')
+        // Create an account link for onboarding
+        const accountLink = await stripe.accountLinks.create({
+          account: account.id,
+          refresh_url: `${req.headers.get('origin')}/revenue`,
+          return_url: `${req.headers.get('origin')}/revenue`,
+          type: 'account_onboarding',
+        })
+        console.log('Created account link')
 
-      return new Response(
-        JSON.stringify({ url: accountLink.url }),
-        { 
-          status: 200, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
+        return new Response(
+          JSON.stringify({ url: accountLink.url }),
+          { 
+            status: 200, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
+      } catch (stripeError) {
+        console.error('Stripe API error:', stripeError)
+        return new Response(
+          JSON.stringify({ error: 'Failed to create Stripe account', details: stripeError.message }),
+          { 
+            status: 500, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
+      }
     }
 
     return new Response(
