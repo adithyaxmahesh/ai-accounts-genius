@@ -11,6 +11,7 @@ import { WriteOff } from "@/components/types";
 import { ExpensePieChart } from "./expenses/ExpensePieChart";
 import { ExpenseList } from "./expenses/ExpenseList";
 import { calculateExpenseCategories, COLORS } from "@/utils/expenseCalculations";
+import { useToast } from "./ui/use-toast";
 
 interface ExpenseCategory {
   name: string;
@@ -20,6 +21,7 @@ interface ExpenseCategory {
 
 export const ExpenseCategoriesCard = () => {
   const { session } = useAuth();
+  const { toast } = useToast();
   const [activeIndex, setActiveIndex] = useState<number | undefined>();
   const [sortBy, setSortBy] = useState<'amount' | 'category'>('amount');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -30,24 +32,36 @@ export const ExpenseCategoriesCard = () => {
       const { data: writeOffs, error } = await supabase
         .from('write_offs')
         .select(`
-          amount,
-          description,
-          date,
+          *,
           tax_codes (
+            code,
+            description,
+            state,
             expense_category
           )
         `)
         .eq('user_id', session?.user.id)
+        .order('date', { ascending: false })
         .returns<WriteOff[]>();
 
-      if (error) throw error;
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Error loading expenses",
+          description: error.message
+        });
+        throw error;
+      }
+
+      console.log('Fetched write-offs:', writeOffs); // Debug log
 
       const categories = calculateExpenseCategories(writeOffs || []);
+      console.log('Calculated categories:', categories); // Debug log
       
       return Object.entries(categories).map(([name, value]) => ({
         name,
         value: Number(value),
-        color: COLORS[name as keyof typeof COLORS]
+        color: COLORS[name as keyof typeof COLORS] || COLORS.Other
       })) as ExpenseCategory[];
     },
     enabled: !!session?.user.id
