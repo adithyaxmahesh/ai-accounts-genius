@@ -12,18 +12,22 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log('Starting analyze-assurance function');
     const { engagementId } = await req.json();
-    console.log('Processing assurance analysis for engagement:', engagementId);
     
     if (!engagementId) {
+      console.error('Missing engagementId');
       throw new Error('Engagement ID is required');
     }
 
+    console.log('Processing assurance analysis for engagement:', engagementId);
+    
     const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
 
     // Fetch engagement data
@@ -38,6 +42,8 @@ serve(async (req) => {
       throw engagementError;
     }
 
+    console.log('Fetched engagement data:', engagement);
+
     // Fetch procedures
     const { data: procedures, error: proceduresError } = await supabase
       .from('assurance_procedures')
@@ -49,7 +55,15 @@ serve(async (req) => {
       throw proceduresError;
     }
 
+    console.log('Fetched procedures:', procedures);
+
+    if (!openAIApiKey) {
+      console.error('OpenAI API key not found');
+      throw new Error('OpenAI API key not configured');
+    }
+
     // Analyze with GPT-4
+    console.log('Sending request to OpenAI');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -57,7 +71,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: [
           {
             role: 'system',
@@ -83,6 +97,7 @@ serve(async (req) => {
     }
 
     const aiResponse = await response.json();
+    console.log('Received OpenAI response:', aiResponse);
     const analysis = aiResponse.choices[0].message.content;
 
     // Process the AI response
@@ -106,7 +121,8 @@ serve(async (req) => {
         risk_score: riskScore,
         confidence_score: confidenceScore,
         findings,
-        recommendations
+        recommendations,
+        user_id: engagement.user_id // Important: Add user_id for RLS
       })
       .select()
       .single();
@@ -116,6 +132,8 @@ serve(async (req) => {
       throw error;
     }
 
+    console.log('Successfully stored analysis:', data);
+
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -123,7 +141,8 @@ serve(async (req) => {
     console.error('Error in analyze-assurance function:', error);
     return new Response(
       JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'An unknown error occurred'
+        error: error instanceof Error ? error.message : 'An unknown error occurred',
+        details: error instanceof Error ? error.stack : undefined
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

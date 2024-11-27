@@ -22,7 +22,15 @@ export const AIAnalysisCard = ({ engagements, onRefetch }: AIAnalysisCardProps) 
         body: { engagementId }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Analysis error:", error);
+        throw error;
+      }
+      
+      if (!data) {
+        throw new Error("No data received from analysis");
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -36,11 +44,96 @@ export const AIAnalysisCard = ({ engagements, onRefetch }: AIAnalysisCardProps) 
       console.error("Analysis error:", error);
       toast({
         title: "Analysis Failed",
-        description: "Failed to complete the analysis. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to complete the analysis. Please try again.",
         variant: "destructive",
       });
     }
   });
+
+  const renderAnalysisContent = (engagement: any) => {
+    const analysis = engagement.ai_assurance_analysis?.[0];
+    
+    if (!analysis) {
+      return (
+        <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+          <AlertCircle className="h-12 w-12 mb-4" />
+          <p>No AI analysis available yet.</p>
+          <p className="text-sm">Run an analysis to see AI-powered insights here.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          <Badge variant={
+            analysis.risk_score > 0.7 ? "destructive" : 
+            analysis.risk_score > 0.4 ? "warning" : 
+            "success"
+          }>
+            Risk Score: {(analysis.risk_score * 100).toFixed(0)}%
+          </Badge>
+          <Badge variant="outline">
+            Confidence: {(analysis.confidence_score * 100).toFixed(0)}%
+          </Badge>
+        </div>
+        
+        {analysis.findings?.length > 0 && (
+          <div className="space-y-2">
+            <h5 className="text-sm font-medium flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-yellow-500" />
+              Key Findings
+            </h5>
+            <ul className="space-y-1">
+              {analysis.findings.map((finding: any, idx: number) => (
+                <li key={idx} className="text-sm flex items-start gap-2">
+                  <span className={cn(
+                    "mt-1 h-2 w-2 rounded-full",
+                    finding.severity === 'high' ? 'bg-red-500' :
+                    finding.severity === 'medium' ? 'bg-yellow-500' :
+                    'bg-green-500'
+                  )} />
+                  {finding.description}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        
+        {analysis.recommendations?.length > 0 && (
+          <div className="space-y-2">
+            <h5 className="text-sm font-medium flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              Recommendations
+            </h5>
+            <ul className="space-y-1">
+              {analysis.recommendations.map((rec: any, idx: number) => (
+                <li key={idx} className="text-sm flex items-start gap-2">
+                  <span className={cn(
+                    "mt-1 h-2 w-2 rounded-full",
+                    rec.priority === 'high' ? 'bg-red-500' :
+                    rec.priority === 'medium' ? 'bg-yellow-500' :
+                    'bg-green-500'
+                  )} />
+                  {rec.description}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <Progress 
+          value={100 - (analysis.risk_score * 100)} 
+          className={cn(
+            "h-2",
+            analysis.risk_score > 0.7 ? "bg-red-500" :
+            analysis.risk_score > 0.4 ? "bg-yellow-500" :
+            "bg-green-500"
+          )}
+        />
+      </div>
+    );
+  };
 
   return (
     <Card>
@@ -65,82 +158,7 @@ export const AIAnalysisCard = ({ engagements, onRefetch }: AIAnalysisCardProps) 
               </Button>
             </div>
             
-            {(engagement as any).ai_assurance_analysis?.[0] && (
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <Badge variant={
-                    (engagement as any).ai_assurance_analysis[0].risk_score > 0.7 ? "destructive" : 
-                    (engagement as any).ai_assurance_analysis[0].risk_score > 0.4 ? "warning" : 
-                    "success"
-                  }>
-                    Risk Score: {((engagement as any).ai_assurance_analysis[0].risk_score * 100).toFixed(0)}%
-                  </Badge>
-                  <Badge variant="outline">
-                    Confidence: {((engagement as any).ai_assurance_analysis[0].confidence_score * 100).toFixed(0)}%
-                  </Badge>
-                </div>
-                
-                {(engagement as any).ai_assurance_analysis[0].findings?.length > 0 && (
-                  <div className="space-y-2">
-                    <h5 className="text-sm font-medium flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                      Key Findings
-                    </h5>
-                    <ul className="space-y-1">
-                      {(engagement as any).ai_assurance_analysis[0].findings.map((finding: any, idx: number) => (
-                        <li key={idx} className="text-sm flex items-start gap-2">
-                          <span className={`mt-1 h-2 w-2 rounded-full ${
-                            finding.severity === 'high' ? 'bg-red-500' :
-                            finding.severity === 'medium' ? 'bg-yellow-500' :
-                            'bg-green-500'
-                          }`} />
-                          {finding.description}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                
-                {(engagement as any).ai_assurance_analysis[0].recommendations?.length > 0 && (
-                  <div className="space-y-2">
-                    <h5 className="text-sm font-medium flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      Recommendations
-                    </h5>
-                    <ul className="space-y-1">
-                      {(engagement as any).ai_assurance_analysis[0].recommendations.map((rec: any, idx: number) => (
-                        <li key={idx} className="text-sm flex items-start gap-2">
-                          <span className={`mt-1 h-2 w-2 rounded-full ${
-                            rec.priority === 'high' ? 'bg-red-500' :
-                            rec.priority === 'medium' ? 'bg-yellow-500' :
-                            'bg-green-500'
-                          }`} />
-                          {rec.description}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                <Progress 
-                  value={100 - ((engagement as any).ai_assurance_analysis[0].risk_score * 100)} 
-                  className={cn(
-                    "h-2",
-                    (engagement as any).ai_assurance_analysis[0].risk_score > 0.7 ? "bg-red-500" :
-                    (engagement as any).ai_assurance_analysis[0].risk_score > 0.4 ? "bg-yellow-500" :
-                    "bg-green-500"
-                  )}
-                />
-              </div>
-            )}
-
-            {!(engagement as any).ai_assurance_analysis?.[0] && (
-              <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
-                <AlertCircle className="h-12 w-12 mb-4" />
-                <p>No AI analysis available yet.</p>
-                <p className="text-sm">Run an analysis to see AI-powered insights here.</p>
-              </div>
-            )}
+            {renderAnalysisContent(engagement)}
           </div>
         ))}
 
