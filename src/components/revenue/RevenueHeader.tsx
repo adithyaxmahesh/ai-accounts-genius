@@ -24,7 +24,7 @@ export const RevenueHeader = ({ onFilterClick, onAddRevenueClick }: RevenueHeade
       <div className="flex items-center gap-4">
         <Button 
           variant="outline" 
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/dashboard')}
           className="gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
