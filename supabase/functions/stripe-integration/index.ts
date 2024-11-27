@@ -7,18 +7,28 @@ const stripe = new Stripe(Deno.env.get('STRIPE_API_KEY') as string, {
   httpClient: Stripe.createFetchHttpClient(),
 })
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
 serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders })
+  }
+
   try {
     const { userId, action } = await req.json()
     
     if (!userId) {
       return new Response(
         JSON.stringify({ error: 'User ID is required' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
     if (action === 'create-connect-account') {
+      // Create a Stripe Connect account
       const account = await stripe.accounts.create({
         type: 'standard',
         metadata: {
@@ -26,6 +36,7 @@ serve(async (req) => {
         },
       })
 
+      // Create an account link for onboarding
       const accountLink = await stripe.accountLinks.create({
         account: account.id,
         refresh_url: `${req.headers.get('origin')}/revenue`,
@@ -35,18 +46,28 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ url: accountLink.url }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
       )
     }
 
     return new Response(
       JSON.stringify({ error: 'Invalid action' }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
+      { 
+        status: 400, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
     )
   } catch (error) {
+    console.error('Error in stripe-integration:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
     )
   }
 })
