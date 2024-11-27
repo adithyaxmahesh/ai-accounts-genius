@@ -12,15 +12,15 @@ const Auth = () => {
 
   useEffect(() => {
     if (session) {
-      navigate('/');
+      navigate('/dashboard');
     }
   }, [session, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <Card className="w-full max-w-md p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1A1F2C] to-[#121520]">
+      <Card className="w-full max-w-md p-8 glass-card">
         <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold">Welcome</h1>
+          <h1 className="text-2xl font-bold text-white">Welcome Back</h1>
           <p className="text-muted-foreground">Sign in to access your account</p>
         </div>
         
@@ -31,10 +31,10 @@ const Auth = () => {
             variables: {
               default: {
                 colors: {
-                  brand: '#000000',
-                  brandAccent: '#666666',
-                  inputText: '#000000',
-                  inputBackground: '#ffffff',
+                  brand: '#9b87f5',
+                  brandAccent: '#7E69AB',
+                  inputText: '#ffffff',
+                  inputBackground: 'rgba(255, 255, 255, 0.05)',
                   inputBorder: '#9b87f5',
                   inputBorderFocus: '#7E69AB',
                   inputBorderHover: '#6E59A5',
@@ -43,10 +43,13 @@ const Auth = () => {
             },
             style: {
               input: {
-                backgroundColor: '#ffffff',
-                color: '#000000',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                color: '#ffffff',
                 borderWidth: '2px',
               },
+              button: {
+                borderWidth: '2px',
+              }
             }
           }}
           providers={[]}

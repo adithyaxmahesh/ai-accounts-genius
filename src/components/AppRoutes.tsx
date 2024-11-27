@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+import Landing from "@/pages/Landing";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import WriteOffs from "@/pages/WriteOffs";
@@ -19,7 +20,8 @@ import Expenses from "@/pages/Expenses";
 export const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<Index />} />
+      <Route path="/" element={<Landing />} />
+      <Route path="/dashboard" element={<Index />} />
       <Route path="/auth" element={<Auth />} />
       <Route path="/write-offs" element={<WriteOffs />} />
       <Route path="/documents" element={<Documents />} />
