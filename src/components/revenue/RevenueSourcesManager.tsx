@@ -58,14 +58,27 @@ export const RevenueSourcesManager = () => {
   };
 
   const handleStripeConnect = async () => {
+    if (!session?.user?.id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to connect Stripe.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setIsConnectingStripe(true);
+      console.log('Initiating Stripe connection...');
+      
       const { data, error } = await supabase.functions.invoke('stripe-integration', {
         body: { 
-          userId: session?.user.id,
+          userId: session.user.id,
           action: 'create-connect-account'
         }
       });
+
+      console.log('Stripe response:', { data, error });
 
       if (error) {
         console.error('Stripe connection error:', error);

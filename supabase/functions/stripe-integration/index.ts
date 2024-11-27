@@ -13,14 +13,17 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
     const { userId, action } = await req.json()
+    console.log('Received request:', { userId, action })
     
     if (!userId) {
+      console.error('No user ID provided')
       return new Response(
         JSON.stringify({ error: 'User ID is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -28,6 +31,8 @@ serve(async (req) => {
     }
 
     if (action === 'create-connect-account') {
+      console.log('Creating Stripe Connect account for user:', userId)
+      
       // Create a Stripe Connect account
       const account = await stripe.accounts.create({
         type: 'standard',
@@ -35,6 +40,7 @@ serve(async (req) => {
           supabaseUserId: userId,
         },
       })
+      console.log('Created Stripe account:', account.id)
 
       // Create an account link for onboarding
       const accountLink = await stripe.accountLinks.create({
@@ -43,6 +49,7 @@ serve(async (req) => {
         return_url: `${req.headers.get('origin')}/revenue`,
         type: 'account_onboarding',
       })
+      console.log('Created account link')
 
       return new Response(
         JSON.stringify({ url: accountLink.url }),
