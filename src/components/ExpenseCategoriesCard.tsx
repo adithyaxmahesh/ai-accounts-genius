@@ -43,19 +43,19 @@ export const ExpenseCategoriesCard = () => {
       if (error) throw error;
 
       const categories = calculateExpenseCategories(writeOffs || []);
-
+      
       return Object.entries(categories).map(([name, value]) => ({
         name,
-        value,
+        value: Number(value),
         color: COLORS[name as keyof typeof COLORS]
-      }));
+      })) as ExpenseCategory[];
     },
     enabled: !!session?.user.id
   });
 
   const sortedExpenses = expenses?.slice().sort((a, b) => {
     const compareValue = sortBy === 'amount' 
-      ? Math.abs(a.value) - Math.abs(b.value)
+      ? a.value - b.value
       : a.name.localeCompare(b.name);
     return sortOrder === 'asc' ? compareValue : -compareValue;
   });
