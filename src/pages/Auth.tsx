@@ -33,8 +33,20 @@ const Auth = () => {
                 colors: {
                   brand: '#000000',
                   brandAccent: '#666666',
+                  inputText: '#000000',
+                  inputBackground: '#ffffff',
+                  inputBorder: '#9b87f5',
+                  inputBorderFocus: '#7E69AB',
+                  inputBorderHover: '#6E59A5',
                 }
               }
+            },
+            style: {
+              input: {
+                backgroundColor: '#ffffff',
+                color: '#000000',
+                borderWidth: '2px',
+              },
             }
           }}
           providers={[]}
