@@ -29,12 +29,18 @@ interface BalanceSheetSectionProps {
 
 const getSubcategoryColor = (category: string) => {
   const colors: { [key: string]: string } = {
-    'current-assets': 'bg-emerald-500/10 text-emerald-200 border-emerald-500/20',
-    'non-current-assets': 'bg-green-500/10 text-green-200 border-green-500/20',
-    'current-liabilities': 'bg-red-500/10 text-red-200 border-red-500/20',
-    'non-current-liabilities': 'bg-rose-500/10 text-rose-200 border-rose-500/20',
-    'contributed-capital': 'bg-blue-500/10 text-blue-200 border-blue-500/20',
-    'retained-earnings': 'bg-indigo-500/10 text-indigo-200 border-indigo-500/20',
+    'cash': 'bg-emerald-500/10 text-emerald-200 border-emerald-500/20',
+    'credit_cards': 'bg-blue-500/10 text-blue-200 border-blue-500/20',
+    'investments': 'bg-purple-500/10 text-purple-200 border-purple-500/20',
+    'receivables': 'bg-yellow-500/10 text-yellow-200 border-yellow-500/20',
+    'inventory': 'bg-orange-500/10 text-orange-200 border-orange-500/20',
+    'equipment': 'bg-indigo-500/10 text-indigo-200 border-indigo-500/20',
+    'loans': 'bg-red-500/10 text-red-200 border-red-500/20',
+    'credit_card_debt': 'bg-rose-500/10 text-rose-200 border-rose-500/20',
+    'payables': 'bg-pink-500/10 text-pink-200 border-pink-500/20',
+    'taxes': 'bg-red-700/10 text-red-200 border-red-700/20',
+    'retained': 'bg-green-500/10 text-green-200 border-green-500/20',
+    'capital': 'bg-blue-700/10 text-blue-200 border-blue-700/20',
   };
   return colors[category.toLowerCase()] || 'bg-slate-800 text-slate-200 border-slate-700';
 };

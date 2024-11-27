@@ -7,46 +7,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/components/AuthProvider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/AuthProvider";
+import { BalanceSheetFormFields } from "./balance-sheet/BalanceSheetFormFields";
 
 interface AddBalanceSheetItemProps {
   onClose: () => void;
   onSuccess: () => void;
 }
-
-const ASSET_SUBCATEGORIES = [
-  { value: "cash", label: "Cash & Bank" },
-  { value: "credit_cards", label: "Credit Cards" },
-  { value: "investments", label: "Investments" },
-  { value: "receivables", label: "Accounts Receivable" },
-  { value: "inventory", label: "Inventory" },
-  { value: "equipment", label: "Equipment & Property" },
-];
-
-const LIABILITY_SUBCATEGORIES = [
-  { value: "loans", label: "Loans & Mortgages" },
-  { value: "credit_card_debt", label: "Credit Card Debt" },
-  { value: "payables", label: "Accounts Payable" },
-  { value: "taxes", label: "Tax Liabilities" },
-];
-
-const EQUITY_SUBCATEGORIES = [
-  { value: "retained", label: "Retained Earnings" },
-  { value: "capital", label: "Owner's Capital" },
-];
 
 export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemProps) => {
   const { session } = useAuth();
@@ -58,19 +28,6 @@ export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemP
   const [description, setDescription] = useState("");
   const [selectedTab, setSelectedTab] = useState("asset");
   const [isTracking, setIsTracking] = useState(false);
-
-  const getSubcategories = () => {
-    switch (selectedTab) {
-      case "asset":
-        return ASSET_SUBCATEGORIES;
-      case "liability":
-        return LIABILITY_SUBCATEGORIES;
-      case "equity":
-        return EQUITY_SUBCATEGORIES;
-      default:
-        return [];
-    }
-  };
 
   const addItem = useMutation({
     mutationFn: async () => {
@@ -162,69 +119,19 @@ export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemP
           </TabsList>
         </Tabs>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="bg-background"
-            />
-          </div>
-          <div>
-            <Label htmlFor="amount">Amount</Label>
-            <Input
-              id="amount"
-              type="number"
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              required
-              className="bg-background"
-            />
-          </div>
-          <div>
-            <Label htmlFor="subcategory">Subcategory</Label>
-            <Select 
-              value={subcategory} 
-              onValueChange={setSubcategory}
-              required
-            >
-              <SelectTrigger className="bg-background">
-                <SelectValue placeholder="Select subcategory" />
-              </SelectTrigger>
-              <SelectContent>
-                {getSubcategories().map((sub) => (
-                  <SelectItem key={sub.value} value={sub.value}>
-                    {sub.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {(subcategory === "credit_cards" || subcategory === "credit_card_debt") && (
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="tracking"
-                checked={isTracking}
-                onChange={(e) => setIsTracking(e.target.checked)}
-                className="rounded border-gray-300"
-              />
-              <Label htmlFor="tracking">Enable automatic expense tracking for this credit card</Label>
-            </div>
-          )}
-          <div>
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Add any relevant details or notes"
-              className="bg-background"
-            />
-          </div>
+          <BalanceSheetFormFields
+            name={name}
+            setName={setName}
+            amount={amount}
+            setAmount={setAmount}
+            subcategory={subcategory}
+            setSubcategory={setSubcategory}
+            description={description}
+            setDescription={setDescription}
+            selectedTab={selectedTab}
+            isTracking={isTracking}
+            setIsTracking={setIsTracking}
+          />
           <div className="flex justify-end space-x-2">
             <Button variant="outline" type="button" onClick={onClose}>
               Cancel
