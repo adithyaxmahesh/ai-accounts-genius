@@ -54,10 +54,9 @@ const Auth = () => {
               },
               button: {
                 border: '2px solid transparent',
-                transform: 'none',
                 transition: 'transform 0.2s ease',
                 transform: 'translateY(0)',
-                ":hover": {
+                hover: {
                   transform: 'translateY(-1px)'
                 }
               }
