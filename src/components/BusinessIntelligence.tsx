@@ -11,22 +11,36 @@ export const BusinessIntelligence = () => {
   const { session } = useAuth();
   const { toast } = useToast();
 
-  const { data: insights, refetch } = useQuery({
-    queryKey: ['business-insights', session?.user.id],
+  const { data: insights, refetch, isLoading } = useQuery({
+    queryKey: ['business-insights', session?.user?.id],
     queryFn: async () => {
+      if (!session?.user?.id) {
+        throw new Error("User must be authenticated");
+      }
+
       const { data, error } = await supabase
         .from('business_insights')
         .select('*')
-        .eq('user_id', session?.user.id)
+        .eq('user_id', session.user.id)
         .order('created_at', { ascending: false })
         .limit(1);
       
       if (error) throw error;
-      return data;
-    }
+      return data?.[0];
+    },
+    enabled: !!session?.user?.id
   });
 
   const generateInsights = async () => {
+    if (!session?.user?.id) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to generate insights.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       toast({
         title: "Generating Insights",
@@ -35,7 +49,7 @@ export const BusinessIntelligence = () => {
 
       const { data, error } = await supabase.functions.invoke('generate-insights', {
         body: { 
-          userId: session?.user.id 
+          userId: session.user.id 
         }
       });
 
@@ -47,23 +61,33 @@ export const BusinessIntelligence = () => {
         title: "Insights Generated",
         description: "New business insights are available",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating insights:", error);
       toast({
         title: "Error",
-        description: "Failed to generate insights. Please try again.",
+        description: error.message || "Failed to generate insights. Please try again.",
         variant: "destructive",
       });
     }
   };
 
   const pieData = [
-    { name: 'Revenue', value: 400 },
-    { name: 'Expenses', value: 300 },
-    { name: 'Profit', value: 100 }
+    { name: 'Revenue', value: insights?.metrics?.revenue || 0 },
+    { name: 'Expenses', value: insights?.metrics?.expenses || 0 },
+    { name: 'Profit', value: insights?.metrics?.profit || 0 }
   ];
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
+
+  if (isLoading) {
+    return (
+      <Card className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-6">
@@ -100,36 +124,30 @@ export const BusinessIntelligence = () => {
       </div>
 
       <div className="space-y-6">
-        {insights?.map((insight) => (
-          <div key={insight.id} className="space-y-4">
+        {insights?.recommendations?.map((recommendation: string, index: number) => (
+          <div key={index} className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
-                <span className="font-medium">{insight.category}</span>
+                <span className="font-medium">Recommendation {index + 1}</span>
               </div>
-              <span className={`text-sm font-medium ${
-                insight.priority === 'high' ? 'text-red-500' : 
-                insight.priority === 'medium' ? 'text-yellow-500' : 
-                'text-green-500'
-              }`}>
-                {insight.priority?.toUpperCase()}
-              </span>
+              {insights.metrics?.growth > 0 ? (
+                <ArrowUpRight className="h-4 w-4 text-green-500" />
+              ) : (
+                <ArrowDownRight className="h-4 w-4 text-red-500" />
+              )}
             </div>
-
-            <div className="space-y-2">
-              {insight.recommendations?.map((rec, index) => (
-                <div key={index} className="flex items-start gap-2 p-3 bg-muted rounded-lg">
-                  {rec.includes('increase') || rec.includes('growth') ? (
-                    <ArrowUpRight className="h-4 w-4 text-green-500 mt-1" />
-                  ) : (
-                    <ArrowDownRight className="h-4 w-4 text-red-500 mt-1" />
-                  )}
-                  <p className="text-sm">{rec}</p>
-                </div>
-              ))}
+            <div className="p-3 bg-muted rounded-lg">
+              <p className="text-sm">{recommendation}</p>
             </div>
           </div>
         ))}
+
+        {!insights?.recommendations?.length && (
+          <div className="text-center text-muted-foreground py-4">
+            No insights available. Click "Generate New Insights" to analyze your business data.
+          </div>
+        )}
       </div>
     </Card>
   );
