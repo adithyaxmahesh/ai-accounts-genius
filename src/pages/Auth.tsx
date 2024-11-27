@@ -50,20 +50,16 @@ const Auth = () => {
                 backgroundColor: 'transparent',
                 border: '2px solid',
                 borderColor: '#9b87f5',
-                color: 'white',
-                ':focus': {
-                  borderColor: '#7E69AB',
-                },
-                ':hover': {
-                  borderColor: '#6E59A5',
-                },
+                color: 'white'
               },
               button: {
                 border: '2px solid transparent',
-                ':hover': {
-                  transform: 'translateY(-1px)',
-                },
-              },
+                transform: 'none',
+                transition: 'transform 0.2s ease',
+                '&:hover': {
+                  transform: 'translateY(-1px)'
+                }
+              }
             }
           }}
           providers={[]}
