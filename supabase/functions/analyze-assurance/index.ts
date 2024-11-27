@@ -26,7 +26,6 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
 
-    // Fetch engagement data with detailed information
     const { data: engagement, error: engagementError } = await supabase
       .from('assurance_engagements')
       .select(`
@@ -43,9 +42,9 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
-    // Enhanced prompt for better analysis
+    // Enhanced professional prompt for better analysis
     const analysisPrompt = `
-      As an expert auditor and risk analyst, analyze this assurance engagement:
+      As an expert CPA and financial auditor, analyze this assurance engagement with professional accounting insights:
       
       Client: ${engagement.client_name}
       Type: ${engagement.engagement_type}
@@ -54,14 +53,17 @@ serve(async (req) => {
       Procedures Performed: ${JSON.stringify(engagement.assurance_procedures)}
       Evidence Collected: ${JSON.stringify(engagement.assurance_evidence)}
       
-      Please provide:
-      1. A detailed risk assessment with specific areas of concern
-      2. Analysis of control effectiveness
-      3. Concrete recommendations for improvement
-      4. Compliance considerations
-      5. Quality of evidence assessment
+      Provide a detailed professional analysis including:
+      1. Material financial statement risks and control deficiencies
+      2. Compliance with GAAP/IFRS standards
+      3. Internal control effectiveness evaluation
+      4. Specific accounting treatment recommendations
+      5. Revenue recognition and expense validation findings
+      6. Asset valuation and impairment considerations
+      7. Going concern assessment if applicable
+      8. Tax compliance implications
       
-      Format the response to include specific findings and actionable recommendations.
+      Format your response to include specific findings with materiality thresholds and actionable recommendations based on professional accounting standards.
     `;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -71,11 +73,11 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o',
         messages: [
           {
             role: 'system',
-            content: 'You are an expert AI auditor analyzing assurance engagements. Provide detailed, actionable insights.'
+            content: 'You are an expert CPA and auditor providing professional assurance analysis.'
           },
           {
             role: 'user',
@@ -93,7 +95,7 @@ serve(async (req) => {
     const aiResponse = await response.json();
     const analysis = aiResponse.choices[0].message.content;
     
-    // Process the AI response into structured data
+    // Enhanced processing of AI response
     const processedAnalysis = processAIResponse(analysis);
     
     // Store analysis results
@@ -133,19 +135,20 @@ serve(async (req) => {
 
 function processAIResponse(analysisText: string) {
   // Extract key sections from the AI response
-  const findingsMatch = analysisText.match(/(?:Key Findings|Areas of Concern):(.*?)(?=Recommendations|$)/s);
+  const findingsMatch = analysisText.match(/(?:Material Findings|Key Issues|Financial Risks):(.*?)(?=Recommendations|$)/s);
   const recommendationsMatch = analysisText.match(/Recommendations:(.*?)(?=\n\n|$)/s);
   
-  // Calculate risk score based on the content
+  // Calculate risk score based on professional indicators
   const riskIndicators = [
-    'high risk', 'significant concern', 'critical', 'major issue',
-    'severe', 'urgent', 'immediate attention'
+    'material weakness', 'significant deficiency', 'control deficiency',
+    'non-compliance', 'misstatement', 'going concern', 'fraud risk',
+    'regulatory violation', 'impairment'
   ];
   
   let riskScore = 0.5; // Default medium risk
-  let confidenceScore = 0.8; // Default high confidence
+  let confidenceScore = 0.85; // Default high confidence for professional analysis
   
-  // Adjust risk score based on content
+  // Adjust risk score based on professional findings
   const lowerContent = analysisText.toLowerCase();
   riskIndicators.forEach(indicator => {
     if (lowerContent.includes(indicator.toLowerCase())) {
@@ -156,24 +159,34 @@ function processAIResponse(analysisText: string) {
   // Cap risk score between 0 and 1
   riskScore = Math.min(Math.max(riskScore, 0), 1);
   
-  // Process findings
+  // Process findings with professional context
   const findings = findingsMatch ? findingsMatch[1]
     .split(/\n/)
     .filter(f => f.trim())
     .map(finding => ({
       description: finding.replace(/^[-•*]\s*/, '').trim(),
-      severity: finding.toLowerCase().includes('high') ? 'high' :
-               finding.toLowerCase().includes('medium') ? 'medium' : 'low'
+      severity: finding.toLowerCase().includes('material') ? 'high' :
+               finding.toLowerCase().includes('significant') ? 'medium' : 'low',
+      category: finding.toLowerCase().includes('control') ? 'Internal Controls' :
+                finding.toLowerCase().includes('compliance') ? 'Compliance' :
+                finding.toLowerCase().includes('financial') ? 'Financial Reporting' :
+                'General'
     })) : [];
     
-  // Process recommendations
+  // Process recommendations with professional context
   const recommendations = recommendationsMatch ? recommendationsMatch[1]
     .split(/\n/)
     .filter(r => r.trim())
     .map(recommendation => ({
       description: recommendation.replace(/^[-•*]\s*/, '').trim(),
-      priority: recommendation.toLowerCase().includes('urgent') ? 'high' :
-                recommendation.toLowerCase().includes('should') ? 'medium' : 'low'
+      priority: recommendation.toLowerCase().includes('immediately') ? 'high' :
+                recommendation.toLowerCase().includes('should') ? 'medium' : 'low',
+      impact: recommendation.toLowerCase().includes('material') ? 'Material' :
+              recommendation.toLowerCase().includes('significant') ? 'Significant' : 'Moderate',
+      area: recommendation.toLowerCase().includes('control') ? 'Internal Controls' :
+            recommendation.toLowerCase().includes('compliance') ? 'Compliance' :
+            recommendation.toLowerCase().includes('financial') ? 'Financial Reporting' :
+            'General'
     })) : [];
 
   return {
