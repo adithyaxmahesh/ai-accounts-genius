@@ -1,7 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-import { getEngagementAnalysisPrompt } from '../../../src/components/assurance/utils.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +10,66 @@ const corsHeaders = {
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY2');
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+// Utility function moved from frontend to edge function
+const getEngagementAnalysisPrompt = (type: string): string => {
+  switch (type) {
+    case 'internal_control':
+      return `Analyze internal control effectiveness focusing on:
+        - Control environment assessment
+        - Risk assessment procedures
+        - Control activities evaluation
+        - Information and communication systems
+        - Monitoring activities`;
+    
+    case 'operational':
+      return `Conduct operational review focusing on:
+        - Process efficiency analysis
+        - Resource utilization assessment
+        - Operational bottlenecks identification
+        - Performance metrics evaluation
+        - Workflow optimization opportunities`;
+    
+    case 'compliance':
+      return `Perform compliance review focusing on:
+        - Regulatory requirements adherence
+        - Internal policy compliance
+        - Documentation completeness
+        - Reporting requirements
+        - Compliance risk assessment`;
+    
+    case 'performance':
+      return `Conduct performance assessment focusing on:
+        - KPI achievement analysis
+        - Performance metrics evaluation
+        - Efficiency measurements
+        - Quality standards compliance
+        - Performance improvement opportunities`;
+    
+    case 'process':
+      return `Evaluate process effectiveness focusing on:
+        - Process flow analysis
+        - Bottleneck identification
+        - Resource allocation efficiency
+        - Process documentation review
+        - Improvement opportunities`;
+    
+    case 'risk':
+      return `Perform risk assessment focusing on:
+        - Risk identification
+        - Impact analysis
+        - Probability assessment
+        - Control effectiveness
+        - Mitigation strategies`;
+        
+    default:
+      return `Perform general assurance analysis focusing on:
+        - Overall effectiveness
+        - Risk identification
+        - Control assessment
+        - Improvement opportunities`;
+  }
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
