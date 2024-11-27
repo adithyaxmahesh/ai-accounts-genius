@@ -7,71 +7,53 @@ import { ShopifyConnect } from "@/components/shopify/ShopifyConnect";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { RevenueSourcesHelp } from "@/components/revenue/RevenueSourcesHelp";
-import { usePlaidLink } from "react-plaid-link";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export const RevenueSourcesManager = () => {
   const { toast } = useToast();
   const { session } = useAuth();
   const [isConnectingStripe, setIsConnectingStripe] = useState(false);
-  const [isConnectingPlaid, setIsConnectingPlaid] = useState(false);
+  const [isConnectingBank, setIsConnectingBank] = useState(false);
+  const [bankName, setBankName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [routingNumber, setRoutingNumber] = useState("");
+  const [isBankDialogOpen, setIsBankDialogOpen] = useState(false);
 
-  // Plaid Link setup
-  const { open, ready } = usePlaidLink({
-    token: null, // We'll fetch this when needed
-    onSuccess: async (public_token, metadata) => {
-      try {
-        const { error } = await supabase.functions.invoke('plaid-integration', {
-          body: {
-            action: 'exchange-public-token',
-            publicToken: public_token,
-            userId: session?.user.id,
-          }
-        });
-
-        if (error) throw error;
-
-        toast({
-          title: "Bank Account Connected",
-          description: "Your bank account has been successfully connected via Plaid.",
-        });
-      } catch (error) {
-        console.error('Error connecting bank account:', error);
-        toast({
-          title: "Error",
-          description: "Failed to connect bank account. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsConnectingPlaid(false);
-      }
-    },
-    onExit: () => {
-      setIsConnectingPlaid(false);
-    },
-  });
-
-  const handlePlaidConnect = async () => {
+  const handleBankConnect = async () => {
     try {
-      setIsConnectingPlaid(true);
-      const { data, error } = await supabase.functions.invoke('plaid-integration', {
-        body: {
-          action: 'create-link-token',
-          userId: session?.user.id,
-        }
-      });
+      setIsConnectingBank(true);
+      
+      const { error } = await supabase
+        .from('bank_connections')
+        .insert({
+          user_id: session?.user.id,
+          bank_name: bankName,
+          account_number: accountNumber,
+          routing_number: routingNumber
+        });
 
       if (error) throw error;
-      if (!data?.link_token) throw new Error('No link token received');
 
-      open(); // This will open the Plaid Link interface
+      toast({
+        title: "Bank Account Connected",
+        description: "Your bank account has been successfully connected.",
+      });
+      
+      setIsBankDialogOpen(false);
+      setBankName("");
+      setAccountNumber("");
+      setRoutingNumber("");
     } catch (error: any) {
-      console.error('Error initiating Plaid connection:', error);
+      console.error('Error connecting bank account:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to initiate bank connection. Please try again.",
+        description: "Failed to connect bank account. Please try again.",
         variant: "destructive",
       });
-      setIsConnectingPlaid(false);
+    } finally {
+      setIsConnectingBank(false);
     }
   };
 
@@ -131,13 +113,53 @@ export const RevenueSourcesManager = () => {
           <p className="text-sm text-muted-foreground mb-4">
             Connect your business bank account to track revenue and expenses.
           </p>
-          <Button 
-            onClick={handlePlaidConnect} 
-            disabled={isConnectingPlaid || !ready}
-            className="w-full"
-          >
-            {isConnectingPlaid ? "Connecting..." : "Connect Bank"}
-          </Button>
+          <Dialog open={isBankDialogOpen} onOpenChange={setIsBankDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="w-full">Connect Bank</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Connect Bank Account</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="bankName">Bank Name</Label>
+                  <Input
+                    id="bankName"
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    placeholder="Enter bank name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="accountNumber">Account Number</Label>
+                  <Input
+                    id="accountNumber"
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value)}
+                    placeholder="Enter account number"
+                    type="password"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="routingNumber">Routing Number</Label>
+                  <Input
+                    id="routingNumber"
+                    value={routingNumber}
+                    onChange={(e) => setRoutingNumber(e.target.value)}
+                    placeholder="Enter routing number"
+                  />
+                </div>
+                <Button 
+                  onClick={handleBankConnect} 
+                  disabled={isConnectingBank || !bankName || !accountNumber || !routingNumber}
+                  className="w-full"
+                >
+                  {isConnectingBank ? "Connecting..." : "Connect"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </Card>
 
         <Card className="p-6">
