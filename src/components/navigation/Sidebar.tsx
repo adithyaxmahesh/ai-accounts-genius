@@ -58,6 +58,18 @@ export const Sidebar = ({ onCollapse }: SidebarProps) => {
         isCollapsed ? "w-16" : "w-64"
       )}
     >
+      <div className={cn(
+        "p-4 border-b flex items-center",
+        isCollapsed ? "justify-center" : "justify-start"
+      )}>
+        <h1 className={cn(
+          "font-bold text-xl text-primary transition-all duration-300",
+          isCollapsed ? "scale-0 w-0" : "scale-100 w-auto"
+        )}>
+          DevAudit
+        </h1>
+      </div>
+
       <Button
         variant="ghost"
         size="icon"
@@ -71,7 +83,7 @@ export const Sidebar = ({ onCollapse }: SidebarProps) => {
         )}
       </Button>
 
-      <div className={cn("space-y-2 p-4", isCollapsed ? "pt-14" : "pt-16")}>
+      <div className={cn("space-y-2 p-4")}>
         <NavItem to="/documents" icon={<FileText className="h-4 w-4" />} label="Documents" isCollapsed={isCollapsed} />
         <NavItem to="/tax" icon={<Calculator className="h-4 w-4" />} label="Tax Management" isCollapsed={isCollapsed} />
         <NavItem to="/audit" icon={<BookOpen className="h-4 w-4" />} label="Audit Reports" isCollapsed={isCollapsed} />
