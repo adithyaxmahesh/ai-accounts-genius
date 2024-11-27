@@ -9,7 +9,7 @@ import { useReceiptAnalysis } from "./document-management/useReceiptAnalysis";
 interface DocumentListProps {
   documents: ProcessedDocument[];
   processing: boolean;
-  onAnalyze: (documentId: string) => void;
+  onAnalyze: (documentId: string) => Promise<void>;
   onDelete: (documentId: string) => void;
 }
 
@@ -72,6 +72,23 @@ export const DocumentList = ({ documents, processing, onAnalyze, onDelete }: Doc
     }
   };
 
+  const handleAnalyzeDocument = async (documentId: string) => {
+    try {
+      await onAnalyze(documentId);
+      toast({
+        title: "Analysis Complete",
+        description: "Document has been analyzed successfully",
+      });
+    } catch (error) {
+      console.error("Analysis error:", error);
+      toast({
+        title: "Analysis Failed",
+        description: "Failed to analyze document. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleAnalyzeReceipt = async (doc: ProcessedDocument) => {
     if (!isImageFile(doc.name)) {
       toast({
@@ -82,7 +99,20 @@ export const DocumentList = ({ documents, processing, onAnalyze, onDelete }: Doc
       return;
     }
 
-    await analyzeReceipt(doc.id);
+    try {
+      await analyzeReceipt(doc.id);
+      toast({
+        title: "Receipt Analysis Complete",
+        description: "Receipt has been analyzed successfully",
+      });
+    } catch (error) {
+      console.error("Receipt analysis error:", error);
+      toast({
+        title: "Analysis Failed",
+        description: "Failed to analyze receipt. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -123,7 +153,7 @@ export const DocumentList = ({ documents, processing, onAnalyze, onDelete }: Doc
                     {doc.status}
                   </span>
                 </TableCell>
-                <TableCell>{doc.confidence}%</TableCell>
+                <TableCell>{doc.confidence ? `${doc.confidence}%` : 'N/A'}</TableCell>
                 <TableCell>
                   {doc.documentDate ? new Date(doc.documentDate).toLocaleDateString() : 'N/A'}
                 </TableCell>
@@ -136,8 +166,8 @@ export const DocumentList = ({ documents, processing, onAnalyze, onDelete }: Doc
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => analyzeReceipt(doc.id)}
-                        disabled={analyzing}
+                        onClick={() => handleAnalyzeReceipt(doc)}
+                        disabled={analyzing || doc.status === 'Processing'}
                       >
                         <Receipt className={`h-4 w-4 ${analyzing ? 'animate-pulse' : ''}`} />
                       </Button>
@@ -145,8 +175,8 @@ export const DocumentList = ({ documents, processing, onAnalyze, onDelete }: Doc
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => onAnalyze(doc.id)}
-                      disabled={processing || doc.status === 'Analyzed'}
+                      onClick={() => handleAnalyzeDocument(doc.id)}
+                      disabled={processing || doc.status === 'Analyzed' || doc.status === 'Processing'}
                     >
                       <Brain className={`h-4 w-4 ${processing ? 'animate-pulse' : ''}`} />
                     </Button>
