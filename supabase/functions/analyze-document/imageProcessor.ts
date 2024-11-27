@@ -41,9 +41,6 @@ export async function processImage(fileData: Blob) {
 }
 
 async function performOCR(imageData: Blob): Promise<string> {
-  // For now return dummy text - in production this would use a real OCR service
-  return `Invoice #1234
-  Amount: $1,234.56
-  Date: 2024-03-20
-  Description: Office Supplies`;
+  const ocrClient = createOCRClient();
+  return await ocrClient.processImage(imageData);
 }
