@@ -15,66 +15,68 @@ const CashFlow = () => {
   const { data: cashFlowData, isLoading } = useQuery({
     queryKey: ['cash-flows', session?.user.id],
     queryFn: async () => {
-      const { data: statements, error } = await supabase
+      // Fetch operating cash flow data
+      const { data: operatingData, error: operatingError } = await supabase
         .from('cash_flow_statements')
         .select('*')
         .eq('user_id', session?.user.id)
+        .eq('type', 'operating')
         .order('date', { ascending: true });
-      
-      if (error) throw error;
 
-      // If no data exists, provide sample data for visualization
-      const sampleData = statements?.length ? statements : [
-        { date: '2024-01', type: 'operating', amount: 50000 },
-        { date: '2024-02', type: 'operating', amount: 55000 },
-        { date: '2024-03', type: 'operating', amount: 52000 },
-        { date: '2024-01', type: 'financing', amount: -20000 },
-        { date: '2024-02', type: 'financing', amount: -22000 },
-        { date: '2024-03', type: 'financing', amount: -18000 },
-      ];
+      if (operatingError) throw operatingError;
 
-      // Process the data for the chart
-      const processedData = sampleData.reduce((acc, curr) => {
-        const date = new Date(curr.date).toLocaleDateString('default', { month: 'short', year: 'numeric' });
-        const existingEntry = acc.find(entry => entry.date === date);
+      // Fetch financing cash flow data
+      const { data: financingData, error: financingError } = await supabase
+        .from('cash_flow_statements')
+        .select('*')
+        .eq('user_id', session?.user.id)
+        .eq('type', 'financing')
+        .order('date', { ascending: true });
 
-        if (existingEntry) {
-          if (curr.type === 'operating') {
-            existingEntry.operatingCashFlow = Number(curr.amount);
-          } else if (curr.type === 'financing') {
-            existingEntry.financingCashFlow = Number(curr.amount);
-          }
-          existingEntry.freeCashFlow = existingEntry.operatingCashFlow - Math.abs(existingEntry.financingCashFlow);
-          existingEntry.netCashFlow = existingEntry.operatingCashFlow + existingEntry.financingCashFlow;
-        } else {
-          acc.push({
-            date,
-            operatingCashFlow: curr.type === 'operating' ? Number(curr.amount) : 0,
-            financingCashFlow: curr.type === 'financing' ? Number(curr.amount) : 0,
-            freeCashFlow: curr.type === 'operating' ? Number(curr.amount) : 0,
-            netCashFlow: Number(curr.amount),
-          });
-        }
-        return acc;
-      }, [] as Array<{
-        date: string;
-        operatingCashFlow: number;
-        financingCashFlow: number;
-        freeCashFlow: number;
-        netCashFlow: number;
-      }>);
+      if (financingError) throw financingError;
 
       // Calculate current period metrics
       const currentMetrics = {
-        netIncome: 100000,
-        depreciation: 20000,
-        workingCapitalChange: 15000,
-        capitalExpenditure: 30000,
-        operatingIncome: 120000,
-        taxes: 25000,
-        financingInflows: 50000,
-        financingOutflows: 40000,
+        netIncome: operatingData?.reduce((sum, record) => sum + Number(record.amount), 0) || 0,
+        depreciation: operatingData?.filter(record => record.category === 'depreciation')
+          .reduce((sum, record) => sum + Number(record.amount), 0) || 0,
+        workingCapitalChange: operatingData?.filter(record => record.category === 'working_capital')
+          .reduce((sum, record) => sum + Number(record.amount), 0) || 0,
+        capitalExpenditure: financingData?.filter(record => record.category === 'capex')
+          .reduce((sum, record) => sum + Number(record.amount), 0) || 0,
+        operatingIncome: operatingData?.filter(record => record.category === 'operating_income')
+          .reduce((sum, record) => sum + Number(record.amount), 0) || 0,
+        taxes: operatingData?.filter(record => record.category === 'taxes')
+          .reduce((sum, record) => sum + Number(record.amount), 0) || 0,
+        financingInflows: financingData?.filter(record => Number(record.amount) > 0)
+          .reduce((sum, record) => sum + Number(record.amount), 0) || 0,
+        financingOutflows: financingData?.filter(record => Number(record.amount) < 0)
+          .reduce((sum, record) => sum + Math.abs(Number(record.amount)), 0) || 0,
       };
+
+      // Process the data for the chart
+      const dates = [...new Set([
+        ...(operatingData?.map(d => d.date) || []),
+        ...(financingData?.map(d => d.date) || [])
+      ])].sort();
+
+      const processedData = dates.map(date => {
+        const operatingCashFlow = operatingData
+          ?.filter(d => d.date === date)
+          .reduce((sum, record) => sum + Number(record.amount), 0) || 0;
+
+        const financingCashFlow = financingData
+          ?.filter(d => d.date === date)
+          .reduce((sum, record) => sum + Number(record.amount), 0) || 0;
+
+        return {
+          date: new Date(date).toLocaleDateString('default', { month: 'short', year: 'numeric' }),
+          operatingCashFlow,
+          financingCashFlow,
+          freeCashFlow: operatingCashFlow - Math.abs(financingCashFlow),
+          netCashFlow: operatingCashFlow + financingCashFlow,
+        };
+      });
 
       return {
         statements: processedData,
