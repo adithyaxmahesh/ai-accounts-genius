@@ -1,109 +1,104 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/components/AuthProvider";
 import { ProcessedDocument } from "../types";
-import { useDocumentProcessing } from "./useDocumentProcessing";
-import { useDocumentFetching } from "./useDocumentFetching";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const useDocumentUpload = () => {
-  const { toast } = useToast();
-  const { session } = useAuth();
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
-  
-  const { 
-    documents,
-    fetchDocuments,
-    setDocuments 
-  } = useDocumentFetching(session?.user.id);
-  
-  const {
-    processDocument,
-    processTaxDocument
-  } = useDocumentProcessing();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: documents = [] } = useQuery({
+    queryKey: ['documents'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from('processed_documents')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return data.map((doc: any) => ({
+        id: doc.id,
+        name: doc.original_filename,
+        status: doc.processing_status,
+        confidence: doc.confidence_score,
+        documentDate: doc.document_date,
+        uploadedAt: doc.created_at,
+        storage_path: doc.storage_path
+      }));
+    }
+  });
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       const file = event.target.files?.[0];
       if (!file) return;
 
-      if (file.size > 100 * 1024 * 1024) {
-        toast({
-          title: "File Too Large",
-          description: "Maximum file size is 100MB",
-          variant: "destructive",
-        });
-        return;
-      }
-
       setUploading(true);
-      const fileName = `${Math.random()}.${file.name.split(".").pop()}`;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user logged in');
+
+      // Upload file to storage
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}/${crypto.randomUUID()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
-        .from("documents")
-        .upload(fileName, file);
+        .from('documents')
+        .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      const { data: docRecord, error: dbError } = await supabase
+      // Create document record
+      const { data: doc, error: insertError } = await supabase
         .from('processed_documents')
         .insert({
-          user_id: session?.user.id,
+          user_id: user.id,
           original_filename: file.name,
-          storage_path: fileName,
-          processing_status: 'uploaded',
-          document_type: file.name.split(".").pop()
+          storage_path: filePath,
+          processing_status: 'Pending',
+          document_type: fileExt
         })
         .select()
         .single();
 
-      if (dbError) throw dbError;
-
-      const newDoc: ProcessedDocument = {
-        id: docRecord.id,
-        name: file.name,
-        status: "Uploaded",
-        confidence: 0,
-        uploadedAt: new Date().toISOString(),
-        type: file.name.split(".").pop() || 'unknown',
-        storage_path: fileName
-      };
-
-      setDocuments(prev => [newDoc, ...prev]);
-      
-      if (isTaxDocument(file.name)) {
-        await processTaxDocument(docRecord.id);
-      }
+      if (insertError) throw insertError;
 
       toast({
         title: "Upload Successful",
-        description: "Your document has been uploaded and is ready for analysis.",
+        description: "Document has been uploaded successfully.",
       });
 
+      // Refresh documents list
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+
     } catch (error) {
-      console.error("Upload error:", error);
+      console.error('Upload error:', error);
       toast({
         title: "Upload Failed",
-        description: error instanceof Error ? error.message : "There was an error uploading your document.",
+        description: error instanceof Error ? error.message : "Failed to upload document",
         variant: "destructive",
       });
     } finally {
       setUploading(false);
-      if (event.target) {
-        event.target.value = '';
-      }
+      if (event.target) event.target.value = '';
     }
   };
 
   const analyzeDocument = async (documentId: string) => {
     try {
       setProcessing(true);
-      
-      // Update document status to processing
+
+      // Update status to Processing
       await supabase
         .from('processed_documents')
-        .update({ processing_status: 'processing' })
+        .update({ processing_status: 'Processing' })
         .eq('id', documentId);
 
       // Call the analyze-document function
@@ -113,36 +108,34 @@ export const useDocumentUpload = () => {
 
       if (error) throw error;
 
-      // Refresh documents list
-      await fetchDocuments();
-      
-      toast({
-        title: "Analysis Complete",
-        description: "Document has been successfully analyzed.",
-      });
-
-      return data;
-    } catch (error) {
-      console.error("Analysis error:", error);
-      
-      // Update document status to error
+      // Update document with analysis results
       await supabase
         .from('processed_documents')
-        .update({ 
-          processing_status: 'error',
-          extracted_data: {
-            error: error instanceof Error ? error.message : 'Unknown error occurred'
-          }
+        .update({
+          processing_status: 'Analyzed',
+          confidence_score: data.confidence_score || 0,
+          extracted_data: data.extracted_data || {},
+          document_date: data.document_date || null
         })
         .eq('id', documentId);
 
+      // Refresh documents list
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+
+    } catch (error) {
+      console.error('Analysis error:', error);
       toast({
         title: "Analysis Failed",
-        description: error instanceof Error ? error.message : "Failed to analyze document. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to analyze document",
         variant: "destructive",
       });
-      
-      throw error;
+
+      // Reset status on error
+      await supabase
+        .from('processed_documents')
+        .update({ processing_status: 'Pending' })
+        .eq('id', documentId);
+
     } finally {
       setProcessing(false);
     }
@@ -150,44 +143,40 @@ export const useDocumentUpload = () => {
 
   const handleDeleteDocument = async (documentId: string) => {
     try {
-      const documentToDelete = documents.find(doc => doc.id === documentId);
-      if (!documentToDelete) return;
+      const doc = documents.find(d => d.id === documentId);
+      if (!doc) return;
 
-      // Delete from storage
+      // Delete file from storage
       const { error: storageError } = await supabase.storage
-        .from("documents")
-        .remove([documentToDelete.storage_path]);
+        .from('documents')
+        .remove([doc.storage_path]);
 
       if (storageError) throw storageError;
 
-      // Delete from database
-      const { error: dbError } = await supabase
+      // Delete document record
+      const { error: deleteError } = await supabase
         .from('processed_documents')
         .delete()
         .eq('id', documentId);
 
-      if (dbError) throw dbError;
-
-      setDocuments(prev => prev.filter(doc => doc.id !== documentId));
+      if (deleteError) throw deleteError;
 
       toast({
         title: "Document Deleted",
-        description: "Document has been successfully deleted.",
+        description: "Document has been deleted successfully.",
       });
+
+      // Refresh documents list
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+
     } catch (error) {
-      console.error("Delete error:", error);
+      console.error('Delete error:', error);
       toast({
         title: "Delete Failed",
-        description: "Failed to delete document. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to delete document",
         variant: "destructive",
       });
     }
-  };
-
-  const isTaxDocument = (fileName: string): boolean => {
-    const taxDocPatterns = ['w2', '1099', 'tax', 'return', 'schedule'];
-    const lowerFileName = fileName.toLowerCase();
-    return taxDocPatterns.some(pattern => lowerFileName.includes(pattern));
   };
 
   return {

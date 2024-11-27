@@ -1,102 +1,206 @@
-import { Card } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Brain, Trash2, FileText } from "lucide-react";
-import { ProcessedDocument } from "@/components/types";
-import { cn } from "@/lib/utils";
+import { FileText, Image, FileSpreadsheet, Brain, Download, Receipt } from "lucide-react";
+import { ProcessedDocument } from "../types";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
+import { useReceiptAnalysis } from "./useReceiptAnalysis";
 
 interface DocumentListProps {
   documents: ProcessedDocument[];
   processing: boolean;
-  onAnalyze: (documentId: string) => void;
+  onAnalyze: (documentId: string) => Promise<void>;
   onDelete: (documentId: string) => void;
 }
 
 export const DocumentList = ({ documents, processing, onAnalyze, onDelete }: DocumentListProps) => {
-  if (!documents.length) {
-    return (
-      <div className="text-center text-muted-foreground">
-        No documents uploaded yet
-      </div>
-    );
-  }
+  const { toast } = useToast();
+  const { analyzing, analyzeReceipt } = useReceiptAnalysis();
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString();
+  // Sort documents by document date if available, otherwise by upload date
+  const sortedDocuments = [...documents].sort((a, b) => {
+    const dateA = a.documentDate ? new Date(a.documentDate) : new Date(a.uploadedAt);
+    const dateB = b.documentDate ? new Date(b.documentDate) : new Date(b.uploadedAt);
+    return dateB.getTime() - dateA.getTime();
+  });
+
+  const getFileIcon = (fileName: string) => {
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    switch (ext) {
+      case 'csv':
+      case 'xls':
+      case 'xlsx':
+        return <FileSpreadsheet className="h-4 w-4 mr-2 text-green-500" />;
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+        return <Image className="h-4 w-4 mr-2 text-blue-500" />;
+      default:
+        return <FileText className="h-4 w-4 mr-2 text-muted-foreground" />;
+    }
+  };
+
+  const isImageFile = (fileName: string) => {
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif'].includes(ext || '');
+  };
+
+  const handleDownload = async (doc: ProcessedDocument) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .download(doc.storage_path);
+
+      if (error) throw error;
+
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = doc.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download error:", error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download the document",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAnalyzeDocument = async (documentId: string) => {
+    try {
+      await onAnalyze(documentId);
+      toast({
+        title: "Analysis Complete",
+        description: "Document has been analyzed successfully",
+      });
+    } catch (error) {
+      console.error("Analysis error:", error);
+      toast({
+        title: "Analysis Failed",
+        description: "Failed to analyze document. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAnalyzeReceipt = async (doc: ProcessedDocument) => {
+    if (!isImageFile(doc.name)) {
+      toast({
+        title: "Invalid File Type",
+        description: "Only image files can be analyzed as receipts",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await analyzeReceipt(doc.id);
+      toast({
+        title: "Receipt Analysis Complete",
+        description: "Receipt has been analyzed successfully",
+      });
+    } catch (error) {
+      console.error("Receipt analysis error:", error);
+      toast({
+        title: "Analysis Failed",
+        description: "Failed to analyze receipt. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getStatusBadgeClass = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'analyzed':
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100';
+      case 'processing':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100';
+      default:
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100';
+    }
   };
 
   return (
-    <ScrollArea className="h-[300px]">
-      <div className="space-y-4">
-        {documents.map((doc) => (
-          <Card key={doc.id} className="p-4">
-            <div className="flex justify-between items-start">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  <p className="font-medium">{doc.name}</p>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Uploaded on {formatDate(doc.uploadedAt)}
-                </p>
-                
-                {/* Display detected write-offs if available */}
-                {doc.extracted_data?.writeOffs && doc.extracted_data.writeOffs.length > 0 && (
-                  <div className="mt-4 space-y-2">
-                    <p className="text-sm font-medium">Recent Write-offs:</p>
-                    {doc.extracted_data.writeOffs.map((writeOff: any, index: number) => (
-                      <div 
-                        key={index}
-                        className="text-sm p-3 bg-muted/50 rounded-md flex justify-between items-start"
-                      >
-                        <div className="space-y-1">
-                          <div className="font-medium">{writeOff.description}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {writeOff.category} - {writeOff.taxCodeId || "Pending Tax Code"}
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-end">
-                          <span className="font-medium">${writeOff.amount.toLocaleString()}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {formatDate(doc.uploadedAt)}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {writeOff.status || "Pending"}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+    <div className="overflow-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Document Name</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Confidence</TableHead>
+            <TableHead>Document Date</TableHead>
+            <TableHead>Upload Date</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {sortedDocuments.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center text-muted-foreground">
+                No documents uploaded yet
+              </TableCell>
+            </TableRow>
+          ) : (
+            sortedDocuments.map((doc) => (
+              <TableRow key={doc.id}>
+                <TableCell className="font-medium">
+                  <div className="flex items-center">
+                    {getFileIcon(doc.name)}
+                    {doc.name}
                   </div>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onAnalyze(doc.id)}
-                  disabled={processing || doc.status === 'analyzed'}
-                  className={cn(
-                    "hover-scale",
-                    doc.status === 'analyzed' && "bg-green-50 text-green-600 hover:bg-green-50"
-                  )}
-                >
-                  <Brain className="h-4 w-4 mr-1" />
-                  {doc.status === 'analyzed' ? 'Analyzed' : 'Analyze'}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onDelete(doc.id)}
-                  className="hover-scale text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-    </ScrollArea>
+                </TableCell>
+                <TableCell>
+                  <span className={`px-2 py-1 rounded-full text-sm ${getStatusBadgeClass(doc.status)}`}>
+                    {doc.status || 'Pending'}
+                  </span>
+                </TableCell>
+                <TableCell>{doc.confidence ? `${doc.confidence}%` : 'N/A'}</TableCell>
+                <TableCell>
+                  {doc.documentDate ? new Date(doc.documentDate).toLocaleDateString() : 'N/A'}
+                </TableCell>
+                <TableCell>
+                  {new Date(doc.uploadedAt).toLocaleDateString()}
+                </TableCell>
+                <TableCell>
+                  <div className="flex space-x-2">
+                    {isImageFile(doc.name) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleAnalyzeReceipt(doc)}
+                        disabled={analyzing || doc.status === 'Processing'}
+                      >
+                        <Receipt className={`h-4 w-4 ${analyzing ? 'animate-pulse' : ''}`} />
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleAnalyzeDocument(doc.id)}
+                      disabled={processing || doc.status?.toLowerCase() === 'analyzed' || doc.status === 'Processing'}
+                    >
+                      <Brain className={`h-4 w-4 ${processing ? 'animate-pulse' : ''}`} />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownload(doc)}
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
