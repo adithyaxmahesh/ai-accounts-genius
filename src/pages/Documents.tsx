@@ -10,11 +10,12 @@ import { useDocumentUpload } from "@/components/document-management/useDocumentU
 import { startOfYear, endOfYear, startOfQuarter, endOfQuarter } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { ProcessedDocument } from "@/components/types";
 
 const Documents = () => {
   const navigate = useNavigate();
   const { documents, handleFileUpload } = useDocumentUpload();
-  const [filteredDocuments, setFilteredDocuments] = useState(documents);
+  const [filteredDocuments, setFilteredDocuments] = useState<ProcessedDocument[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -50,14 +51,15 @@ const Documents = () => {
 
       if (error) throw error;
 
-      const formattedDocs = data.map(doc => ({
+      const formattedDocs: ProcessedDocument[] = data.map(doc => ({
         id: doc.id,
         name: doc.original_filename,
         status: doc.processing_status,
         confidence: doc.confidence_score || 0,
         uploadedAt: doc.created_at,
-        type: doc.document_type || 'unknown',
-        storage_path: doc.storage_path
+        type: doc.document_type,
+        storage_path: doc.storage_path,
+        documentDate: doc.document_date
       }));
 
       setFilteredDocuments(formattedDocs);

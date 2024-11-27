@@ -5,7 +5,7 @@ export interface ProcessedDocument {
   confidence: number;
   uploadedAt: string;
   documentDate?: string;
-  type: string;
+  type?: string;
   storage_path: string;
   extracted_data?: {
     writeOffs?: Array<{
