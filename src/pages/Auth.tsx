@@ -56,7 +56,8 @@ const Auth = () => {
                 border: '2px solid transparent',
                 transform: 'none',
                 transition: 'transform 0.2s ease',
-                '&:hover': {
+                transform: 'translateY(0)',
+                ":hover": {
                   transform: 'translateY(-1px)'
                 }
               }
