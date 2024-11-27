@@ -17,7 +17,9 @@ export const calculateExpenseCategories = (writeOffs: WriteOff[]) => {
     const category = writeOff.tax_codes?.expense_category || 'Other';
     console.log('Processing write-off:', writeOff.description, 'Category:', category); // Debug log
     
-    acc[category] = (acc[category] || 0) + Number(writeOff.amount);
+    // Ensure we're using absolute values for expenses
+    const amount = Math.abs(Number(writeOff.amount));
+    acc[category] = (acc[category] || 0) + amount;
     return acc;
   }, {} as Record<string, number>);
 };
