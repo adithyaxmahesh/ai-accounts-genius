@@ -10,7 +10,7 @@ const Landing = () => {
       <header className="px-4 lg:px-6 h-14 flex items-center">
         <div className="flex items-center justify-center">
           <ShieldCheck className="h-6 w-6 text-primary" />
-          <span className="ml-2 text-2xl font-bold text-white">Tax Assistant</span>
+          <span className="ml-2 text-2xl font-bold text-white">DevAudit</span>
         </div>
         <nav className="ml-auto flex gap-4 sm:gap-6">
           <Button 
@@ -28,7 +28,7 @@ const Landing = () => {
             <div className="flex flex-col items-center space-y-4 text-center">
               <div className="space-y-2">
                 <h1 className="text-3xl font-bold tracking-tighter text-white sm:text-4xl md:text-5xl lg:text-6xl/none">
-                  Simplify Your Tax Management
+                  Simplify Your Development Audit Process
                 </h1>
                 <p className="mx-auto max-w-[700px] text-gray-400 md:text-xl">
                   Streamline your tax processes with AI-powered insights and professional tools.
