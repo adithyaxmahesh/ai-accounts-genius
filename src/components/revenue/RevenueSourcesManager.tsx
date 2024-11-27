@@ -1,9 +1,9 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Building2, CreditCard, Landmark } from "lucide-react";
 import { ShopifyConnect } from "@/components/shopify/ShopifyConnect";
-import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,7 @@ export const RevenueSourcesManager = () => {
     accountNumber: "",
     routingNumber: "",
   });
+  const [isConnectingStripe, setIsConnectingStripe] = useState(false);
 
   const handleBankConnect = async () => {
     try {
@@ -49,15 +50,30 @@ export const RevenueSourcesManager = () => {
 
   const handleStripeConnect = async () => {
     try {
-      // Redirect to Stripe OAuth flow
-      window.location.href = `https://connect.stripe.com/oauth/authorize?response_type=code&client_id=${import.meta.env.VITE_STRIPE_CLIENT_ID}&scope=read_write&redirect_uri=${window.location.origin}/stripe-callback`;
-    } catch (error) {
+      setIsConnectingStripe(true);
+      const { data, error } = await supabase.functions.invoke('stripe-integration', {
+        body: { 
+          userId: session?.user.id,
+          action: 'create-connect-account'
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No Stripe Connect URL received');
+      }
+    } catch (error: any) {
       console.error('Error connecting Stripe:', error);
       toast({
         title: "Error",
-        description: "Failed to connect Stripe account. Please try again.",
+        description: error.message || "Failed to connect Stripe account. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsConnectingStripe(false);
     }
   };
 
@@ -132,8 +148,12 @@ export const RevenueSourcesManager = () => {
           <p className="text-sm text-muted-foreground mb-4">
             Connect your Stripe account to sync payment data.
           </p>
-          <Button onClick={handleStripeConnect} className="w-full">
-            Connect Stripe
+          <Button 
+            onClick={handleStripeConnect} 
+            disabled={isConnectingStripe}
+            className="w-full"
+          >
+            {isConnectingStripe ? "Connecting..." : "Connect Stripe"}
           </Button>
         </Card>
       </div>
