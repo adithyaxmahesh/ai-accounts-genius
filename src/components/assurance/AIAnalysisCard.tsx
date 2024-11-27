@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { FileCheck, AlertTriangle, AlertCircle, CheckCircle2 } from "lucide-react";
+import { FileCheck, AlertTriangle, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -64,8 +64,8 @@ export const AIAnalysisCard = ({ engagements, onRefetch }: AIAnalysisCardProps) 
     }
 
     return (
-      <div className="space-y-2">
-        <div className="flex gap-2">
+      <div className="space-y-4">
+        <div className="flex flex-wrap gap-2">
           <Badge variant={
             analysis.risk_score > 0.7 ? "destructive" : 
             analysis.risk_score > 0.4 ? "warning" : 
@@ -79,21 +79,21 @@ export const AIAnalysisCard = ({ engagements, onRefetch }: AIAnalysisCardProps) 
         </div>
         
         {analysis.findings?.length > 0 && (
-          <div className="space-y-2">
+          <div className="space-y-2 bg-muted/30 p-4 rounded-lg">
             <h5 className="text-sm font-medium flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-yellow-500" />
               Key Findings
             </h5>
-            <ul className="space-y-1">
+            <ul className="space-y-2">
               {analysis.findings.map((finding: any, idx: number) => (
-                <li key={idx} className="text-sm flex items-start gap-2">
+                <li key={idx} className="text-sm flex items-start gap-2 bg-background/50 p-2 rounded">
                   <span className={cn(
-                    "mt-1 h-2 w-2 rounded-full",
+                    "mt-1.5 h-2 w-2 shrink-0 rounded-full",
                     finding.severity === 'high' ? 'bg-red-500' :
                     finding.severity === 'medium' ? 'bg-yellow-500' :
                     'bg-green-500'
                   )} />
-                  {finding.description}
+                  <span className="flex-1">{finding.description}</span>
                 </li>
               ))}
             </ul>
@@ -101,21 +101,21 @@ export const AIAnalysisCard = ({ engagements, onRefetch }: AIAnalysisCardProps) 
         )}
         
         {analysis.recommendations?.length > 0 && (
-          <div className="space-y-2">
+          <div className="space-y-2 bg-muted/30 p-4 rounded-lg">
             <h5 className="text-sm font-medium flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-green-500" />
               Recommendations
             </h5>
-            <ul className="space-y-1">
+            <ul className="space-y-2">
               {analysis.recommendations.map((rec: any, idx: number) => (
-                <li key={idx} className="text-sm flex items-start gap-2">
+                <li key={idx} className="text-sm flex items-start gap-2 bg-background/50 p-2 rounded">
                   <span className={cn(
-                    "mt-1 h-2 w-2 rounded-full",
+                    "mt-1.5 h-2 w-2 shrink-0 rounded-full",
                     rec.priority === 'high' ? 'bg-red-500' :
                     rec.priority === 'medium' ? 'bg-yellow-500' :
                     'bg-green-500'
                   )} />
-                  {rec.description}
+                  <span className="flex-1">{rec.description}</span>
                 </li>
               ))}
             </ul>
@@ -154,7 +154,14 @@ export const AIAnalysisCard = ({ engagements, onRefetch }: AIAnalysisCardProps) 
                 onClick={() => runAnalysis.mutate(engagement.id)}
                 disabled={runAnalysis.isPending}
               >
-                {runAnalysis.isPending ? "Analyzing..." : "Run Analysis"}
+                {runAnalysis.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  "Run Analysis"
+                )}
               </Button>
             </div>
             

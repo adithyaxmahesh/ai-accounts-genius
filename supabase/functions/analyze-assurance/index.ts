@@ -12,7 +12,6 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -22,48 +21,49 @@ serve(async (req) => {
     const { engagementId } = await req.json();
     
     if (!engagementId) {
-      console.error('Missing engagementId');
       throw new Error('Engagement ID is required');
     }
 
-    console.log('Processing assurance analysis for engagement:', engagementId);
-    
     const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
 
-    // Fetch engagement data
+    // Fetch engagement data with detailed information
     const { data: engagement, error: engagementError } = await supabase
       .from('assurance_engagements')
-      .select('*, client_name, engagement_type, risk_assessment, findings')
+      .select(`
+        *,
+        assurance_procedures(*),
+        assurance_evidence(*)
+      `)
       .eq('id', engagementId)
       .single();
 
-    if (engagementError) {
-      console.error('Error fetching engagement:', engagementError);
-      throw engagementError;
-    }
-
-    console.log('Fetched engagement data:', engagement);
-
-    // Fetch procedures
-    const { data: procedures, error: proceduresError } = await supabase
-      .from('assurance_procedures')
-      .select('*')
-      .eq('engagement_id', engagementId);
-
-    if (proceduresError) {
-      console.error('Error fetching procedures:', proceduresError);
-      throw proceduresError;
-    }
-
-    console.log('Fetched procedures:', procedures);
+    if (engagementError) throw engagementError;
 
     if (!openAIApiKey) {
-      console.error('OpenAI API key not found');
       throw new Error('OpenAI API key not configured');
     }
 
-    // Analyze with GPT-4
-    console.log('Sending request to OpenAI');
+    // Enhanced prompt for better analysis
+    const analysisPrompt = `
+      As an expert auditor and risk analyst, analyze this assurance engagement:
+      
+      Client: ${engagement.client_name}
+      Type: ${engagement.engagement_type}
+      Risk Assessment: ${JSON.stringify(engagement.risk_assessment)}
+      
+      Procedures Performed: ${JSON.stringify(engagement.assurance_procedures)}
+      Evidence Collected: ${JSON.stringify(engagement.assurance_evidence)}
+      
+      Please provide:
+      1. A detailed risk assessment with specific areas of concern
+      2. Analysis of control effectiveness
+      3. Concrete recommendations for improvement
+      4. Compliance considerations
+      5. Quality of evidence assessment
+      
+      Format the response to include specific findings and actionable recommendations.
+    `;
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -75,16 +75,11 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are an AI auditor analyzing assurance procedures and evidence. Provide detailed analysis including risk assessment, evidence validation, and recommendations.'
+            content: 'You are an expert AI auditor analyzing assurance engagements. Provide detailed, actionable insights.'
           },
           {
             role: 'user',
-            content: `Analyze this assurance engagement:\n${JSON.stringify({
-              clientName: engagement.client_name,
-              type: engagement.engagement_type,
-              riskAssessment: engagement.risk_assessment,
-              procedures: procedures
-            }, null, 2)}`
+            content: analysisPrompt
           }
         ],
       }),
@@ -92,47 +87,31 @@ serve(async (req) => {
 
     if (!response.ok) {
       const error = await response.json();
-      console.error('OpenAI API error:', error);
       throw new Error(`OpenAI API error: ${error.error?.message || 'Unknown error'}`);
     }
 
     const aiResponse = await response.json();
-    console.log('Received OpenAI response:', aiResponse);
     const analysis = aiResponse.choices[0].message.content;
-
-    // Process the AI response
-    const riskScore = Math.random(); // Simplified for example
-    const confidenceScore = Math.random();
-    const findings = [{
-      description: "Sample finding from analysis",
-      severity: "medium"
-    }];
-    const recommendations = [{
-      description: "Sample recommendation from analysis",
-      priority: "high"
-    }];
-
+    
+    // Process the AI response into structured data
+    const processedAnalysis = processAIResponse(analysis);
+    
     // Store analysis results
     const { data, error } = await supabase
       .from('ai_assurance_analysis')
       .insert({
         engagement_id: engagementId,
         analysis_type: 'comprehensive',
-        risk_score: riskScore,
-        confidence_score: confidenceScore,
-        findings,
-        recommendations,
-        user_id: engagement.user_id // Important: Add user_id for RLS
+        risk_score: processedAnalysis.riskScore,
+        confidence_score: processedAnalysis.confidenceScore,
+        findings: processedAnalysis.findings,
+        recommendations: processedAnalysis.recommendations,
+        user_id: engagement.user_id
       })
       .select()
       .single();
 
-    if (error) {
-      console.error('Error storing analysis:', error);
-      throw error;
-    }
-
-    console.log('Successfully stored analysis:', data);
+    if (error) throw error;
 
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -151,3 +130,56 @@ serve(async (req) => {
     );
   }
 });
+
+function processAIResponse(analysisText: string) {
+  // Extract key sections from the AI response
+  const findingsMatch = analysisText.match(/(?:Key Findings|Areas of Concern):(.*?)(?=Recommendations|$)/s);
+  const recommendationsMatch = analysisText.match(/Recommendations:(.*?)(?=\n\n|$)/s);
+  
+  // Calculate risk score based on the content
+  const riskIndicators = [
+    'high risk', 'significant concern', 'critical', 'major issue',
+    'severe', 'urgent', 'immediate attention'
+  ];
+  
+  let riskScore = 0.5; // Default medium risk
+  let confidenceScore = 0.8; // Default high confidence
+  
+  // Adjust risk score based on content
+  const lowerContent = analysisText.toLowerCase();
+  riskIndicators.forEach(indicator => {
+    if (lowerContent.includes(indicator.toLowerCase())) {
+      riskScore += 0.1;
+    }
+  });
+  
+  // Cap risk score between 0 and 1
+  riskScore = Math.min(Math.max(riskScore, 0), 1);
+  
+  // Process findings
+  const findings = findingsMatch ? findingsMatch[1]
+    .split(/\n/)
+    .filter(f => f.trim())
+    .map(finding => ({
+      description: finding.replace(/^[-•*]\s*/, '').trim(),
+      severity: finding.toLowerCase().includes('high') ? 'high' :
+               finding.toLowerCase().includes('medium') ? 'medium' : 'low'
+    })) : [];
+    
+  // Process recommendations
+  const recommendations = recommendationsMatch ? recommendationsMatch[1]
+    .split(/\n/)
+    .filter(r => r.trim())
+    .map(recommendation => ({
+      description: recommendation.replace(/^[-•*]\s*/, '').trim(),
+      priority: recommendation.toLowerCase().includes('urgent') ? 'high' :
+                recommendation.toLowerCase().includes('should') ? 'medium' : 'low'
+    })) : [];
+
+  return {
+    riskScore,
+    confidenceScore,
+    findings,
+    recommendations
+  };
+}
