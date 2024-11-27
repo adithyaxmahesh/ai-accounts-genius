@@ -32,20 +32,20 @@ export const FinancialMetrics = () => {
 
       <Card 
         className="relative overflow-hidden bg-[#1A1F2C]/80 backdrop-blur-lg border border-white/10 p-6 hover:scale-105 transition-transform duration-200 cursor-pointer group"
-        onClick={() => navigate('/balance-sheet')}
+        onClick={() => navigate('/expenses')}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-transparent" />
         <div className="relative z-10">
-          <PiggyBank className="h-8 w-8 mb-4 text-blue-500" />
+          <Receipt className="h-8 w-8 mb-4 text-red-500" />
           <div className="space-y-1">
-            <p className="text-sm text-blue-500 font-medium">Cash Balance</p>
+            <p className="text-sm text-red-500 font-medium">Expenses</p>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-bold text-white">
-                ${metrics?.cashBalance.toLocaleString()}
+                ${metrics?.totalExpenses?.toLocaleString() || '0'}
               </span>
             </div>
-            <p className="text-sm text-blue-500">
-              Available funds
+            <p className="text-sm text-red-500">
+              {metrics?.totalExpenses ? `${((metrics.totalExpenses / metrics.totalRevenue) * 100).toFixed(1)}% of revenue` : 'No expenses recorded'}
             </p>
           </div>
         </div>
@@ -74,20 +74,20 @@ export const FinancialMetrics = () => {
 
       <Card 
         className="relative overflow-hidden bg-[#1A1F2C]/80 backdrop-blur-lg border border-white/10 p-6 hover:scale-105 transition-transform duration-200 cursor-pointer group"
-        onClick={() => navigate('/expenses')}
+        onClick={() => navigate('/balance-sheet')}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent" />
         <div className="relative z-10">
-          <Receipt className="h-8 w-8 mb-4 text-red-500" />
+          <PiggyBank className="h-8 w-8 mb-4 text-blue-500" />
           <div className="space-y-1">
-            <p className="text-sm text-red-500 font-medium">Expenses</p>
+            <p className="text-sm text-blue-500 font-medium">Cash Balance</p>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-bold text-white">
-                ${metrics?.totalExpenses?.toLocaleString() || '0'}
+                ${metrics?.cashBalance.toLocaleString()}
               </span>
             </div>
-            <p className="text-sm text-red-500">
-              {metrics?.totalExpenses ? `${((metrics.totalExpenses / metrics.totalRevenue) * 100).toFixed(1)}% of revenue` : 'No expenses recorded'}
+            <p className="text-sm text-blue-500">
+              Available funds
             </p>
           </div>
         </div>

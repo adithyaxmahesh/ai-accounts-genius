@@ -9,11 +9,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Brain, DollarSign, Calculator } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
+import { useFinancialData } from "@/hooks/useFinancialData";
 
 export const SmartBudgetPlanner = () => {
   const { session } = useAuth();
   const { toast } = useToast();
   const [selectedTab, setSelectedTab] = useState("ai");
+  const { data: financialData } = useFinancialData();
   const [manualBudget, setManualBudget] = useState({
     payroll: "",
     rentAndUtilities: "",
@@ -33,33 +35,10 @@ export const SmartBudgetPlanner = () => {
   const { data: cashData } = useQuery({
     queryKey: ['available-cash', session?.user.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('balance_sheet_items')
-        .select('*')
-        .eq('user_id', session?.user.id)
-        .eq('category', 'current-assets');
-      
-      if (error) throw error;
-      return data?.reduce((sum, item) => sum + Number(item.amount), 0) || 0;
+      // This will trigger the bank balance sync through useFinancialData
+      return financialData?.cashBalance || 0;
     },
-    enabled: !!session?.user.id,
-  });
-
-  // Query AI recommendations
-  const { data: aiRecommendations, refetch: refetchRecommendations } = useQuery({
-    queryKey: ['budget-recommendations', session?.user.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('ai_budget_recommendations')
-        .select('*')
-        .eq('user_id', session?.user.id)
-        .order('created_at', { ascending: false })
-        .limit(1);
-      
-      if (error) throw error;
-      return data?.[0];
-    },
-    enabled: !!session?.user.id,
+    enabled: !!session?.user.id && !!financialData,
   });
 
   const generateAIRecommendations = async () => {
