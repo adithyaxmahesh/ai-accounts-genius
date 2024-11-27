@@ -1,22 +1,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@11.1.0?target=deno'
-
-const stripeKey = Deno.env.get('STRIPE_API_KEY');
-if (!stripeKey) {
-  console.error('STRIPE_API_KEY is not set in environment variables');
-  throw new Error('STRIPE_API_KEY is required');
-}
-
-const stripe = new Stripe(stripeKey, {
-  apiVersion: '2022-11-15',
-  httpClient: Stripe.createFetchHttpClient(),
-})
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+const stripe = new Stripe(Deno.env.get('STRIPE_API_KEY') ?? '', {
+  apiVersion: '2022-11-15',
+  httpClient: Stripe.createFetchHttpClient(),
+})
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -27,70 +20,56 @@ serve(async (req) => {
   try {
     const { userId, action } = await req.json()
     console.log('Received request:', { userId, action })
-    
+
     if (!userId) {
-      console.error('No user ID provided')
-      return new Response(
-        JSON.stringify({ error: 'User ID is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      throw new Error('User ID is required')
     }
 
     if (action === 'create-connect-account') {
-      console.log('Creating Stripe Connect account for user:', userId)
+      console.log('Creating Stripe Connect account...')
       
-      try {
-        // Create a Stripe Connect account
-        const account = await stripe.accounts.create({
-          type: 'standard',
-          metadata: {
-            supabaseUserId: userId,
-          },
-        })
-        console.log('Created Stripe account:', account.id)
+      // Create a Stripe Connect account
+      const account = await stripe.accounts.create({
+        type: 'standard',
+        metadata: {
+          supabaseUserId: userId,
+        },
+      })
+      console.log('Created Stripe account:', account.id)
 
-        // Create an account link for onboarding
-        const accountLink = await stripe.accountLinks.create({
-          account: account.id,
-          refresh_url: `${req.headers.get('origin')}/revenue`,
-          return_url: `${req.headers.get('origin')}/revenue`,
-          type: 'account_onboarding',
-        })
-        console.log('Created account link')
+      // Create account link
+      const accountLink = await stripe.accountLinks.create({
+        account: account.id,
+        refresh_url: `${req.headers.get('origin')}/revenue`,
+        return_url: `${req.headers.get('origin')}/revenue`,
+        type: 'account_onboarding',
+      })
+      console.log('Created account link:', accountLink.url)
 
-        return new Response(
-          JSON.stringify({ url: accountLink.url }),
-          { 
-            status: 200, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        )
-      } catch (stripeError) {
-        console.error('Stripe API error:', stripeError)
-        return new Response(
-          JSON.stringify({ error: 'Failed to create Stripe account', details: stripeError.message }),
-          { 
-            status: 500, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        )
-      }
+      return new Response(
+        JSON.stringify({ url: accountLink.url }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200 
+        }
+      )
     }
 
     return new Response(
-      JSON.stringify({ error: 'Invalid action' }),
+      JSON.stringify({ error: 'Invalid action' }), 
       { 
-        status: 400, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400 
       }
     )
+
   } catch (error) {
     console.error('Error in stripe-integration:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error.message }), 
       { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400
       }
     )
   }
