@@ -51,16 +51,16 @@ const Auth = () => {
                 border: '2px solid',
                 borderColor: '#9b87f5',
                 color: 'white',
-                '&:focus': {
+                ':focus': {
                   borderColor: '#7E69AB',
                 },
-                '&:hover': {
+                ':hover': {
                   borderColor: '#6E59A5',
                 },
               },
               button: {
                 border: '2px solid transparent',
-                '&:hover': {
+                ':hover': {
                   transform: 'translateY(-1px)',
                 },
               },
