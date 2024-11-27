@@ -9,6 +9,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -54,9 +55,9 @@ serve(async (req) => {
             role: 'system',
             content: `You are a knowledgeable tax assistant. Provide accurate, helpful tax advice based on the user's context. 
             Available context: 
-            - Write-offs: ${JSON.stringify(context.writeOffs)}
-            - Revenue Records: ${JSON.stringify(context.revenueRecords)}
-            - Tax Analysis: ${JSON.stringify(context.taxAnalysis)}`
+            - Write-offs: ${JSON.stringify(context?.writeOffs)}
+            - Revenue Records: ${JSON.stringify(context?.revenueRecords)}
+            - Tax Analysis: ${JSON.stringify(context?.taxAnalysis)}`
           },
           {
             role: 'user',
@@ -91,7 +92,9 @@ serve(async (req) => {
         }
       });
 
-    if (chatError) throw chatError;
+    if (chatError) {
+      console.error('Error saving chat:', chatError);
+    }
 
     // Create a notification for the user
     await supabase
@@ -110,21 +113,24 @@ serve(async (req) => {
                  answer.includes('planning') ? 'Planning' :
                  'General'
       }),
-      { headers: corsHeaders }
+      { 
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        } 
+      }
     );
   } catch (error) {
     console.error('Error in tax-chat function:', error);
-    let errorMessage = 'Failed to process your question.';
     
-    if (error.message?.includes('Rate limit')) {
-      errorMessage = 'You have reached the rate limit for chat requests. Please try again later.';
-    } else if (error.message?.includes('insufficient_quota')) {
-      errorMessage = 'The monthly API quota has been reached. Please try again next month.';
-    }
-
     return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { headers: corsHeaders, status: 500 }
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'An unknown error occurred'
+      }),
+      { 
+        headers: corsHeaders,
+        status: 500
+      }
     );
   }
 });
