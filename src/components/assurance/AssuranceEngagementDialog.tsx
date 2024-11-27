@@ -71,20 +71,20 @@ export const AssuranceEngagementDialog = ({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>New Assurance Engagement</DialogTitle>
+          <DialogTitle>New Internal Assurance Engagement</DialogTitle>
           <DialogDescription>
-            Create a new assurance engagement for your client. This will start the assurance process including planning, evidence gathering, evaluation, and reporting phases.
+            Create a new internal assurance engagement for your organization. This will start the assurance process including planning, evidence gathering, evaluation, and reporting phases.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium">Client Name</label>
+            <label className="text-sm font-medium">Department/Division</label>
             <Input
               value={formData.clientName}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, clientName: e.target.value }))
               }
-              placeholder="Enter the client organization name"
+              placeholder="Enter the department or division name"
             />
           </div>
 
@@ -100,12 +100,12 @@ export const AssuranceEngagementDialog = ({
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="financial_audit">Financial Statement Audit</SelectItem>
-                <SelectItem value="compliance">Compliance Review</SelectItem>
                 <SelectItem value="internal_control">Internal Control Review</SelectItem>
-                <SelectItem value="performance">Performance Assessment</SelectItem>
                 <SelectItem value="operational">Operational Review</SelectItem>
-                <SelectItem value="sustainability">Sustainability Assurance</SelectItem>
+                <SelectItem value="compliance">Compliance Review</SelectItem>
+                <SelectItem value="performance">Performance Assessment</SelectItem>
+                <SelectItem value="process">Process Evaluation</SelectItem>
+                <SelectItem value="risk">Risk Assessment</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -128,7 +128,7 @@ export const AssuranceEngagementDialog = ({
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, objective: e.target.value }))
               }
-              placeholder="Define the purpose and objectives of this assurance engagement"
+              placeholder="Define the purpose and objectives of this internal assurance engagement"
             />
           </div>
 
@@ -139,7 +139,7 @@ export const AssuranceEngagementDialog = ({
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, scope: e.target.value }))
               }
-              placeholder="Define the boundaries and scope of the assurance engagement"
+              placeholder="Define the boundaries and scope of the internal assurance review"
             />
           </div>
 
