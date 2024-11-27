@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { getEngagementAnalysisPrompt } from '../../../src/components/assurance/utils.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,14 +18,68 @@ serve(async (req) => {
   }
 
   try {
-    const { engagementId, procedureId, evidenceData, documentText } = await req.json();
+    const { engagementId, procedureId } = await req.json();
     console.log('Processing assurance analysis for engagement:', engagementId);
     
     const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
 
+    // Fetch comprehensive engagement data
+    const [
+      { data: engagement },
+      { data: procedures },
+      { data: evidence },
+      { data: previousAnalysis }
+    ] = await Promise.all([
+      supabase
+        .from('assurance_engagements')
+        .select('*, client_name, engagement_type, risk_assessment, findings')
+        .eq('id', engagementId)
+        .single(),
+      supabase
+        .from('assurance_procedures')
+        .select('*')
+        .eq('engagement_id', engagementId),
+      supabase
+        .from('assurance_evidence')
+        .select('*')
+        .eq('engagement_id', engagementId),
+      supabase
+        .from('ai_assurance_analysis')
+        .select('*')
+        .eq('engagement_id', engagementId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+    ]);
+
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
+
+    // Prepare comprehensive context for AI analysis
+    const analysisContext = {
+      engagement: {
+        clientName: engagement.client_name,
+        type: engagement.engagement_type,
+        riskAssessment: engagement.risk_assessment,
+        existingFindings: engagement.findings
+      },
+      procedures: procedures?.map(p => ({
+        type: p.procedure_type,
+        description: p.description,
+        status: p.status,
+        results: p.results
+      })),
+      evidence: evidence?.map(e => ({
+        type: e.evidence_type,
+        description: e.description,
+        reliability: e.reliability_score,
+        metadata: e.metadata
+      })),
+      historicalAnalysis: previousAnalysis?.[0]
+    };
+
+    // Get specific prompt based on engagement type
+    const typeSpecificPrompt = getEngagementAnalysisPrompt(engagement.engagement_type);
 
     // Analyze with GPT-4
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -42,7 +97,7 @@ serve(async (req) => {
           },
           {
             role: 'user',
-            content: `Analyze this assurance data:\nEvidence: ${JSON.stringify(evidenceData)}\nDocument Text: ${documentText}`
+            content: `${typeSpecificPrompt}\n\nAnalyze this assurance engagement data:\n${JSON.stringify(analysisContext, null, 2)}`
           }
         ],
       }),
@@ -58,12 +113,12 @@ serve(async (req) => {
     const analysis = aiResponse.choices[0].message.content;
 
     // Process the AI response
-    const riskScore = calculateRiskScore(analysis);
-    const confidenceScore = calculateConfidenceScore(analysis);
+    const riskScore = calculateRiskScore(analysis, analysisContext);
+    const confidenceScore = calculateConfidenceScore(analysis, analysisContext);
     const findings = extractFindings(analysis);
     const recommendations = extractRecommendations(analysis);
-    const evidenceValidation = validateEvidence(analysis, evidenceData);
-    const nlpAnalysis = performNLPAnalysis(analysis, documentText);
+    const evidenceValidation = validateEvidence(analysis, evidence);
+    const nlpAnalysis = performNLPAnalysis(analysis, analysisContext);
 
     // Store analysis results
     const { data, error } = await supabase
@@ -96,14 +151,17 @@ serve(async (req) => {
   }
 });
 
-function calculateRiskScore(analysis: string): number {
+function calculateRiskScore(analysis: string, context: any): number {
   const riskIndicators = analysis.toLowerCase().match(/risk|concern|issue|problem/g)?.length || 0;
-  return Math.min(Math.max(riskIndicators * 0.2, 0), 1);
+  const contextualRisk = context.engagement.riskAssessment?.level === 'high' ? 0.3 : 0;
+  const evidenceRisk = context.evidence.some((e: any) => e.reliability < 0.7) ? 0.2 : 0;
+  return Math.min(Math.max((riskIndicators * 0.1) + contextualRisk + evidenceRisk, 0), 1);
 }
 
-function calculateConfidenceScore(analysis: string): number {
+function calculateConfidenceScore(analysis: string, context: any): number {
   const confidenceIndicators = analysis.toLowerCase().match(/confident|certain|clear|evident/g)?.length || 0;
-  return Math.min(Math.max(confidenceIndicators * 0.25, 0), 1);
+  const evidenceReliability = context.evidence.reduce((acc: number, e: any) => acc + (e.reliability || 0), 0) / context.evidence.length;
+  return Math.min(Math.max((confidenceIndicators * 0.1) + (evidenceReliability * 0.5), 0), 1);
 }
 
 function extractFindings(analysis: string): any[] {
