@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Brain, Calculator } from "lucide-react";
+import { Brain } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { useQuery } from "@tanstack/react-query";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
 import { ChatMessage } from "./chat/ChatMessage";
 import { ChatSuggestions } from "./chat/ChatSuggestions";
 import { ChatInput } from "./chat/ChatInput";
@@ -128,24 +127,16 @@ export const QueryInterface = () => {
   };
 
   return (
-    <Card className="p-6 glass-card">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Brain className="h-6 w-6 text-primary" />
-          <h2 className="text-xl font-semibold">AI Tax Assistant</h2>
-        </div>
-        {taxAnalysis && (
-          <Badge variant="outline" className="flex items-center gap-1">
-            <Calculator className="h-4 w-4" />
-            Last Analysis: {new Date(taxAnalysis.created_at).toLocaleDateString()}
-          </Badge>
-        )}
+    <Card className="max-w-3xl mx-auto">
+      <div className="flex items-center gap-2 border-b p-4">
+        <Brain className="h-5 w-5 text-primary" />
+        <h2 className="text-lg font-semibold">AI Tax Assistant</h2>
       </div>
 
-      <div className="space-y-4">
-        <ScrollArea className="h-[400px] pr-4 border rounded-lg">
+      <div className="flex flex-col h-[600px]">
+        <ScrollArea className="flex-1 p-4">
           {chatHistory.length > 0 ? (
-            <div className="space-y-4 p-4">
+            <div className="space-y-px">
               {chatHistory.map((message, index) => (
                 <ChatMessage key={index} {...message} />
               ))}
@@ -155,12 +146,14 @@ export const QueryInterface = () => {
           )}
         </ScrollArea>
 
-        <ChatInput
-          query={query}
-          loading={loading}
-          onQueryChange={setQuery}
-          onSubmit={handleQuery}
-        />
+        <div className="border-t p-4">
+          <ChatInput
+            query={query}
+            loading={loading}
+            onQueryChange={setQuery}
+            onSubmit={handleQuery}
+          />
+        </div>
       </div>
     </Card>
   );

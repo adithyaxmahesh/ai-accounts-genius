@@ -20,11 +20,12 @@ export const ChatInput = ({ query, loading, onQueryChange, onSubmit }: ChatInput
   return (
     <div className="flex gap-2">
       <Input
-        placeholder="Ask about expenses, tax write-offs, or financial optimization..."
+        placeholder="Ask about taxes, write-offs, or financial planning..."
         value={query}
         onChange={(e) => onQueryChange(e.target.value)}
         onKeyPress={handleKeyPress}
         className="flex-1"
+        disabled={loading}
       />
       <Button onClick={onSubmit} disabled={loading}>
         {loading ? (
