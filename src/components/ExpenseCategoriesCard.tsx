@@ -1,51 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, Sector } from 'recharts';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExpenseTrends } from "./expenses/ExpenseTrends";
 import { ExpenseAnalysis } from "./expenses/ExpenseAnalysis";
 import { ExpenseRecommendations } from "./expenses/ExpenseRecommendations";
 import { WriteOff } from "@/components/types";
-
-const COLORS = {
-  'Operational': '#0088FE',
-  'Employee & Payroll': '#00C49F',
-  'Travel & Entertainment': '#FFBB28',
-  'Marketing & Advertising': '#FF8042',
-  'Professional Services': '#8884d8',
-  'Insurance': '#82ca9d',
-  'Taxes & Licenses': '#ffc658',
-  'Equipment & Assets': '#ff7c43',
-  'Technology & IT': '#665191',
-  'Financial': '#a05195',
-  'Research & Development': '#2f4b7c',
-  'Training & Education': '#f95d6a',
-  'Utilities': '#d45087',
-  'Miscellaneous': '#a05195',
-  'Sustainability': '#665191'
-};
-
-const renderActiveShape = (props: any) => {
-  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
-
-  return (
-    <g>
-      <Sector
-        cx={cx}
-        cy={cy}
-        innerRadius={innerRadius}
-        outerRadius={outerRadius + 5}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        fill={fill}
-      />
-    </g>
-  );
-};
+import { ExpensePieChart } from "./expenses/ExpensePieChart";
+import { ExpenseList } from "./expenses/ExpenseList";
+import { calculateExpenseCategories, COLORS } from "@/utils/expenseCalculations";
 
 interface ExpenseCategory {
   name: string;
@@ -77,17 +42,7 @@ export const ExpenseCategoriesCard = () => {
 
       if (error) throw error;
 
-      const categories: Record<string, number> = (writeOffs || []).reduce((acc, writeOff) => {
-        const baseCategory = writeOff.tax_codes?.expense_category || 'Miscellaneous';
-        const category = Object.keys(COLORS).find(c => 
-          baseCategory.toLowerCase().includes(c.toLowerCase())
-        ) || 'Miscellaneous';
-        
-        // Convert string amount to number and don't use Math.abs
-        const amount = Number(writeOff.amount);
-        acc[category] = (acc[category] || 0) + amount;
-        return acc;
-      }, {} as Record<string, number>);
+      const categories = calculateExpenseCategories(writeOffs || []);
 
       return Object.entries(categories).map(([name, value]) => ({
         name,
@@ -100,7 +55,7 @@ export const ExpenseCategoriesCard = () => {
 
   const sortedExpenses = expenses?.slice().sort((a, b) => {
     const compareValue = sortBy === 'amount' 
-      ? a.value - b.value 
+      ? Math.abs(a.value) - Math.abs(b.value)
       : a.name.localeCompare(b.name);
     return sortOrder === 'asc' ? compareValue : -compareValue;
   });
@@ -131,54 +86,14 @@ export const ExpenseCategoriesCard = () => {
         <TabsContent value="overview">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={sortedExpenses}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    activeIndex={activeIndex}
-                    activeShape={renderActiveShape}
-                    onMouseEnter={(_, index) => setActiveIndex(index)}
-                    onMouseLeave={() => setActiveIndex(undefined)}
-                  >
-                    {sortedExpenses?.map((entry) => (
-                      <Cell key={entry.name} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value: number) => `$${value.toLocaleString()}`} 
-                  />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
+              <ExpensePieChart
+                expenses={sortedExpenses || []}
+                activeIndex={activeIndex}
+                onMouseEnter={(_, index) => setActiveIndex(index)}
+                onMouseLeave={() => setActiveIndex(undefined)}
+              />
             </div>
-
-            <ScrollArea className="h-[300px]">
-              <div className="space-y-2">
-                {sortedExpenses?.map((category) => (
-                  <div 
-                    key={category.name}
-                    className="flex justify-between items-center p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-3 h-3 rounded-full" 
-                        style={{ backgroundColor: category.color }}
-                      />
-                      <span className="font-medium">{category.name}</span>
-                    </div>
-                    <span className="font-semibold">
-                      ${category.value.toLocaleString()}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
+            <ExpenseList expenses={sortedExpenses || []} />
           </div>
         </TabsContent>
 
