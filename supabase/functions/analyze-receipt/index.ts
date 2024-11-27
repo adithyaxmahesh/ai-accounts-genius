@@ -15,6 +15,8 @@ serve(async (req) => {
       throw new Error('Document ID is required')
     }
 
+    console.log('Starting receipt analysis for document:', documentId)
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -41,6 +43,8 @@ serve(async (req) => {
       btoa(String.fromCharCode(...new Uint8Array(buffer)))
     )
 
+    console.log('Analyzing receipt with OpenAI Vision...')
+
     // Use OpenAI's GPT-4 Vision to analyze the receipt
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -56,7 +60,7 @@ serve(async (req) => {
             content: [
               {
                 type: 'text',
-                text: 'Please analyze this receipt and extract the following information in JSON format: date, merchant_name, total_amount, items (array of {description, amount}), and whether this appears to be a business expense. Also provide a confidence score between 0 and 1.'
+                text: 'Please analyze this receipt and extract the following information in JSON format: date, merchant_name, total_amount, items (array of {description, amount}), and whether this appears to be a business expense. Also suggest an expense category from these options: Transportation, Office, Marketing, Travel, Equipment, Services, Other. Return a confidence score between 0 and 1.'
               },
               {
                 type: 'image_url',
@@ -72,6 +76,15 @@ serve(async (req) => {
     const analysisResult = await response.json()
     const extractedData = JSON.parse(analysisResult.choices[0].message.content)
 
+    console.log('Receipt analysis completed:', extractedData)
+
+    // Get matching tax code for the expense category
+    const { data: taxCode } = await supabase
+      .from('tax_codes')
+      .select('id')
+      .eq('expense_category', extractedData.expense_category)
+      .single()
+
     // Store analysis results
     const { error: analysisError } = await supabase
       .from('receipt_analysis')
@@ -86,28 +99,35 @@ serve(async (req) => {
 
     if (analysisError) throw analysisError
 
-    // Create write-off or revenue record based on analysis
+    // Create write-off entry if it's a business expense
     if (extractedData.is_business_expense) {
-      await supabase
+      console.log('Creating write-off entry...')
+      const { error: writeOffError } = await supabase
         .from('write_offs')
         .insert({
           user_id: document.user_id,
           amount: extractedData.total_amount,
-          description: `${extractedData.merchant_name} - Business Expense`,
+          description: `${extractedData.merchant_name} - ${extractedData.items?.map(item => item.description).join(', ')}`,
           date: extractedData.date,
+          tax_code_id: taxCode?.id,
           status: 'pending'
         })
-    } else {
-      await supabase
-        .from('revenue_records')
-        .insert({
-          user_id: document.user_id,
-          amount: extractedData.total_amount,
-          category: 'Receipt',
-          description: `${extractedData.merchant_name} - Revenue`,
-          date: extractedData.date
-        })
+
+      if (writeOffError) {
+        console.error('Error creating write-off:', writeOffError)
+        throw writeOffError
+      }
     }
+
+    // Update document status
+    await supabase
+      .from('processed_documents')
+      .update({
+        processing_status: 'Analyzed',
+        extracted_data: extractedData,
+        confidence_score: extractedData.confidence_score
+      })
+      .eq('id', documentId)
 
     return new Response(
       JSON.stringify({ success: true, data: extractedData }),
