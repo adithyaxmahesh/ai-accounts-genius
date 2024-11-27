@@ -15,13 +15,18 @@ export const SmartBudgetPlanner = () => {
   const { toast } = useToast();
   const [selectedTab, setSelectedTab] = useState("ai");
   const [manualBudget, setManualBudget] = useState({
-    housing: "",
-    utilities: "",
-    transportation: "",
-    food: "",
-    healthcare: "",
-    entertainment: "",
-    savings: "",
+    payroll: "",
+    rentAndUtilities: "",
+    equipmentAndSupplies: "",
+    marketingAndAdvertising: "",
+    insurance: "",
+    professionalServices: "",
+    softwareAndSubscriptions: "",
+    travelAndEntertainment: "",
+    inventory: "",
+    taxes: "",
+    maintenanceAndRepairs: "",
+    otherOperatingExpenses: "",
   });
 
   // Query available cash
@@ -61,7 +66,7 @@ export const SmartBudgetPlanner = () => {
     try {
       toast({
         title: "Generating Recommendations",
-        description: "Analyzing your financial data...",
+        description: "Analyzing your business financial data...",
       });
 
       await supabase.functions.invoke('analyze-budget', {
@@ -72,7 +77,7 @@ export const SmartBudgetPlanner = () => {
 
       toast({
         title: "Success",
-        description: "Budget recommendations generated successfully",
+        description: "Business budget recommendations generated successfully",
       });
     } catch (error: any) {
       toast({
@@ -89,7 +94,7 @@ export const SmartBudgetPlanner = () => {
         .from('financial_planning')
         .insert({
           user_id: session?.user.id,
-          plan_type: 'manual-budget',
+          plan_type: 'business-budget',
           plan_data: manualBudget,
           status: 'active'
         });
@@ -98,7 +103,7 @@ export const SmartBudgetPlanner = () => {
 
       toast({
         title: "Success",
-        description: "Budget saved successfully",
+        description: "Business budget saved successfully",
       });
     } catch (error: any) {
       toast({
@@ -113,7 +118,7 @@ export const SmartBudgetPlanner = () => {
     <Card className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="space-y-1">
-          <h2 className="text-2xl font-semibold">Smart Budget Planner</h2>
+          <h2 className="text-2xl font-semibold">Business Budget Planner</h2>
           <p className="text-muted-foreground">
             Available Cash: ${cashData?.toLocaleString() || '0'}
           </p>
@@ -135,7 +140,7 @@ export const SmartBudgetPlanner = () => {
         <TabsContent value="ai" className="space-y-4">
           <Button onClick={generateAIRecommendations}>
             <Brain className="w-4 h-4 mr-2" />
-            Generate Recommendations
+            Generate Business Recommendations
           </Button>
 
           {aiRecommendations && (
@@ -153,7 +158,7 @@ export const SmartBudgetPlanner = () => {
             {Object.entries(manualBudget).map(([category, value]) => (
               <div key={category} className="space-y-2">
                 <Label htmlFor={category} className="capitalize">
-                  {category}
+                  {category.replace(/([A-Z])/g, ' $1').trim()}
                 </Label>
                 <div className="relative">
                   <DollarSign className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -174,7 +179,7 @@ export const SmartBudgetPlanner = () => {
           </div>
 
           <Button onClick={saveManualBudget} className="w-full">
-            Save Budget
+            Save Business Budget
           </Button>
         </TabsContent>
       </Tabs>
