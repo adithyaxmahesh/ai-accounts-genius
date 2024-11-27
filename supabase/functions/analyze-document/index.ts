@@ -3,9 +3,12 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { corsHeaders } from './utils.ts'
 import { processDocument } from './documentProcessor.ts'
+import { processCSV } from './csvProcessor.ts'
+import { processImage } from './imageProcessor.ts'
+import { processExcel } from './excelProcessor.ts'
+import { processPDF } from './pdfProcessor.ts'
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -53,8 +56,29 @@ serve(async (req) => {
 
     console.log('Downloaded file content successfully');
 
-    // Process document and detect write-offs
-    const analysis = await processDocument(supabaseClient, document, fileData);
+    // Process document based on file type
+    const fileExt = document.original_filename.split('.').pop()?.toLowerCase();
+    let analysis;
+
+    switch (fileExt) {
+      case 'csv':
+        analysis = await processCSV(fileData);
+        break;
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+        analysis = await processImage(fileData);
+        break;
+      case 'xls':
+      case 'xlsx':
+        analysis = await processExcel(fileData);
+        break;
+      case 'pdf':
+        analysis = await processPDF(fileData);
+        break;
+      default:
+        analysis = await processDocument(supabaseClient, document, fileData);
+    }
 
     console.log('Document analysis completed successfully');
 
@@ -68,7 +92,7 @@ serve(async (req) => {
           writeOffs: analysis.writeOffs
         },
         processing_status: 'analyzed',
-        confidence_score: 0.85
+        confidence_score: analysis.confidenceScore || 0.85
       })
       .eq('id', documentId);
 
@@ -90,7 +114,6 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in document analysis:', error);
     
-    // Update document status to error if we have a document ID
     try {
       const { documentId } = await req.json();
       if (documentId) {
