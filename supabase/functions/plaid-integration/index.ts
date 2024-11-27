@@ -8,7 +8,6 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -34,6 +33,10 @@ serve(async (req) => {
     });
 
     const plaidClient = new PlaidApi(configuration);
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
     if (action === 'create-link-token') {
       const response = await plaidClient.linkTokenCreate({
@@ -66,13 +69,11 @@ serve(async (req) => {
         country_codes: ['US'],
       });
 
+      // Get account balances
+      const balances = await plaidClient.accountsGet({ access_token: accessToken });
+      
       // Store in Supabase
-      const supabase = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      )
-
-      const { error } = await supabase
+      const { error: connectionError } = await supabase
         .from('plaid_connections')
         .insert({
           user_id: userId,
@@ -81,7 +82,64 @@ serve(async (req) => {
           institution_name: institution.data.institution.name,
         })
 
-      if (error) throw error;
+      if (connectionError) throw connectionError;
+
+      // Update or insert balance sheet items for each account
+      for (const account of balances.data.accounts) {
+        const { error: balanceError } = await supabase
+          .from('balance_sheet_items')
+          .upsert({
+            user_id: userId,
+            name: `${institution.data.institution.name} - ${account.name}`,
+            amount: account.balances.current,
+            category: 'asset',
+            subcategory: 'cash',
+            description: `Connected bank account (${account.type})`,
+          }, {
+            onConflict: 'user_id,name',
+          });
+
+        if (balanceError) throw balanceError;
+      }
+
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (action === 'sync-balances') {
+      // Get all Plaid connections for the user
+      const { data: connections, error: connectionsError } = await supabase
+        .from('plaid_connections')
+        .select('*')
+        .eq('user_id', userId);
+
+      if (connectionsError) throw connectionsError;
+
+      // Update balances for each connection
+      for (const connection of connections) {
+        const balances = await plaidClient.accountsGet({ 
+          access_token: connection.access_token 
+        });
+
+        for (const account of balances.data.accounts) {
+          const { error: balanceError } = await supabase
+            .from('balance_sheet_items')
+            .upsert({
+              user_id: userId,
+              name: `${connection.institution_name} - ${account.name}`,
+              amount: account.balances.current,
+              category: 'asset',
+              subcategory: 'cash',
+              description: `Connected bank account (${account.type})`,
+            }, {
+              onConflict: 'user_id,name',
+            });
+
+          if (balanceError) throw balanceError;
+        }
+      }
 
       return new Response(
         JSON.stringify({ success: true }),

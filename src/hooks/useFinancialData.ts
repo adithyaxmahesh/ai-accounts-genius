@@ -35,14 +35,13 @@ export const useFinancialData = (dateRange?: { from: Date | null; to: Date | nul
         .eq('category', 'asset')
         .eq('subcategory', 'cash');
 
-      if (dateRange?.from) {
-        revenueQuery = revenueQuery.gte('date', dateRange.from.toISOString().split('T')[0]);
-        expensesQuery = expensesQuery.gte('date', dateRange.from.toISOString().split('T')[0]);
-      }
-      if (dateRange?.to) {
-        revenueQuery = revenueQuery.lte('date', dateRange.to.toISOString().split('T')[0]);
-        expensesQuery = expensesQuery.lte('date', dateRange.to.toISOString().split('T')[0]);
-      }
+      // Sync bank balances before getting cash items
+      await supabase.functions.invoke('plaid-integration', {
+        body: { 
+          userId: session?.user.id,
+          action: 'sync-balances'
+        }
+      });
 
       const [{ data: revenues = [], error: revenueError }, 
              { data: expenses = [], error: expenseError },
