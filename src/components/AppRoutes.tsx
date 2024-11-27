@@ -1,4 +1,5 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "@/components/AuthProvider";
 import Landing from "@/pages/Landing";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
@@ -18,25 +19,46 @@ import FinancialStatements from "@/pages/FinancialStatements";
 import Expenses from "@/pages/Expenses";
 
 export const AppRoutes = () => {
+  const { session } = useAuth();
+
+  // Protected route wrapper
+  const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+    if (!session) {
+      return <Navigate to="/" replace />;
+    }
+    return <>{children}</>;
+  };
+
+  // Public route wrapper - redirects to dashboard if authenticated
+  const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+    if (session) {
+      return <Navigate to="/dashboard" replace />;
+    }
+    return <>{children}</>;
+  };
+
   return (
     <Routes>
-      <Route path="/" element={<Landing />} />
-      <Route path="/dashboard" element={<Index />} />
-      <Route path="/auth" element={<Auth />} />
-      <Route path="/write-offs" element={<WriteOffs />} />
-      <Route path="/documents" element={<Documents />} />
-      <Route path="/tax" element={<Tax />} />
-      <Route path="/revenue" element={<Revenue />} />
-      <Route path="/balance-sheet" element={<BalanceSheet />} />
-      <Route path="/cash-flow" element={<CashFlow />} />
-      <Route path="/income-statement" element={<IncomeStatement />} />
-      <Route path="/owners-equity" element={<OwnersEquity />} />
-      <Route path="/forecast" element={<Forecast />} />
-      <Route path="/audit" element={<Audit />} />
-      <Route path="/audit/:id" element={<AuditDetail />} />
-      <Route path="/assurance" element={<Assurance />} />
-      <Route path="/financial-statements" element={<FinancialStatements />} />
-      <Route path="/expenses" element={<Expenses />} />
+      {/* Public routes */}
+      <Route path="/" element={<PublicRoute><Landing /></PublicRoute>} />
+      <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
+
+      {/* Protected routes */}
+      <Route path="/dashboard" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+      <Route path="/write-offs" element={<ProtectedRoute><WriteOffs /></ProtectedRoute>} />
+      <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
+      <Route path="/tax" element={<ProtectedRoute><Tax /></ProtectedRoute>} />
+      <Route path="/revenue" element={<ProtectedRoute><Revenue /></ProtectedRoute>} />
+      <Route path="/balance-sheet" element={<ProtectedRoute><BalanceSheet /></ProtectedRoute>} />
+      <Route path="/cash-flow" element={<ProtectedRoute><CashFlow /></ProtectedRoute>} />
+      <Route path="/income-statement" element={<ProtectedRoute><IncomeStatement /></ProtectedRoute>} />
+      <Route path="/owners-equity" element={<ProtectedRoute><OwnersEquity /></ProtectedRoute>} />
+      <Route path="/forecast" element={<ProtectedRoute><Forecast /></ProtectedRoute>} />
+      <Route path="/audit" element={<ProtectedRoute><Audit /></ProtectedRoute>} />
+      <Route path="/audit/:id" element={<ProtectedRoute><AuditDetail /></ProtectedRoute>} />
+      <Route path="/assurance" element={<ProtectedRoute><Assurance /></ProtectedRoute>} />
+      <Route path="/financial-statements" element={<ProtectedRoute><FinancialStatements /></ProtectedRoute>} />
+      <Route path="/expenses" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
     </Routes>
   );
 };
