@@ -42,7 +42,6 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
-    // Enhanced professional prompt for better analysis
     const analysisPrompt = `
       As an expert CPA and financial auditor, analyze this assurance engagement with professional accounting insights:
       
@@ -64,6 +63,20 @@ serve(async (req) => {
       8. Tax compliance implications
       
       Format your response to include specific findings with materiality thresholds and actionable recommendations based on professional accounting standards.
+      
+      For each finding, include:
+      - Description of the issue
+      - Impact on financial statements
+      - Severity (high/medium/low)
+      - Specific accounting standards referenced
+      - Quantitative materiality assessment
+      
+      For each recommendation:
+      - Specific corrective actions
+      - Timeline for implementation
+      - Required resources
+      - Expected impact on controls/compliance
+      - Priority level
     `;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -135,14 +148,14 @@ serve(async (req) => {
 
 function processAIResponse(analysisText: string) {
   // Extract key sections from the AI response
-  const findingsMatch = analysisText.match(/(?:Material Findings|Key Issues|Financial Risks):(.*?)(?=Recommendations|$)/s);
+  const findingsMatch = analysisText.match(/(?:Material Findings|Key Issues|Financial Risks|Findings):(.*?)(?=Recommendations|$)/s);
   const recommendationsMatch = analysisText.match(/Recommendations:(.*?)(?=\n\n|$)/s);
   
   // Calculate risk score based on professional indicators
   const riskIndicators = [
     'material weakness', 'significant deficiency', 'control deficiency',
     'non-compliance', 'misstatement', 'going concern', 'fraud risk',
-    'regulatory violation', 'impairment'
+    'regulatory violation', 'impairment', 'material error'
   ];
   
   let riskScore = 0.5; // Default medium risk
@@ -161,33 +174,51 @@ function processAIResponse(analysisText: string) {
   
   // Process findings with professional context
   const findings = findingsMatch ? findingsMatch[1]
-    .split(/\n/)
+    .split(/\n(?=\d+\.|\*|\-|\•)/)
     .filter(f => f.trim())
-    .map(finding => ({
-      description: finding.replace(/^[-•*]\s*/, '').trim(),
-      severity: finding.toLowerCase().includes('material') ? 'high' :
-               finding.toLowerCase().includes('significant') ? 'medium' : 'low',
-      category: finding.toLowerCase().includes('control') ? 'Internal Controls' :
-                finding.toLowerCase().includes('compliance') ? 'Compliance' :
-                finding.toLowerCase().includes('financial') ? 'Financial Reporting' :
-                'General'
-    })) : [];
+    .map(finding => {
+      const severityMatch = finding.match(/severity:\s*(high|medium|low)/i);
+      const categoryMatch = finding.match(/category:\s*([\w\s]+)/i);
+      const impactMatch = finding.match(/impact:\s*([\w\s]+)/i);
+      
+      return {
+        description: finding.replace(/^[-•*\d\.]\s*/, '').trim(),
+        severity: severityMatch ? severityMatch[1].toLowerCase() : 
+                 finding.toLowerCase().includes('material') ? 'high' :
+                 finding.toLowerCase().includes('significant') ? 'medium' : 'low',
+        category: categoryMatch ? categoryMatch[1].trim() :
+                 finding.toLowerCase().includes('control') ? 'Internal Controls' :
+                 finding.toLowerCase().includes('compliance') ? 'Compliance' :
+                 finding.toLowerCase().includes('financial') ? 'Financial Reporting' :
+                 'General',
+        impact: impactMatch ? impactMatch[1].trim() : 'Undefined'
+      };
+    }) : [];
     
   // Process recommendations with professional context
   const recommendations = recommendationsMatch ? recommendationsMatch[1]
-    .split(/\n/)
+    .split(/\n(?=\d+\.|\*|\-|\•)/)
     .filter(r => r.trim())
-    .map(recommendation => ({
-      description: recommendation.replace(/^[-•*]\s*/, '').trim(),
-      priority: recommendation.toLowerCase().includes('immediately') ? 'high' :
-                recommendation.toLowerCase().includes('should') ? 'medium' : 'low',
-      impact: recommendation.toLowerCase().includes('material') ? 'Material' :
-              recommendation.toLowerCase().includes('significant') ? 'Significant' : 'Moderate',
-      area: recommendation.toLowerCase().includes('control') ? 'Internal Controls' :
-            recommendation.toLowerCase().includes('compliance') ? 'Compliance' :
-            recommendation.toLowerCase().includes('financial') ? 'Financial Reporting' :
-            'General'
-    })) : [];
+    .map(recommendation => {
+      const priorityMatch = recommendation.match(/priority:\s*(high|medium|low)/i);
+      const timelineMatch = recommendation.match(/timeline:\s*([\w\s]+)/i);
+      const impactMatch = recommendation.match(/impact:\s*([\w\s]+)/i);
+      
+      return {
+        description: recommendation.replace(/^[-•*\d\.]\s*/, '').trim(),
+        priority: priorityMatch ? priorityMatch[1].toLowerCase() :
+                 recommendation.toLowerCase().includes('immediately') ? 'high' :
+                 recommendation.toLowerCase().includes('should') ? 'medium' : 'low',
+        timeline: timelineMatch ? timelineMatch[1].trim() : 'As soon as possible',
+        impact: impactMatch ? impactMatch[1].trim() : 
+               recommendation.toLowerCase().includes('material') ? 'Material' :
+               recommendation.toLowerCase().includes('significant') ? 'Significant' : 'Moderate',
+        area: recommendation.toLowerCase().includes('control') ? 'Internal Controls' :
+              recommendation.toLowerCase().includes('compliance') ? 'Compliance' :
+              recommendation.toLowerCase().includes('financial') ? 'Financial Reporting' :
+              'General'
+      };
+    }) : [];
 
   return {
     riskScore,
