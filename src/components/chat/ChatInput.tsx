@@ -10,13 +10,20 @@ interface ChatInputProps {
 }
 
 export const ChatInput = ({ query, loading, onQueryChange, onSubmit }: ChatInputProps) => {
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      onSubmit();
+    }
+  };
+
   return (
     <div className="flex gap-2">
       <Input
         placeholder="Ask about expenses, tax write-offs, or financial optimization..."
         value={query}
         onChange={(e) => onQueryChange(e.target.value)}
-        onKeyPress={(e) => e.key === 'Enter' && onSubmit()}
+        onKeyPress={handleKeyPress}
         className="flex-1"
       />
       <Button onClick={onSubmit} disabled={loading}>

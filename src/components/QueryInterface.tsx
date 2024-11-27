@@ -93,6 +93,11 @@ export const QueryInterface = () => {
         body: { 
           message: query,
           userId: session?.user.id,
+          context: {
+            writeOffs,
+            revenueRecords,
+            taxAnalysis
+          }
         }
       });
 
