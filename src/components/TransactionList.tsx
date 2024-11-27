@@ -10,14 +10,6 @@ import { WriteOff } from "@/components/types";
 import { useToast } from "@/components/ui/use-toast";
 import { DollarSign, Building, Calendar, Tag } from "lucide-react";
 
-// Separate the calculation logic for reusability
-const calculateTotalDeductions = (writeOffs: WriteOff[]) => {
-  return writeOffs.reduce((sum, writeOff) => {
-    const amount = Math.abs(Number(writeOff.amount));
-    return sum + amount;
-  }, 0);
-};
-
 export const TransactionList = () => {
   const { session } = useAuth();
   const [showAll, setShowAll] = useState(false);
@@ -59,7 +51,6 @@ export const TransactionList = () => {
   }
 
   const displayWriteOffs = showAll ? writeOffs : writeOffs.slice(0, 3);
-  const totalDeductions = calculateTotalDeductions(writeOffs);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -74,8 +65,27 @@ export const TransactionList = () => {
     const parts = description.split(',');
     return {
       payee: parts[0],
-      purpose: parts[1] || 'Not specified'
+      purpose: parts[1] || 'Not specified',
+      charges: parts.slice(2).map(Number).filter(n => !isNaN(n))
     };
+  };
+
+  const calculateTotalAmount = (writeOff: WriteOff) => {
+    const { charges } = parseDescription(writeOff.description);
+    if (charges.length > 0) {
+      return charges.reduce((sum, n) => sum + n, 0);
+    }
+    return Number(writeOff.amount) || 0;
+  };
+
+  const totalDeductions = writeOffs.reduce((sum, writeOff) => sum + calculateTotalAmount(writeOff), 0);
+
+  const getChargesBreakdown = (description: string) => {
+    const { charges } = parseDescription(description);
+    if (charges.length > 0) {
+      return charges.map(formatCurrency).join(' + ');
+    }
+    return '';
   };
 
   return (
@@ -114,7 +124,6 @@ export const TransactionList = () => {
             ) : (
               displayWriteOffs.map((writeOff) => {
                 const { payee, purpose } = parseDescription(writeOff.description);
-                const amount = Math.abs(Number(writeOff.amount));
                 return (
                   <div key={writeOff.id} className="flex flex-col p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
                     <div className="flex justify-between items-start mb-2">
@@ -129,7 +138,7 @@ export const TransactionList = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold">{formatCurrency(amount)}</p>
+                        <p className="font-semibold">{formatCurrency(calculateTotalAmount(writeOff))}</p>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                           <Calendar className="h-3 w-3" />
                           <p>{new Date(writeOff.date).toLocaleDateString()}</p>
@@ -145,6 +154,11 @@ export const TransactionList = () => {
                           {writeOff.tax_codes.code} - {writeOff.tax_codes.description}
                         </p>
                       </div>
+                    )}
+                    {getChargesBreakdown(writeOff.description) && (
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Breakdown: {getChargesBreakdown(writeOff.description)}
+                      </p>
                     )}
                     <p className="text-sm text-muted-foreground mt-2 capitalize">
                       Status: {writeOff.status || "Pending"}
