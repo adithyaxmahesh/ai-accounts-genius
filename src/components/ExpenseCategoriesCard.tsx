@@ -83,7 +83,9 @@ export const ExpenseCategoriesCard = () => {
           baseCategory.toLowerCase().includes(c.toLowerCase())
         ) || 'Miscellaneous';
         
-        acc[category] = (acc[category] || 0) + Math.abs(Number(writeOff.amount));
+        // Convert string amount to number and don't use Math.abs
+        const amount = Number(writeOff.amount);
+        acc[category] = (acc[category] || 0) + amount;
         return acc;
       }, {} as Record<string, number>);
 
