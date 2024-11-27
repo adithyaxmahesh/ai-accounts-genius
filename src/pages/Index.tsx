@@ -12,18 +12,21 @@ const Index = () => {
   const navigate = useNavigate();
 
   const { data: profile } = useQuery({
-    queryKey: ['profile'],
+    queryKey: ['profile', session?.user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
-        .eq('id', session?.user.id)
+        .select('id, company_name, role, created_at')
+        .eq('id', session?.user?.id)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching profile:', error);
+        throw error;
+      }
       return data;
     },
-    enabled: !!session?.user.id,
+    enabled: !!session?.user?.id,
   });
 
   if (!session) {
