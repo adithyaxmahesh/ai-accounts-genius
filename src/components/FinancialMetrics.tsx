@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { DollarSign, Target, Wallet, TrendingUp } from "lucide-react";
+import { DollarSign, Target, Wallet, TrendingUp, Receipt } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useFinancialData } from "@/hooks/useFinancialData";
 
