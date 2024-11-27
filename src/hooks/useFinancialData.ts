@@ -42,12 +42,21 @@ export const useFinancialData = (dateRange?: { from: Date | null; to: Date | nul
       if (revenueError) throw revenueError;
       if (expenseError) throw expenseError;
 
-      const totalRevenue = revenues.reduce((sum, record) => sum + Number(record.amount), 0);
-      const totalExpenses = expenses.reduce((sum, record) => sum + Number(record.amount), 0);
+      const totalRevenue = revenues.reduce((sum, record) => sum + Math.abs(Number(record.amount)), 0);
+      const totalExpenses = expenses.reduce((sum, record) => sum + Math.abs(Number(record.amount)), 0);
       const netIncome = totalRevenue - totalExpenses;
       const averageRevenue = revenues.length ? totalRevenue / revenues.length : 0;
       const averageExpense = expenses.length ? totalExpenses / expenses.length : 0;
       const profitMargin = totalRevenue ? (netIncome / totalRevenue) * 100 : 0;
+
+      console.log('Financial Data Calculated:', {
+        totalRevenue,
+        totalExpenses,
+        netIncome,
+        averageRevenue,
+        averageExpense,
+        profitMargin
+      });
 
       return {
         totalRevenue,
