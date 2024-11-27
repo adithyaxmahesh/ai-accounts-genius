@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import "https://deno.land/x/xhr@0.1.0/mod.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { corsHeaders } from './utils.ts'
-import { processDocument, updateFinancialRecords } from './documentProcessor.ts'
+import { processDocument } from './documentProcessor.ts'
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -16,6 +16,8 @@ serve(async (req) => {
       throw new Error('Document ID is required');
     }
 
+    console.log('Starting document analysis for document:', documentId);
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
@@ -24,6 +26,12 @@ serve(async (req) => {
     }
 
     const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+    // Update document status to Processing
+    await supabaseClient
+      .from('processed_documents')
+      .update({ processing_status: 'processing' })
+      .eq('id', documentId);
 
     // Get document metadata and user ID
     const { data: document, error: docError } = await supabaseClient
@@ -34,6 +42,8 @@ serve(async (req) => {
 
     if (docError) throw docError;
 
+    console.log('Retrieved document metadata:', document.original_filename);
+
     // Download file content
     const { data: fileData, error: downloadError } = await supabaseClient.storage
       .from('documents')
@@ -41,8 +51,12 @@ serve(async (req) => {
 
     if (downloadError) throw downloadError;
 
+    console.log('Downloaded file content successfully');
+
     // Process document and detect write-offs
     const analysis = await processDocument(supabaseClient, document, fileData);
+
+    console.log('Document analysis completed successfully');
 
     // Update document status and extracted data
     await supabaseClient
@@ -57,14 +71,6 @@ serve(async (req) => {
         confidence_score: 0.85
       })
       .eq('id', documentId);
-
-    // Update financial records including write-offs
-    await updateFinancialRecords(supabaseClient, document.user_id, analysis);
-
-    // Generate new forecast
-    await supabaseClient.functions.invoke('generate-forecast', {
-      body: { userId: document.user_id }
-    });
 
     return new Response(
       JSON.stringify({ 
@@ -83,8 +89,35 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('Error in document analysis:', error);
+    
+    // Update document status to error if we have a document ID
+    try {
+      const { documentId } = await req.json();
+      if (documentId) {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL');
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+        if (supabaseUrl && supabaseKey) {
+          const supabaseClient = createClient(supabaseUrl, supabaseKey);
+          await supabaseClient
+            .from('processed_documents')
+            .update({ 
+              processing_status: 'error',
+              extracted_data: {
+                error: error.message
+              }
+            })
+            .eq('id', documentId);
+        }
+      }
+    } catch (updateError) {
+      console.error('Error updating document status:', updateError);
+    }
+
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.stack
+      }),
       { 
         headers: { 
           ...corsHeaders, 

@@ -3,7 +3,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { ProcessedDocument } from "../types";
-import { extractDateFromDocument } from "./documentUtils";
 import { useDocumentProcessing } from "./useDocumentProcessing";
 import { useDocumentFetching } from "./useDocumentFetching";
 
@@ -100,20 +99,50 @@ export const useDocumentUpload = () => {
   const analyzeDocument = async (documentId: string) => {
     try {
       setProcessing(true);
-      await processDocument(documentId);
+      
+      // Update document status to processing
+      await supabase
+        .from('processed_documents')
+        .update({ processing_status: 'processing' })
+        .eq('id', documentId);
+
+      // Call the analyze-document function
+      const { data, error } = await supabase.functions.invoke('analyze-document', {
+        body: { documentId }
+      });
+
+      if (error) throw error;
+
+      // Refresh documents list
       await fetchDocuments();
       
       toast({
         title: "Analysis Complete",
         description: "Document has been successfully analyzed.",
       });
+
+      return data;
     } catch (error) {
       console.error("Analysis error:", error);
+      
+      // Update document status to error
+      await supabase
+        .from('processed_documents')
+        .update({ 
+          processing_status: 'error',
+          extracted_data: {
+            error: error instanceof Error ? error.message : 'Unknown error occurred'
+          }
+        })
+        .eq('id', documentId);
+
       toast({
         title: "Analysis Failed",
-        description: "Failed to analyze document. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to analyze document. Please try again.",
         variant: "destructive",
       });
+      
+      throw error;
     } finally {
       setProcessing(false);
     }
@@ -166,7 +195,6 @@ export const useDocumentUpload = () => {
     processing,
     documents,
     handleFileUpload,
-    processDocument,
     analyzeDocument,
     handleDeleteDocument
   };
