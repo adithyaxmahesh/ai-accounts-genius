@@ -35,10 +35,27 @@ export const SmartBudgetPlanner = () => {
   const { data: cashData } = useQuery({
     queryKey: ['available-cash', session?.user.id],
     queryFn: async () => {
-      // This will trigger the bank balance sync through useFinancialData
       return financialData?.cashBalance || 0;
     },
     enabled: !!session?.user.id && !!financialData,
+  });
+
+  // Query AI recommendations
+  const { data: aiRecommendations, refetch: refetchRecommendations } = useQuery({
+    queryKey: ['ai-budget-recommendations', session?.user.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ai_budget_recommendations')
+        .select('*')
+        .eq('user_id', session?.user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!session?.user.id
   });
 
   const generateAIRecommendations = async () => {
