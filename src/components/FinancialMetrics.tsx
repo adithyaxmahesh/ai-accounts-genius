@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { DollarSign, Target, PiggyBank, Receipt } from "lucide-react";
+import { DollarSign, Target, Wallet, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useFinancialData } from "@/hooks/useFinancialData";
 
@@ -57,7 +57,7 @@ export const FinancialMetrics = () => {
       >
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent" />
         <div className="relative z-10">
-          <PiggyBank className="h-8 w-8 mb-4 text-blue-500" />
+          <TrendingUp className="h-8 w-8 mb-4 text-blue-500" />
           <div className="space-y-1">
             <p className="text-sm text-blue-500 font-medium">Net Profit</p>
             <div className="flex items-baseline gap-2">
@@ -78,7 +78,7 @@ export const FinancialMetrics = () => {
       >
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent" />
         <div className="relative z-10">
-          <PiggyBank className="h-8 w-8 mb-4 text-blue-500" />
+          <Wallet className="h-8 w-8 mb-4 text-blue-500" />
           <div className="space-y-1">
             <p className="text-sm text-blue-500 font-medium">Cash Balance</p>
             <div className="flex items-baseline gap-2">
