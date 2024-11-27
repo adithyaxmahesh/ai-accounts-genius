@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/use-toast";
 
 interface AddBalanceSheetItemProps {
   onClose: () => void;
@@ -28,6 +29,7 @@ interface AddBalanceSheetItemProps {
 
 const ASSET_SUBCATEGORIES = [
   { value: "cash", label: "Cash & Bank" },
+  { value: "credit_cards", label: "Credit Cards" },
   { value: "investments", label: "Investments" },
   { value: "receivables", label: "Accounts Receivable" },
   { value: "inventory", label: "Inventory" },
@@ -36,6 +38,7 @@ const ASSET_SUBCATEGORIES = [
 
 const LIABILITY_SUBCATEGORIES = [
   { value: "loans", label: "Loans & Mortgages" },
+  { value: "credit_card_debt", label: "Credit Card Debt" },
   { value: "payables", label: "Accounts Payable" },
   { value: "taxes", label: "Tax Liabilities" },
 ];
@@ -47,11 +50,14 @@ const EQUITY_SUBCATEGORIES = [
 
 export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemProps) => {
   const { session } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [subcategory, setSubcategory] = useState("");
   const [description, setDescription] = useState("");
   const [selectedTab, setSelectedTab] = useState("asset");
+  const [isTracking, setIsTracking] = useState(false);
 
   const getSubcategories = () => {
     switch (selectedTab) {
@@ -68,7 +74,8 @@ export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemP
 
   const addItem = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase
+      // Add the balance sheet item
+      const { data: balanceSheetItem, error: balanceError } = await supabase
         .from("balance_sheet_items")
         .insert([
           {
@@ -79,19 +86,65 @@ export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemP
             description,
             user_id: session?.user.id,
           },
-        ]);
+        ])
+        .select()
+        .single();
 
-      if (error) throw error;
-      return data;
+      if (balanceError) throw balanceError;
+
+      // If it's a credit card and tracking is enabled, set up expense tracking
+      if (subcategory === "credit_cards" && isTracking) {
+        const { error: trackingError } = await supabase
+          .from("expense_patterns")
+          .insert([
+            {
+              user_id: session?.user.id,
+              pattern: name.toLowerCase(),
+              category: "Credit Card",
+              is_expense: true,
+              confidence: 1,
+            },
+          ]);
+
+        if (trackingError) {
+          toast({
+            title: "Warning",
+            description: "Balance sheet item added but expense tracking setup failed",
+            variant: "destructive",
+          });
+        }
+      }
+
+      return balanceSheetItem;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["balanceSheetItems"] });
       onSuccess();
       onClose();
+      toast({
+        title: "Success",
+        description: "Balance sheet item added successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!name || !amount || !subcategory) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
     addItem.mutate();
   };
 
@@ -136,6 +189,7 @@ export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemP
             <Select 
               value={subcategory} 
               onValueChange={setSubcategory}
+              required
             >
               <SelectTrigger className="bg-background">
                 <SelectValue placeholder="Select subcategory" />
@@ -149,6 +203,18 @@ export const AddBalanceSheetItem = ({ onClose, onSuccess }: AddBalanceSheetItemP
               </SelectContent>
             </Select>
           </div>
+          {(subcategory === "credit_cards" || subcategory === "credit_card_debt") && (
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="tracking"
+                checked={isTracking}
+                onChange={(e) => setIsTracking(e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              <Label htmlFor="tracking">Enable automatic expense tracking for this credit card</Label>
+            </div>
+          )}
           <div>
             <Label htmlFor="description">Description</Label>
             <Textarea
