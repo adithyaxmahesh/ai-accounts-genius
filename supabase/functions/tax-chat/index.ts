@@ -5,6 +5,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Content-Type': 'application/json'
 };
 
 serve(async (req) => {
@@ -13,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    const { message, userId } = await req.json();
+    const { message, userId, context } = await req.json();
     console.log('Processing tax chat request for user:', userId);
 
     const supabase = createClient(
@@ -47,15 +48,19 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: [
           {
             role: 'system',
-            content: 'You are a knowledgeable tax assistant. Provide accurate, helpful tax advice based on the user\'s context.'
+            content: `You are a knowledgeable tax assistant. Provide accurate, helpful tax advice based on the user's context. 
+            Available context: 
+            - Write-offs: ${JSON.stringify(context.writeOffs)}
+            - Revenue Records: ${JSON.stringify(context.revenueRecords)}
+            - Tax Analysis: ${JSON.stringify(context.taxAnalysis)}`
           },
           {
             role: 'user',
-            content: `Context: ${JSON.stringify(taxContext)}\n\nQuestion: ${message}`
+            content: message
           }
         ],
         max_tokens: 500,
@@ -80,14 +85,32 @@ serve(async (req) => {
         user_id: userId,
         question: message,
         answer,
-        context: taxContext
+        context: {
+          ...context,
+          taxContext
+        }
       });
 
     if (chatError) throw chatError;
 
+    // Create a notification for the user
+    await supabase
+      .from('push_notifications')
+      .insert({
+        user_id: userId,
+        title: 'New Tax Chat Response',
+        body: 'Your tax assistant has provided a new response',
+        type: 'tax_chat'
+      });
+
     return new Response(
-      JSON.stringify({ answer }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        answer,
+        category: answer.includes('deduction') ? 'Deductions' : 
+                 answer.includes('planning') ? 'Planning' :
+                 'General'
+      }),
+      { headers: corsHeaders }
     );
   } catch (error) {
     console.error('Error in tax-chat function:', error);
@@ -101,7 +124,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      { headers: corsHeaders, status: 500 }
     );
   }
 });
