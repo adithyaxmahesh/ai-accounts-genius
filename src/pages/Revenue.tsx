@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { RevenueSourcesManager } from "@/components/revenue/RevenueSourcesManager";
 import { RevenueChart } from "@/components/revenue/RevenueChart";
 import { RevenueMetrics } from "@/components/revenue/RevenueMetrics";
 import { RevenueCategories } from "@/components/revenue/RevenueCategories";
@@ -85,7 +84,6 @@ const Revenue = () => {
         onFilterClick={() => setShowFilters(!showFilters)}
         onAddRevenueClick={handleAddRevenue}
       />
-      <RevenueSourcesManager />
       <RevenueMetrics 
         totalRevenue={totalRevenue}
         averageRevenue={averageRevenue}
