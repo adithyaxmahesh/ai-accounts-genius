@@ -8,6 +8,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { HelpCircle } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface BalanceSheetFormFieldsProps {
   name: string;
@@ -24,24 +31,24 @@ interface BalanceSheetFormFieldsProps {
 }
 
 export const ASSET_SUBCATEGORIES = [
-  { value: "cash", label: "Cash & Bank" },
-  { value: "credit_cards", label: "Credit Cards" },
-  { value: "investments", label: "Investments" },
-  { value: "receivables", label: "Accounts Receivable" },
-  { value: "inventory", label: "Inventory" },
-  { value: "equipment", label: "Equipment & Property" },
+  { value: "cash", label: "Cash & Bank", help: "Affects Current Ratio & Cash Flow" },
+  { value: "credit_cards", label: "Credit Cards", help: "Affects Cash Flow" },
+  { value: "investments", label: "Investments", help: "Affects Health Score" },
+  { value: "receivables", label: "Accounts Receivable", help: "Affects Current Ratio" },
+  { value: "inventory", label: "Inventory", help: "Affects Current Ratio" },
+  { value: "equipment", label: "Equipment & Property", help: "Long-term Asset" },
 ];
 
 export const LIABILITY_SUBCATEGORIES = [
-  { value: "loans", label: "Loans & Mortgages" },
-  { value: "credit_card_debt", label: "Credit Card Debt" },
-  { value: "payables", label: "Accounts Payable" },
-  { value: "taxes", label: "Tax Liabilities" },
+  { value: "loans", label: "Loans & Mortgages", help: "Affects Debt Ratio" },
+  { value: "credit_card_debt", label: "Credit Card Debt", help: "Affects Debt Ratio & Current Ratio" },
+  { value: "payables", label: "Accounts Payable", help: "Affects Current Ratio" },
+  { value: "taxes", label: "Tax Liabilities", help: "Affects Debt Ratio" },
 ];
 
 export const EQUITY_SUBCATEGORIES = [
-  { value: "retained", label: "Retained Earnings" },
-  { value: "capital", label: "Owner's Capital" },
+  { value: "retained", label: "Retained Earnings", help: "Owner's Equity" },
+  { value: "capital", label: "Owner's Capital", help: "Initial Investment" },
 ];
 
 export const BalanceSheetFormFields = ({
@@ -95,7 +102,19 @@ export const BalanceSheetFormFields = ({
         />
       </div>
       <div>
-        <Label htmlFor="subcategory">Subcategory</Label>
+        <Label htmlFor="subcategory" className="flex items-center gap-2">
+          Subcategory
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <HelpCircle className="h-4 w-4 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Choose a category to see how it affects your financial metrics</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </Label>
         <Select 
           value={subcategory} 
           onValueChange={setSubcategory}
@@ -106,8 +125,9 @@ export const BalanceSheetFormFields = ({
           </SelectTrigger>
           <SelectContent>
             {getSubcategories().map((sub) => (
-              <SelectItem key={sub.value} value={sub.value}>
+              <SelectItem key={sub.value} value={sub.value} className="relative">
                 {sub.label}
+                <span className="text-xs text-muted-foreground ml-2">({sub.help})</span>
               </SelectItem>
             ))}
           </SelectContent>
