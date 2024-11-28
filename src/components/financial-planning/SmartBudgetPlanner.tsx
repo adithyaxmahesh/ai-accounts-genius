@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, DollarSign, Calculator } from "lucide-react";
+import { Brain, DollarSign, Calculator, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { useFinancialData } from "@/hooks/useFinancialData";
@@ -40,8 +40,8 @@ export const SmartBudgetPlanner = () => {
     enabled: !!session?.user.id && !!financialData,
   });
 
-  // Query AI recommendations
-  const { data: aiRecommendations, refetch: refetchRecommendations } = useQuery({
+  // Query AI recommendations with proper error handling
+  const { data: aiRecommendations, refetch: refetchRecommendations, isLoading: isLoadingRecommendations } = useQuery({
     queryKey: ['ai-budget-recommendations', session?.user.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -65,9 +65,11 @@ export const SmartBudgetPlanner = () => {
         description: "Analyzing your business financial data...",
       });
 
-      await supabase.functions.invoke('analyze-budget', {
+      const { error } = await supabase.functions.invoke('analyze-budget', {
         body: { userId: session?.user.id }
       });
+
+      if (error) throw error;
 
       await refetchRecommendations();
 
@@ -134,17 +136,54 @@ export const SmartBudgetPlanner = () => {
         </TabsList>
 
         <TabsContent value="ai" className="space-y-4">
-          <Button onClick={generateAIRecommendations}>
-            <Brain className="w-4 h-4 mr-2" />
-            Generate Business Recommendations
+          <Button 
+            onClick={generateAIRecommendations}
+            disabled={isLoadingRecommendations}
+          >
+            {isLoadingRecommendations ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Brain className="w-4 h-4 mr-2" />
+                Generate Business Recommendations
+              </>
+            )}
           </Button>
 
           {aiRecommendations && (
             <div className="space-y-4 mt-4">
               <h3 className="font-semibold">Recommended Budget Allocation</h3>
-              <div className="prose max-w-none">
-                {aiRecommendations.recommended_spending}
+              <div className="grid gap-4">
+                {Object.entries(aiRecommendations.current_spending || {}).map(([category, amount]) => (
+                  <div key={category} className="p-4 bg-muted rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium capitalize">
+                        {category.replace(/_/g, ' ')}
+                      </span>
+                      <span className="text-primary">
+                        ${Number(amount).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
+              {aiRecommendations.recommended_spending && (
+                <div className="p-4 bg-muted rounded-lg">
+                  <h4 className="font-medium mb-2">AI Recommendations</h4>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                    {aiRecommendations.recommended_spending}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!aiRecommendations && !isLoadingRecommendations && (
+            <div className="text-center py-8 text-muted-foreground">
+              No recommendations generated yet. Click the button above to get started.
             </div>
           )}
         </TabsContent>
