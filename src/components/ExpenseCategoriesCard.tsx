@@ -1,17 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/components/AuthProvider";
 import { useState } from "react";
 import { ExpenseTrends } from "./expenses/ExpenseTrends";
 import { ExpenseAnalysis } from "./expenses/ExpenseAnalysis";
 import { ExpenseRecommendations } from "./expenses/ExpenseRecommendations";
-import { WriteOff } from "@/components/types";
 import { ExpensePieChart } from "./expenses/ExpensePieChart";
 import { ExpenseList } from "./expenses/ExpenseList";
-import { calculateExpenseCategories, COLORS } from "@/utils/expenseCalculations";
-import { useToast } from "./ui/use-toast";
+import { COLORS } from "@/utils/expenseCalculations";
+import { useFinancialStreams } from "@/hooks/useFinancialStreams";
 
 interface ExpenseCategory {
   name: string;
@@ -20,63 +16,26 @@ interface ExpenseCategory {
 }
 
 export const ExpenseCategoriesCard = () => {
-  const { session } = useAuth();
-  const { toast } = useToast();
   const [activeIndex, setActiveIndex] = useState<number | undefined>();
-  const [sortBy, setSortBy] = useState<'amount' | 'category'>('amount');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const { data: streams } = useFinancialStreams();
 
-  const { data: expenses } = useQuery({
-    queryKey: ['categorized-expenses', session?.user.id],
-    queryFn: async () => {
-      const { data: writeOffs, error } = await supabase
-        .from('write_offs')
-        .select(`
-          *,
-          tax_codes (
-            code,
-            description,
-            state,
-            expense_category
-          )
-        `)
-        .eq('user_id', session?.user.id)
-        .order('date', { ascending: false })
-        .returns<WriteOff[]>();
+  const expenses = streams
+    ?.filter(stream => stream.type === 'expense' || stream.type === 'write_off')
+    .reduce((acc, stream) => {
+      const category = stream.category || 'Other';
+      acc[category] = (acc[category] || 0) + stream.amount;
+      return acc;
+    }, {} as Record<string, number>);
 
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Error loading expenses",
-          description: error.message
-        });
-        throw error;
-      }
+  const expenseCategories = Object.entries(expenses || {}).map(([name, value]) => ({
+    name,
+    value: Number(value),
+    color: COLORS[name as keyof typeof COLORS] || COLORS.Other
+  }));
 
-      console.log('Fetched write-offs:', writeOffs); // Debug log
+  const totalExpenses = expenseCategories.reduce((sum, exp) => sum + exp.value, 0);
 
-      const categories = calculateExpenseCategories(writeOffs || []);
-      console.log('Calculated categories:', categories); // Debug log
-      
-      return Object.entries(categories).map(([name, value]) => ({
-        name,
-        value: Number(value),
-        color: COLORS[name as keyof typeof COLORS] || COLORS.Other
-      })) as ExpenseCategory[];
-    },
-    enabled: !!session?.user.id
-  });
-
-  const sortedExpenses = expenses?.slice().sort((a, b) => {
-    const compareValue = sortBy === 'amount' 
-      ? a.value - b.value
-      : a.name.localeCompare(b.name);
-    return sortOrder === 'asc' ? compareValue : -compareValue;
-  });
-
-  const totalExpenses = expenses?.reduce((sum, exp) => sum + exp.value, 0) || 0;
-
-  if (!expenses?.length) {
+  if (!expenseCategories?.length) {
     return (
       <Card className="p-6">
         <h3 className="text-xl font-semibold mb-4">Expense Categories</h3>
@@ -101,30 +60,30 @@ export const ExpenseCategoriesCard = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="h-[300px]">
               <ExpensePieChart
-                expenses={sortedExpenses || []}
+                expenses={expenseCategories}
                 activeIndex={activeIndex}
                 onMouseEnter={(_, index) => setActiveIndex(index)}
                 onMouseLeave={() => setActiveIndex(undefined)}
               />
             </div>
-            <ExpenseList expenses={sortedExpenses || []} />
+            <ExpenseList expenses={expenseCategories} />
           </div>
         </TabsContent>
 
         <TabsContent value="analysis">
           <ExpenseAnalysis 
-            expenses={sortedExpenses || []} 
+            expenses={expenseCategories} 
             totalExpenses={totalExpenses}
           />
         </TabsContent>
 
         <TabsContent value="trends">
-          <ExpenseTrends expenses={sortedExpenses || []} />
+          <ExpenseTrends expenses={expenseCategories} />
         </TabsContent>
 
         <TabsContent value="recommendations">
           <ExpenseRecommendations 
-            expenses={sortedExpenses || []} 
+            expenses={expenseCategories} 
             totalExpenses={totalExpenses}
           />
         </TabsContent>
