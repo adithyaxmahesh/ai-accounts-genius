@@ -26,52 +26,35 @@ serve(async (req) => {
     }
 
     switch (action) {
-      case 'get-cash-balance': {
-        console.log('Fetching cash balance for user:', userId)
-        try {
-          const balance = await stripe.balance.retrieve();
-          return new Response(
-            JSON.stringify(balance),
-            { 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 200 
-            }
-          );
-        } catch (error) {
-          console.error('Error retrieving balance:', error)
-          return new Response(
-            JSON.stringify({ error: 'Failed to retrieve balance' }),
-            { 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 400 
-            }
-          )
-        }
-      }
-
       case 'create-connect-account': {
         console.log('Creating Stripe Connect account for user:', userId)
         try {
-          // Create a Stripe Connect account
+          // Create a Stripe Connect account with additional capabilities
           const account = await stripe.accounts.create({
             type: 'standard',
             metadata: {
               supabaseUserId: userId,
             },
+            capabilities: {
+              card_payments: { requested: true },
+              transfers: { requested: true },
+              bank_transfer_payments: { requested: true }
+            },
           })
           console.log('Created Stripe account:', account.id)
 
-          // Create account link with proper return URLs
+          // Create account link for onboarding
           const accountLink = await stripe.accountLinks.create({
             account: account.id,
-            refresh_url: `${req.headers.get('origin')}/revenue`,
-            return_url: `${req.headers.get('origin')}/revenue`,
+            refresh_url: `${req.headers.get('origin')}/revenue?error=true`,
+            return_url: `${req.headers.get('origin')}/revenue?success=true`,
             type: 'account_onboarding',
+            collect: 'eventually_due',
           })
           console.log('Created account link:', accountLink.url)
 
           return new Response(
-            JSON.stringify({ url: accountLink.url }),
+            JSON.stringify({ url: accountLink.url, accountId: account.id }),
             { 
               headers: { ...corsHeaders, 'Content-Type': 'application/json' },
               status: 200 
@@ -80,7 +63,34 @@ serve(async (req) => {
         } catch (error) {
           console.error('Error creating Stripe account:', error)
           return new Response(
-            JSON.stringify({ error: 'Failed to create Stripe account' }),
+            JSON.stringify({ error: error.message }),
+            { 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 400 
+            }
+          )
+        }
+      }
+
+      case 'get-account-status': {
+        const { accountId } = await req.json()
+        if (!accountId) {
+          throw new Error('Account ID is required')
+        }
+
+        try {
+          const account = await stripe.accounts.retrieve(accountId)
+          return new Response(
+            JSON.stringify({ account }),
+            { 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200 
+            }
+          )
+        } catch (error) {
+          console.error('Error retrieving Stripe account:', error)
+          return new Response(
+            JSON.stringify({ error: error.message }),
             { 
               headers: { ...corsHeaders, 'Content-Type': 'application/json' },
               status: 400 

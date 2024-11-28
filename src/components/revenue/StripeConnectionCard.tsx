@@ -3,13 +3,34 @@ import { Button } from "@/components/ui/button";
 import { CreditCard } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useSearchParams } from "react-router-dom";
 
 export const StripeConnectionCard = () => {
   const { session } = useAuth();
   const { toast } = useToast();
   const [isConnecting, setIsConnecting] = useState(false);
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    // Handle the return from Stripe Connect OAuth
+    const success = searchParams.get('success');
+    const error = searchParams.get('error');
+
+    if (success) {
+      toast({
+        title: "Success",
+        description: "Your Stripe account has been connected successfully.",
+      });
+    } else if (error) {
+      toast({
+        title: "Error",
+        description: "There was an error connecting your Stripe account. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [searchParams, toast]);
 
   const handleStripeConnect = async () => {
     if (!session?.user?.id) {
@@ -40,6 +61,11 @@ export const StripeConnectionCard = () => {
         throw new Error('No Stripe Connect URL received');
       }
 
+      // Store the Stripe account ID in local storage for later use
+      if (data.accountId) {
+        localStorage.setItem('stripeAccountId', data.accountId);
+      }
+
       // Redirect to Stripe Connect onboarding
       window.location.href = data.url;
     } catch (error: any) {
@@ -59,7 +85,7 @@ export const StripeConnectionCard = () => {
       <CreditCard className="h-8 w-8 mb-4 text-primary" />
       <h3 className="text-lg font-semibold mb-2">Stripe Account</h3>
       <p className="text-sm text-muted-foreground mb-4">
-        Connect your Stripe account to sync payment data.
+        Connect your Stripe account to sync payment data and bank transactions.
       </p>
       <Button 
         onClick={handleStripeConnect} 
