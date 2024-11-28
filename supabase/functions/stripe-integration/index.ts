@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const stripe = new Stripe(Deno.env.get('STRIPE_API_KEY') ?? '', {
+const stripe = new Stripe(Deno.env.get('STRIPE_API_KEY2') ?? '', {
   apiVersion: '2022-11-15',
   httpClient: Stripe.createFetchHttpClient(),
 })
