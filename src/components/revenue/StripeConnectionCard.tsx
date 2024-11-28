@@ -31,18 +31,22 @@ export const StripeConnectionCard = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
 
       if (!data?.url) {
         throw new Error('No Stripe Connect URL received');
       }
 
+      // Redirect to Stripe Connect onboarding
       window.location.href = data.url;
     } catch (error: any) {
       console.error('Error connecting Stripe:', error);
       toast({
         title: "Connection Failed",
-        description: "Could not connect to Stripe. Please try again.",
+        description: error.message || "Could not connect to Stripe. Please try again.",
         variant: "destructive",
       });
     } finally {
