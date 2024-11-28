@@ -12,7 +12,6 @@ const stripe = new Stripe(Deno.env.get('STRIPE_API_KEY') ?? '', {
 })
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -25,43 +24,58 @@ serve(async (req) => {
       throw new Error('User ID is required')
     }
 
-    if (action === 'create-connect-account') {
-      console.log('Creating Stripe Connect account...')
-      
-      // Create a Stripe Connect account
-      const account = await stripe.accounts.create({
-        type: 'standard',
-        metadata: {
-          supabaseUserId: userId,
-        },
-      })
-      console.log('Created Stripe account:', account.id)
+    switch (action) {
+      case 'get-cash-balance':
+        const customer = await stripe.customers.retrieve(userId);
+        const balance = await stripe.customers.retrieveCashBalance(
+          customer.id
+        );
+        return new Response(
+          JSON.stringify(balance),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200 
+          }
+        );
 
-      // Create account link
-      const accountLink = await stripe.accountLinks.create({
-        account: account.id,
-        refresh_url: `${req.headers.get('origin')}/revenue`,
-        return_url: `${req.headers.get('origin')}/revenue`,
-        type: 'account_onboarding',
-      })
-      console.log('Created account link:', accountLink.url)
+      case 'create-connect-account':
+        console.log('Creating Stripe Connect account...')
+        
+        // Create a Stripe Connect account
+        const account = await stripe.accounts.create({
+          type: 'standard',
+          metadata: {
+            supabaseUserId: userId,
+          },
+        })
+        console.log('Created Stripe account:', account.id)
 
-      return new Response(
-        JSON.stringify({ url: accountLink.url }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200 
-        }
-      )
+        // Create account link
+        const accountLink = await stripe.accountLinks.create({
+          account: account.id,
+          refresh_url: `${req.headers.get('origin')}/revenue`,
+          return_url: `${req.headers.get('origin')}/revenue`,
+          type: 'account_onboarding',
+        })
+        console.log('Created account link:', accountLink.url)
+
+        return new Response(
+          JSON.stringify({ url: accountLink.url }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200 
+          }
+        );
+
+      default:
+        return new Response(
+          JSON.stringify({ error: 'Invalid action' }), 
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400 
+          }
+        )
     }
-
-    return new Response(
-      JSON.stringify({ error: 'Invalid action' }), 
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400 
-      }
-    )
 
   } catch (error) {
     console.error('Error in stripe-integration:', error)
