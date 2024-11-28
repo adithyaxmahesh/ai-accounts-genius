@@ -8,7 +8,9 @@ import { useAuth } from "@/components/AuthProvider";
 import { cn } from "@/lib/utils";
 import { WriteOff } from "@/components/types";
 import { useToast } from "@/components/ui/use-toast";
-import { DollarSign, Building, Calendar, Tag } from "lucide-react";
+import { DollarSign, Building, Calendar, Tag, FileCheck, AlertCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const TransactionList = () => {
   const { session } = useAuth();
@@ -26,17 +28,17 @@ export const TransactionList = () => {
             code,
             description,
             state,
-            expense_category
+            expense_category,
+            validation_rules,
+            documentation_requirements,
+            max_deduction_amount
           )
         `)
         .eq('user_id', session?.user.id)
         .order('date', { ascending: false })
         .returns<WriteOff[]>();
       
-      if (error) {
-        throw error;
-      }
-      
+      if (error) throw error;
       return data || [];
     },
     enabled: !!session?.user.id
@@ -88,6 +90,17 @@ export const TransactionList = () => {
     return '';
   };
 
+  const getValidationStatus = (writeOff: WriteOff) => {
+    const rules = writeOff.tax_codes?.validation_rules || [];
+    const docs = writeOff.tax_codes?.documentation_requirements || [];
+    const hasAllDocs = docs.every(doc => writeOff.description.toLowerCase().includes(doc.toLowerCase()));
+    
+    return {
+      isValid: hasAllDocs && rules.length > 0,
+      missingDocs: docs.filter(doc => !writeOff.description.toLowerCase().includes(doc.toLowerCase()))
+    };
+  };
+
   return (
     <Card className="glass-card p-6">
       <div className="flex justify-between items-center mb-6">
@@ -124,6 +137,8 @@ export const TransactionList = () => {
             ) : (
               displayWriteOffs.map((writeOff) => {
                 const { payee, purpose } = parseDescription(writeOff.description);
+                const validationStatus = getValidationStatus(writeOff);
+                
                 return (
                   <div key={writeOff.id} className="flex flex-col p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
                     <div className="flex justify-between items-start mb-2">
@@ -131,6 +146,29 @@ export const TransactionList = () => {
                         <div className="flex items-center gap-2">
                           <Building className="h-4 w-4 text-muted-foreground" />
                           <p className="font-semibold">{payee}</p>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                {validationStatus.isValid ? (
+                                  <Badge variant="success" className="ml-2">
+                                    <FileCheck className="h-3 w-3 mr-1" />
+                                    Validated
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="destructive" className="ml-2">
+                                    <AlertCircle className="h-3 w-3 mr-1" />
+                                    Missing Documentation
+                                  </Badge>
+                                )}
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {validationStatus.isValid 
+                                  ? "All documentation requirements met"
+                                  : `Missing: ${validationStatus.missingDocs.join(", ")}`
+                                }
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
                         <div className="flex items-center gap-2">
                           <Tag className="h-4 w-4 text-muted-foreground" />
@@ -153,6 +191,11 @@ export const TransactionList = () => {
                         <p className="text-sm text-muted-foreground">
                           {writeOff.tax_codes.code} - {writeOff.tax_codes.description}
                         </p>
+                        {writeOff.tax_codes.max_deduction_amount && (
+                          <p className="text-sm text-muted-foreground">
+                            Maximum Deduction: {formatCurrency(writeOff.tax_codes.max_deduction_amount)}
+                          </p>
+                        )}
                       </div>
                     )}
                     {getChargesBreakdown(writeOff.description) && (
