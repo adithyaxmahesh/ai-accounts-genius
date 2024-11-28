@@ -5,6 +5,7 @@ import { FinancialHealthCard } from "@/components/financial-health/FinancialHeal
 import { CollaboratorsList } from "@/components/collaborators/CollaboratorsList";
 import { AutomationRules } from "@/components/automation/AutomationRules";
 import { FinancialInsights } from "@/components/financial-insights/FinancialInsights";
+import { FinancialHealthAlerts } from "@/components/FinancialHealthAlerts";
 
 export const DashboardContent = () => {
   return (
@@ -17,6 +18,7 @@ export const DashboardContent = () => {
           <div className="space-y-2">
             <FinancialPlanningCard />
             <FinancialHealthCard />
+            <FinancialHealthAlerts />
           </div>
           <div className="space-y-2">
             <CollaboratorsList />
