@@ -33,6 +33,9 @@ export interface WriteOff {
     description: string;
     state: string;
     expense_category: string;
+    validation_rules?: string[];
+    documentation_requirements?: string[];
+    max_deduction_amount?: number;
   };
   user_id?: string;
 }

@@ -8,9 +8,8 @@ import { useAuth } from "@/components/AuthProvider";
 import { cn } from "@/lib/utils";
 import { WriteOff } from "@/components/types";
 import { useToast } from "@/components/ui/use-toast";
-import { DollarSign, Building, Calendar, Tag, FileCheck, AlertCircle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { DollarSign } from "lucide-react";
+import { WriteOffCard } from "./write-offs/WriteOffCard";
 
 export const TransactionList = () => {
   const { session } = useAuth();
@@ -80,8 +79,6 @@ export const TransactionList = () => {
     return Number(writeOff.amount) || 0;
   };
 
-  const totalDeductions = writeOffs.reduce((sum, writeOff) => sum + calculateTotalAmount(writeOff), 0);
-
   const getChargesBreakdown = (description: string) => {
     const { charges } = parseDescription(description);
     if (charges.length > 0) {
@@ -90,16 +87,9 @@ export const TransactionList = () => {
     return '';
   };
 
-  const getValidationStatus = (writeOff: WriteOff) => {
-    const rules = writeOff.tax_codes?.validation_rules || [];
-    const docs = writeOff.tax_codes?.documentation_requirements || [];
-    const hasAllDocs = docs.every(doc => writeOff.description.toLowerCase().includes(doc.toLowerCase()));
-    
-    return {
-      isValid: hasAllDocs && rules.length > 0,
-      missingDocs: docs.filter(doc => !writeOff.description.toLowerCase().includes(doc.toLowerCase()))
-    };
-  };
+  const totalDeductions = writeOffs.reduce((sum, writeOff) => 
+    sum + calculateTotalAmount(writeOff), 0
+  );
 
   return (
     <Card className="glass-card p-6">
@@ -135,80 +125,15 @@ export const TransactionList = () => {
                 No write-offs found
               </div>
             ) : (
-              displayWriteOffs.map((writeOff) => {
-                const { payee, purpose } = parseDescription(writeOff.description);
-                const validationStatus = getValidationStatus(writeOff);
-                
-                return (
-                  <div key={writeOff.id} className="flex flex-col p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <Building className="h-4 w-4 text-muted-foreground" />
-                          <p className="font-semibold">{payee}</p>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger>
-                                {validationStatus.isValid ? (
-                                  <Badge variant="success" className="ml-2">
-                                    <FileCheck className="h-3 w-3 mr-1" />
-                                    Validated
-                                  </Badge>
-                                ) : (
-                                  <Badge variant="destructive" className="ml-2">
-                                    <AlertCircle className="h-3 w-3 mr-1" />
-                                    Missing Documentation
-                                  </Badge>
-                                )}
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                {validationStatus.isValid 
-                                  ? "All documentation requirements met"
-                                  : `Missing: ${validationStatus.missingDocs.join(", ")}`
-                                }
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Tag className="h-4 w-4 text-muted-foreground" />
-                          <p className="text-sm text-muted-foreground">{purpose}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold">{formatCurrency(calculateTotalAmount(writeOff))}</p>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Calendar className="h-3 w-3" />
-                          <p>{new Date(writeOff.date).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-                    </div>
-                    {writeOff.tax_codes && (
-                      <div className="mt-2 pt-2 border-t border-border">
-                        <p className="text-sm text-muted-foreground">
-                          {writeOff.tax_codes.state} - {writeOff.tax_codes.expense_category}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {writeOff.tax_codes.code} - {writeOff.tax_codes.description}
-                        </p>
-                        {writeOff.tax_codes.max_deduction_amount && (
-                          <p className="text-sm text-muted-foreground">
-                            Maximum Deduction: {formatCurrency(writeOff.tax_codes.max_deduction_amount)}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                    {getChargesBreakdown(writeOff.description) && (
-                      <p className="text-sm text-muted-foreground mt-2">
-                        Breakdown: {getChargesBreakdown(writeOff.description)}
-                      </p>
-                    )}
-                    <p className="text-sm text-muted-foreground mt-2 capitalize">
-                      Status: {writeOff.status || "Pending"}
-                    </p>
-                  </div>
-                );
-              })
+              displayWriteOffs.map((writeOff) => (
+                <WriteOffCard
+                  key={writeOff.id}
+                  writeOff={writeOff}
+                  parseDescription={parseDescription}
+                  calculateTotalAmount={calculateTotalAmount}
+                  getChargesBreakdown={getChargesBreakdown}
+                />
+              ))
             )}
           </div>
         </ScrollArea>

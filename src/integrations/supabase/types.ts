@@ -2817,9 +2817,13 @@ export type Database = {
           created_at: string
           deduction_type: string
           description: string
+          documentation_requirements: Json | null
           expense_category: string | null
           id: string
+          max_deduction_amount: number | null
+          requires_receipt: boolean | null
           state: string | null
+          validation_rules: Json | null
         }
         Insert: {
           category: string
@@ -2827,9 +2831,13 @@ export type Database = {
           created_at?: string
           deduction_type: string
           description: string
+          documentation_requirements?: Json | null
           expense_category?: string | null
           id?: string
+          max_deduction_amount?: number | null
+          requires_receipt?: boolean | null
           state?: string | null
+          validation_rules?: Json | null
         }
         Update: {
           category?: string
@@ -2837,9 +2845,13 @@ export type Database = {
           created_at?: string
           deduction_type?: string
           description?: string
+          documentation_requirements?: Json | null
           expense_category?: string | null
           id?: string
+          max_deduction_amount?: number | null
+          requires_receipt?: boolean | null
           state?: string | null
+          validation_rules?: Json | null
         }
         Relationships: []
       }
