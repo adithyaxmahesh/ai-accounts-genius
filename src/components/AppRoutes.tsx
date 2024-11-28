@@ -17,6 +17,7 @@ import AuditDetail from "@/pages/AuditDetail";
 import Assurance from "@/pages/Assurance";
 import FinancialStatements from "@/pages/FinancialStatements";
 import Expenses from "@/pages/Expenses";
+import FinancialStreams from "@/pages/FinancialStreams";
 
 export const AppRoutes = () => {
   const { session } = useAuth();
@@ -59,6 +60,7 @@ export const AppRoutes = () => {
       <Route path="/assurance" element={<ProtectedRoute><Assurance /></ProtectedRoute>} />
       <Route path="/financial-statements" element={<ProtectedRoute><FinancialStatements /></ProtectedRoute>} />
       <Route path="/expenses" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
+      <Route path="/financial-streams" element={<ProtectedRoute><FinancialStreams /></ProtectedRoute>} />
     </Routes>
   );
 };

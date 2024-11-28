@@ -13,7 +13,8 @@ import {
   CreditCard,
   Wallet,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Banknote
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -91,6 +92,7 @@ export const Sidebar = ({ onCollapse }: SidebarProps) => {
         <NavItem to="/write-offs" icon={<PieChart className="h-4 w-4" />} label="Write-Offs" isCollapsed={isCollapsed} />
         <NavItem to="/assurance" icon={<Shield className="h-4 w-4" />} label="Assurance" isCollapsed={isCollapsed} />
         <NavItem to="/forecast" icon={<TrendingUp className="h-4 w-4" />} label="Forecast" isCollapsed={isCollapsed} />
+        <NavItem to="/financial-streams" icon={<Banknote className="h-4 w-4" />} label="Financial Streams" isCollapsed={isCollapsed} />
         
         {!isCollapsed && (
           <div className="py-2">
